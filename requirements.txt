@@ -11,3 +11,5 @@ numpy
 scikit-learn
 seaborn
 tensorflow
+typing
+datetime
