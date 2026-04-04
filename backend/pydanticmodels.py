@@ -1,6 +1,7 @@
 from pydantic import BaseModel,EmailStr
 from pydantic.fields import Field
-
+from typing import Literal,LiteralString, List
+from datetime import datetime
 
 class ModelWarehouse(BaseModel):
     name : str = Field(...)
@@ -12,3 +13,10 @@ class ModelWarehouse(BaseModel):
     email : EmailStr = Field(...)
     owner : str = Field(...)
 
+class Orders(BaseModel):
+    retailer_id : int
+    warehouseid : int
+
+class Order_items(BaseModel):
+    itemname : List[str]
+    quantity : List[int] = Field(gt=1)

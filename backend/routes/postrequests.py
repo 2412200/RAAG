@@ -1,8 +1,8 @@
 from backend.database import get_connection
 from fastapi import FastAPI, HTTPException, APIRouter
 from fastapi.responses import JSONResponse
-from backend.pydanticmodels import ModelWarehouse
-
+from backend.pydanticmodels import ModelWarehouse, Orders, Order_items
+from datetime import date
 router = APIRouter()
 
 @router.post("/POST/warehouses")
@@ -57,3 +57,79 @@ def post_warehouse(data: ModelWarehouse):
     finally:
         cursor.close()
         conn.close()
+
+from fastapi import HTTPException
+from datetime import date
+
+@router.post("/POST/orders")
+def post_orders(orders: Orders):
+    conn = None
+    cursor = None
+
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute(
+            "SELECT location FROM retailers WHERE retailer_id = %s",
+            (orders.retailer_id,)
+        )
+        result = cursor.fetchone()
+
+        if not result:
+            raise HTTPException(status_code=404, detail="Retailer not found")
+
+        (location,) = result
+
+        cursor.execute(
+            "SELECT warehouseid FROM warehouses WHERE warehouseid = %s",
+            (orders.warehouseid,)
+        )
+        result2 = cursor.fetchone()
+
+        if not result2:
+            raise HTTPException(status_code=404, detail="Warehouse not found")
+
+        cursor.execute("""
+            INSERT INTO orders (
+                warehouseid,
+                retailer_id,
+                order_date,
+                status,
+                total_amount,
+                shipping_address,
+                payment_status
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """, (
+            orders.warehouseid,
+            orders.retailer_id,
+            date.today(),
+            "Processing",
+            0,
+            location,
+            "Not Done"
+        ))
+
+        conn.commit()
+
+        return {"message": "Order created successfully"}
+
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+@router.post("/POST/order_items")
+def order_items(order_items : Order_items):
+    for i in order_items.itemname:
+        print(i)
+    for i in order_items.quantity:
+        print(i)
+    return "hello"
