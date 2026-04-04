@@ -66,3 +66,5 @@ def kids(request : Request):
 @app.get("/furniture")
 def furniture(request : Request):
     return templates.TemplateResponse("furniture.html",{"request" : request})
+
+#hi bro
