@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Add Product - RAAG.com</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+
+<body>
+
+<div class="navbar">
+  <div class="nav-left">
+    <a href="/">Home</a>
+    <a href="/orders">My Orders</a>
+    <a href="/credits">My Credit</a>
+  </div>
+  <div class="nav-right">
+    <a href="/call">Make Call</a>
+    <a href="/">Retailer Login</a>
+    <a href="/account">Account</a>
+  </div>
+</div>
+
+<div class="form-container">
+  <h2>Add New Product</h2>
+
+  <form action="/POST/product" method="post" enctype="multipart/form-data">
+
+    <div class="form-group">
+      <label for="productname">Product Name</label>
+      <input type="text" id="productname" name="productname" placeholder="Enter product name" required>
+    </div>
+
+    <div class="form-group">
+      <label for="size">Size</label>
+      <select id="size" name="size" required>
+        <option value="" disabled selected>Select size</option>
+        <option value="S">S</option>
+        <option value="M">M</option>
+        <option value="L">L</option>
+        <option value="XL">XL</option>
+        <option value="XXL">XXL</option>
+        <option value="XXXL">XXXL</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="fabric_name">Fabric Name</label>
+      <input type="text" id="fabric_name" name="fabric_name" placeholder="Enter Fabric name" required>
+    </div>
+
+    <div class="form-group">
+      <label for="Category">Category</label>
+      <select id="Category" name="Category" required>
+        <option value="" disabled selected>Select product type</option>
+        <option value="Mens Shirt">Mens Shirt</option>
+        <option value="Mens TShirt">Mens TShirt</option>
+        <option value="Mens Lower">Mens Lower</option>
+        <option value="Mens Jeans">Mens Jeans</option>
+        <option value="Mens Shorts">Mens Shorts</option>
+        <option value="Pyjama">Pyjama</option>
+        <option value="Mens Inner Wear">Mens Inner Wear</option>
+        <option value="Womens Shirt">Womens Shirt</option>
+        <option value="Womens TShirt">Womens TShirt</option>
+        <option value="Womens Lower">Womens Lower</option>
+        <option value="Womens Jeans">Womens Jeans</option>
+        <option value="Womens Pyjama">Womens Pyjama</option>
+
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="GSM">GSM</label>
+      <input type="number" id="GSM" name="GSM" placeholder="Enter GSM" min="0" required>
+    </div>
+
+    <div class="form-group">
+      <label for="price">Price</label>
+      <input type="number" id="price" name="price" placeholder="Enter price" min="0" required>
+    </div>
+
+    <div class="form-group">
+      <label for="Gender">Gender</label>
+      <select id="Gender" name="Gender" required>
+        <option value="" disabled selected>Select Gender</option>
+        <option value="Male">Male</option>
+        <option value="Female">Female</option>
+      </select>
+    </div>
+
+    <button type="submit" class="btn-submit">Add Product</button>
+
+  </form>   <!-- ← make sure button is ABOVE this line -->
+</div>
+<form action="/POST/product" method="post" enctype="multipart/form-data"></form>
+
+</body>
+</html>

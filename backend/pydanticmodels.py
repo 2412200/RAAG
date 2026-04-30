@@ -20,3 +20,12 @@ class Orders(BaseModel):
 class Order_items(BaseModel):
     itemname : List[str]
     quantity : List[int] = Field(gt=1)
+
+class apparels(BaseModel):
+    productname : str
+    size : str
+    fabric_name : str
+    category : str
+    GSM : int
+    Price : float
+    Gender : str

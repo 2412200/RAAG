@@ -1,8 +1,11 @@
 from backend.database import get_connection
 from fastapi import FastAPI, HTTPException, APIRouter
 from fastapi.responses import JSONResponse
-from backend.pydanticmodels import ModelWarehouse, Orders, Order_items
+from backend.pydanticmodels import ModelWarehouse, Orders, Order_items, apparels
 from datetime import date
+from fastapi import Form, UploadFile, File
+import shutil, os
+
 router = APIRouter()
 
 @router.post("/POST/warehouses")
@@ -133,3 +136,36 @@ def order_items(order_items : Order_items):
     for i in order_items.quantity:
         print(i)
     return "hello"
+
+
+@router.post("/POST/product")
+async def add_product(
+    productname: str = Form(...),
+    size: str = Form(...),
+    price: int = Form(...),
+    fabric_name: str = Form(...),
+    Category: str = Form(...),
+    GSM: int = Form(...),
+    Gender: str = Form(...)
+):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        INSERT INTO apparels (productname, size, price, fabric, category, gsm, gender)
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
+    """, (
+        productname,
+        size,
+        price,
+        fabric_name,
+        Category,
+        GSM,
+        Gender
+    ))
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    return {"message": "Item Added successfully"}

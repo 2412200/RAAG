@@ -26,6 +26,10 @@ def orders(request : Request):
 def credits(request : Request):
     return templates.TemplateResponse("credits.html",{"request" : request})
 
+@app.get("/manufacturer")
+def manufacture(request : Request):
+    return templates.TemplateResponse("manufacturer.html",{"request" : request})
+
 @app.get("/womens")
 def womens(request : Request):
     return templates.TemplateResponse("womens.html",{"request" : request})
@@ -65,5 +69,3 @@ def kids(request : Request):
 @app.get("/furniture")
 def furniture(request : Request):
     return templates.TemplateResponse("furniture.html",{"request" : request})
-
-#hi bro
