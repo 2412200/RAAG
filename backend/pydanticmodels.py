@@ -29,3 +29,7 @@ class apparels(BaseModel):
     GSM : int
     Price : float
     Gender : str
+
+class Manufacturer(BaseModel):
+    username : str
+    password : str

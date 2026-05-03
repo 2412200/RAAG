@@ -169,3 +169,8 @@ async def add_product(
     conn.close()
 
     return {"message": "Item Added successfully"}
+
+
+@router.post("/auth/manufactuer")
+def authmanufacturer(Manufacturer):
+    
