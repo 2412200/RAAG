@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mens Wear</title>
+    <link rel="stylesheet" href="frontend/static/css/style.css">
+</head>
+
+<body>
+
+    <!-- NAVBAR -->
+
+    <div class="navbar">
+
+        <div class="nav-left">
+            <a href="/">Home</a>
+            <a href="/orders">My Orders</a>
+            <a href="/credit">My Credit</a>
+        </div>
+
+        <div class="nav-right">
+            <a href="#">Make Call</a>
+            <a href="#">Wholesaler Login</a>
+            <a href="#">My Account</a>
+        </div>
+
+    </div>
+
+
+    <!-- PRODUCTS -->
+
+    <div class="products-container">
+
+        {% for product in Products %}
+
+        <div class="product-card">
+
+            <img src="{{ url_for('static', path='images/' + product.image) }}">
+
+            <p>{{ product.name }}</p>
+
+            <p>
+                Buy {{ product.quantity }}
+                at ₹{{ product.price }}
+            </p>
+
+        </div>
+
+        {% endfor %}
+
+    </div>
+
+</body>
+</html>
