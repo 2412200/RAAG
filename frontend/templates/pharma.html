@@ -1,84 +1,333 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pharma</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --red:#C0172A;
+      --red-dark:#8B0D1C;
+      --red-light:#E8293F;
+      --black:#0D0D0D;
+      --black2:#181818;
+      --black3:#222;
+      --gold:#D4A847;
+      --white:#F5F0ED;
+      --muted:#A89B92;
+    }
+    body,html{background:var(--black);color:var(--white);font-family:'DM Sans',sans-serif}
 
-<title>Pharma</title>
-<link rel="stylesheet" href="/static/css/style.css">
+    /* ── NAVBAR ── */
+    nav{
+      background:var(--black2);
+      border-bottom:1px solid var(--red-dark);
+      padding:0 2rem;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      height:64px;
+      position:sticky;top:0;z-index:10;
+    }
+    .nav-logo{font-family:'Playfair Display',serif;font-size:22px;font-weight:900;color:var(--red-light);letter-spacing:2px;text-transform:uppercase;text-decoration:none}
+    .nav-left{display:flex;align-items:center;gap:2rem}
+    .nav-links{display:flex;gap:1.5rem}
+    .nav-links a{color:var(--muted);font-size:14px;text-decoration:none;font-weight:400;letter-spacing:0.5px;transition:color .2s}
+    .nav-links a:hover{color:var(--white)}
+    .nav-right{display:flex;gap:1.5rem;align-items:center}
+    .nav-right a{color:var(--muted);font-size:14px;text-decoration:none;transition:color .2s}
+    .nav-right a:hover{color:var(--white)}
+    .btn-account{
+      background:var(--red);
+      color:var(--white)!important;
+      padding:8px 18px;
+      border-radius:4px;
+      font-size:13px;
+      font-weight:500;
+      transition:background .2s!important;
+    }
+    .btn-account:hover{background:var(--red-light)!important}
 
+    /* ── PAGE HEADER ── */
+    .page-header{
+      padding:2.5rem 5%;
+      border-bottom:1px solid #2a2a2a;
+      display:flex;
+      align-items:center;
+      gap:12px;
+    }
+    .page-header-accent{width:4px;height:36px;background:var(--red);border-radius:2px;flex-shrink:0}
+    .breadcrumb{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+    .breadcrumb a{color:var(--muted);text-decoration:none;transition:color .2s}
+    .breadcrumb a:hover{color:var(--red-light)}
+    .page-title{font-family:'Playfair Display',serif;font-size:32px;font-weight:900;color:var(--white);line-height:1}
+
+    /* ── PRODUCT GRID ── */
+    .products-container{
+      display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+      gap:1px;
+      padding:1px;
+      width:90%;
+      margin:2rem auto 3rem;
+    }
+
+    .product-card{
+      background:var(--black2);
+      overflow:hidden;
+      cursor:pointer;
+      position:relative;
+      display:flex;
+      flex-direction:column;
+      transition:transform .25s, box-shadow .25s;
+    }
+    .product-card:hover{
+      transform:translateY(-4px);
+      box-shadow:0 12px 40px rgba(192,23,42,.25);
+      z-index:2;
+    }
+
+    .product-img-wrap{
+      position:relative;
+      overflow:hidden;
+      aspect-ratio:1/1;
+      background:var(--black3);
+    }
+    .product-img-wrap img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+      transition:transform .4s, filter .3s;
+      filter:brightness(.9);
+    }
+    .product-card:hover .product-img-wrap img{
+      transform:scale(1.06);
+      filter:brightness(.75);
+    }
+    .product-img-overlay{
+      position:absolute;inset:0;
+      background:linear-gradient(180deg,transparent 50%,rgba(13,13,13,.7) 100%);
+    }
+    .quick-view{
+      position:absolute;
+      bottom:12px;left:50%;transform:translateX(-50%) translateY(8px);
+      background:var(--red);
+      color:var(--white);
+      font-size:11px;
+      letter-spacing:1.5px;
+      text-transform:uppercase;
+      padding:7px 18px;
+      border-radius:2px;
+      opacity:0;
+      transition:opacity .2s, transform .2s;
+      white-space:nowrap;
+      pointer-events:none;
+    }
+    .product-card:hover .quick-view{
+      opacity:1;
+      transform:translateX(-50%) translateY(0);
+    }
+
+    .product-info{
+      padding:1rem 1rem 1.25rem;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      border-top:1px solid #2a2a2a;
+    }
+    .product-name{
+      font-family:'Playfair Display',serif;
+      font-size:16px;
+      font-weight:700;
+      color:var(--white);
+      line-height:1.2;
+    }
+    .product-price{
+      font-size:12px;
+      color:var(--gold);
+      letter-spacing:0.5px;
+      font-weight:500;
+    }
+    .product-moq{
+      font-size:11px;
+      color:var(--muted);
+      letter-spacing:0.3px;
+    }
+    .add-btn{
+      margin-top:6px;
+      background:transparent;
+      border:1px solid var(--red-dark);
+      color:var(--red-light);
+      font-size:12px;
+      font-family:'DM Sans',sans-serif;
+      letter-spacing:1px;
+      text-transform:uppercase;
+      padding:8px 12px;
+      cursor:pointer;
+      border-radius:2px;
+      transition:background .2s, color .2s;
+      width:100%;
+    }
+    .add-btn:hover{background:var(--red);color:var(--white);border-color:var(--red)}
+
+    /* ── FOOTER ── */
+    footer{
+      background:var(--black2);
+      border-top:1px solid var(--red-dark);
+      padding:1.25rem 2rem;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+    }
+    .footer-brand{font-family:'Playfair Display',serif;color:var(--red);font-size:16px;font-weight:700;letter-spacing:2px}
+    .footer-note{font-size:12px;color:var(--muted)}
+  </style>
 </head>
-
 <body>
 
-<!-- NAVBAR -->
+  <!-- NAVBAR -->
+  <nav>
+    <div class="nav-left">
+      <a class="nav-logo" href="/">RAAG</a>
+      <div class="nav-links">
+        <a href="/">Home</a>
+        <a href="/orders">My Orders</a>
+        <a href="/credit">My Credit</a>
+      </div>
+    </div>
+    <div class="nav-right">
+      <a href="/">Manufacturer Login</a>
+      <a class="btn-account" href="#">My Account</a>
+    </div>
+  </nav>
 
-<div class="navbar">
-
-<div class="nav-left">
-<a href="/">Home</a>
-<a href="/orders">My Orders</a>
-<a href="/credit">My Credit</a>
-</div>
-
-<div class="nav-right">
-<a href="#">Make Call</a>
-<a href="#">Wholesaler Login</a>
-<a href="#">My Account</a>
-</div>
-
-</div>
+  <!-- PAGE HEADER -->
+  <div class="page-header">
+    <div class="page-header-accent"></div>
+    <div>
+      <div class="breadcrumb"><a href="/">Home</a> &nbsp;/&nbsp; Pharma</div>
+      <h1 class="page-title">Pharma</h1>
+    </div>
+  </div>
 
 
 <!-- PRODUCTS -->
+  <div class="products-container">
 
-<div class="products-container">
+    <div class="product-card">
+      <div class="product-img-wrap">
+        <img src="/static/images/Paracetamol.webp" alt="Paracetamol" />
+        <div class="product-img-overlay"></div>
+        <span class="quick-view">View Details</span>
+      </div>
+      <div class="product-info">
+        <p class="product-name">Paracetamol</p>
+        <p class="product-price">₹50,000</p>
+        <p class="product-moq">Min. order: 10 units</p>
+        <button class="add-btn">Add to Order</button>
+      </div>
+    </div>
 
-<div class="product-card">
-<img src="/static/images/Paracetamol.webp">
-<p>Paracetamol</p>
-<p>Buy 10 at 50000</p>
-</div>
+    <div class="product-card">
+      <div class="product-img-wrap">
+        <img src="/static/images/Ibuprofen.webp" alt="Iboprofen" />
+        <div class="product-img-overlay"></div>
+        <span class="quick-view">View Details</span>
+      </div>
+      <div class="product-info">
+        <p class="product-name">Iboprofen</p>
+        <p class="product-price">₹50,000</p>
+        <p class="product-moq">Min. order: 10 units</p>
+        <button class="add-btn">Add to Order</button>
+      </div>
+    </div>
 
-<div class="product-card">
-<img src="/static/images/Ibuprofen.webp">
-<p>Ibuprofen</p>
-<p>Buy 10 at 500000</p>
-</div>
+    <div class="product-card">
+      <div class="product-img-wrap">
+        <img src="/static/images/Aspirin.webp" alt="Aspirin" />
+        <div class="product-img-overlay"></div>
+        <span class="quick-view">View Details</span>
+      </div>
+      <div class="product-info">
+        <p class="product-name">Aspirin</p>
+        <p class="product-price">₹50,000</p>
+        <p class="product-moq">Min. order: 10 units</p>
+        <button class="add-btn">Add to Order</button>
+      </div>
+    </div>
 
-<div class="product-card">
-<img src="/static/images/Aspirin.webp">
-<p>Aspirin</p>
-<p>Buy 10 at 50000</p>
-</div>
+    <div class="product-card">
+      <div class="product-img-wrap">
+        <img src="/static/images/Cetirizine.webp" alt="Citrizine" />
+        <div class="product-img-overlay"></div>
+        <span class="quick-view">View Details</span>
+      </div>
+      <div class="product-info">
+        <p class="product-name">Citrizine</p>
+        <p class="product-price">₹50,000</p>
+        <p class="product-moq">Min. order: 10 units</p>
+        <button class="add-btn">Add to Order</button>
+      </div>
+    </div>
 
-<div class="product-card">
-<img src="/static/images/Cetirizine.webp">
-<p>Cetirizine</p>
-<p>Buy 10 at 100000</p>
-</div>
+    <div class="product-card">
+      <div class="product-img-wrap">
+        <img src="/static/images/Omeprazole.webp" alt="Omeprazole" />
+        <div class="product-img-overlay"></div>
+        <span class="quick-view">View Details</span>
+      </div>
+      <div class="product-info">
+        <p class="product-name">Omeprazole</p>
+        <p class="product-price">₹70,000</p>
+        <p class="product-moq">Min. order: 10 units</p>
+        <button class="add-btn">Add to Order</button>
+      </div>
+    </div>
 
-<div class="product-card">
-<img src="/static/images/Omeprazole.webp">
-<p>Omeprazole</p>
-<p>Buy 10 at 70000</p>
-</div>
+    <div class="product-card">
+      <div class="product-img-wrap">
+        <img src="/static/images/Loperamide.webp" alt="Loperamide" />
+        <div class="product-img-overlay"></div>
+        <span class="quick-view">View Details</span>
+      </div>
+      <div class="product-info">
+        <p class="product-name">Loperamide</p>
+        <p class="product-price">₹50,000</p>
+        <p class="product-moq">Min. order: 10 units</p>
+        <button class="add-btn">Add to Order</button>
+      </div>
+    </div>
 
-<div class="product-card">
-<img src="/static/images/Loperamide.webp">
-<p>Loperamide</p>
-<p>Buy 10 at 80000</p>
-</div>
+    <div class="product-card">
+      <div class="product-img-wrap">
+        <img src="/static/images/Amoxicillin.webp" alt="Amoxicillin" />
+        <div class="product-img-overlay"></div>
+        <span class="quick-view">View Details</span>
+      </div>
+      <div class="product-info">
+        <p class="product-name">Amoxicillin</p>
+        <p class="product-price">₹80,000</p>
+        <p class="product-moq">Min. order: 10 units</p>
+        <button class="add-btn">Add to Order</button>
+      </div>
+    </div>
 
-<div class="product-card">
-<img src="/static/images/Amoxicillin.webp">
-<p>Amoxicillin</p>
-<p>Buy 10 at 80000</p>
-</div>
-
-<div class="product-card">
-<img src="/static/images/Metformin.webp">
-<p>Metformin</p>
-<p>Buy 10 at 80000</p>
-</div>
+    <div class="product-card">
+      <div class="product-img-wrap">
+        <img src="/static/images/Metformin.webp" alt="Metformin" />
+        <div class="product-img-overlay"></div>
+        <span class="quick-view">View Details</span>
+      </div>
+      <div class="product-info">
+        <p class="product-name">Metformin</p>
+        <p class="product-price">₹80,000</p>
+        <p class="product-moq">Min. order: 10 units</p>
+        <button class="add-btn">Add to Order</button>
+      </div>
+    </div>
 
 </div>
 

@@ -1,93 +1,302 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>RAAG.com</title>
-<link rel="stylesheet" href="/static/css/style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RAAG.com</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --red:#C0172A;
+      --red-dark:#8B0D1C;
+      --red-light:#E8293F;
+      --black:#0D0D0D;
+      --black2:#181818;
+      --black3:#222;
+      --gold:#D4A847;
+      --white:#F5F0ED;
+      --muted:#A89B92;
+    }
+    body,html{background:var(--black);color:var(--white);font-family:'DM Sans',sans-serif}
+    .site{min-height:100vh;background:var(--black)}
+
+    nav{
+      background:var(--black2);
+      border-bottom:1px solid var(--red-dark);
+      padding:0 2rem;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      height:64px;
+      position:sticky;top:0;z-index:10;
+    }
+    .nav-logo{font-family:'Playfair Display',serif;font-size:22px;font-weight:900;color:var(--red-light);letter-spacing:2px;text-transform:uppercase}
+    .nav-left{display:flex;align-items:center;gap:2rem}
+    .nav-links{display:flex;gap:1.5rem}
+    .nav-links a{color:var(--muted);font-size:14px;text-decoration:none;font-weight:400;letter-spacing:0.5px;transition:color .2s}
+    .nav-links a:hover{color:var(--white)}
+    .nav-right{display:flex;gap:1.5rem;align-items:center}
+    .nav-right a{color:var(--muted);font-size:14px;text-decoration:none;transition:color .2s}
+    .nav-right a:hover{color:var(--white)}
+    .btn-account{
+      background:var(--red);
+      color:var(--white)!important;
+      padding:8px 18px;
+      border-radius:4px;
+      font-size:13px;
+      font-weight:500;
+      transition:background .2s!important;
+    }
+    .btn-account:hover{background:var(--red-light)!important}
+
+    .search-bar{
+      background:var(--black2);
+      border-bottom:1px solid #2a2a2a;
+      padding:1rem 2rem;
+      display:flex;align-items:center;gap:12px;
+    }
+    .search-wrap{display:flex;flex:1;max-width:480px;background:#111;border:1px solid #333;border-radius:4px;overflow:hidden}
+    .search-wrap input{flex:1;background:transparent;border:none;padding:10px 14px;color:var(--white);font-size:14px;font-family:'DM Sans',sans-serif;outline:none}
+    .search-wrap input::placeholder{color:var(--muted)}
+    .search-wrap button{
+      background:var(--red);
+      border:none;
+      color:var(--white);
+      padding:10px 20px;
+      font-size:13px;
+      font-weight:500;
+      cursor:pointer;
+      font-family:'DM Sans',sans-serif;
+      letter-spacing:0.5px;
+      transition:background .2s;
+    }
+    .search-wrap button:hover{background:var(--red-light)}
+
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:1.5px;
+      padding:1.5px;
+      margin:1.5rem auto;
+      width:90%;
+    }
+
+    .cat-card{
+      background:var(--black2);
+      overflow:hidden;
+      cursor:pointer;
+      position:relative;
+      aspect-ratio:3/4;
+      transition:transform .25s;
+    }
+    .cat-card:hover{z-index:2;transform:scale(1.02)}
+    .cat-card:hover .cat-overlay{opacity:1}
+    .cat-card:hover .cat-img{transform:scale(1.06)}
+
+    .cat-img{
+      width:100%;height:100%;
+      object-fit:cover;
+      filter:brightness(.55) saturate(.8);
+      transition:transform .4s, filter .3s;
+      display:block;
+      background:#1a1a1a;
+    }
+    .cat-card:hover .cat-img{filter:brightness(.45) saturate(.6)}
+
+    .cat-overlay{
+      position:absolute;inset:0;
+      background:linear-gradient(180deg,transparent 35%,rgba(140,10,22,.7) 100%);
+      opacity:.85;
+      transition:opacity .3s;
+    }
+    .cat-label{
+      position:absolute;bottom:0;left:0;right:0;
+      padding:1.25rem 1rem 1rem;
+      display:flex;flex-direction:column;gap:4px;
+    }
+    .cat-tag{
+      font-size:10px;
+      letter-spacing:2px;
+      text-transform:uppercase;
+      color:var(--gold);
+      font-weight:500;
+    }
+    .cat-name{
+      font-family:'Playfair Display',serif;
+      font-size:20px;
+      font-weight:700;
+      color:var(--white);
+      line-height:1.1;
+    }
+    .cat-arrow{
+      position:absolute;bottom:1.25rem;right:1rem;
+      width:28px;height:28px;
+      border:1px solid rgba(255,255,255,.4);
+      border-radius:50%;
+      display:flex;align-items:center;justify-content:center;
+      color:var(--white);
+      font-size:12px;
+      transition:background .2s,border-color .2s;
+    }
+    .cat-card:hover .cat-arrow{background:var(--red);border-color:var(--red)}
+
+    .placeholder-img{
+      width:100%;height:100%;
+      display:flex;align-items:center;justify-content:center;
+      font-size:48px;
+    }
+    a.cat-card{text-decoration:none;color:inherit;display:block;}
+
+    footer{
+      background:var(--black2);
+      border-top:1px solid var(--red-dark);
+      padding:1.25rem 2rem;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+    }
+    .footer-brand{font-family:'Playfair Display',serif;color:var(--red);font-size:16px;font-weight:700;letter-spacing:2px}
+    .footer-note{font-size:12px;color:var(--muted)}
+  </style>
 </head>
-
 <body>
+<div class="site">
+  <nav>
+    <div class="nav-left">
+      <span class="nav-logo">RAAG</span>
+      <div class="nav-links">
+        <a href="/home">Home</a>
+        <a href="/orders">My Orders</a>
+        <a href="/credits">My Credit</a>
+      </div>
+    </div>
+    <div class="nav-right">
+      <a href="/">Manufacturer Login</a>
+      <a class="btn-account" href="#">Account</a>
+    </div>
+  </nav>
 
-<div class="navbar">
+  <div class="search-bar">
+    <div class="search-wrap">
+      <input type="text" placeholder="Search by category…" />
+      <button>Search</button>
+    </div>
+  </div>
 
-<div class="nav-left">
-<a href="/">Home</a>
-<a href="/orders">My Orders</a>
-<a href="/credits">My Credit</a>
-</div>
+  <div style="padding:2rem 1.5px 0;">
+    <div style="display:flex;align-items:center;gap:8px;padding:0 .5rem 1rem;">
+      <div style="width:3px;height:22px;background:var(--red);border-radius:2px"></div>
+      <span style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);font-weight:500">Browse Categories</span>
+    </div>
+  </div>
 
-<div class="nav-right">
-<a href="#">Make Call</a>
-<a href="/manufacturer">Manufacturer Login</a>
-<a href="#">Account</a>
-</div>
+  <div class="grid">
+    <!-- Women Wear -->
+    <a href="/womens" class="cat-card">
+      <!-- Replace the div below with: <img class="cat-img" src="your-image.jpg" alt="Women Wear" /> -->
+      <div class="placeholder-img" style="background:linear-gradient(135deg,#1a0a0d,#2d0e14)">👗</div>
+      <div class="cat-overlay"></div>
+      <div class="cat-label">
+        <span class="cat-tag">Fashion</span>
+        <span class="cat-name">Women Wear</span>
+      </div>
+      <div class="cat-arrow">→</div>
+    </a>
 
-</div>
+    <!-- Mens Wear -->
+    <a href="/men" class="cat-card">
+      <div class="placeholder-img" style="background:linear-gradient(135deg,#0a0d1a,#0e142d)">🧥</div>
+      <div class="cat-overlay"></div>
+      <div class="cat-label">
+        <span class="cat-tag">Fashion</span>
+        <span class="cat-name">Mens Wear</span>
+      </div>
+      <div class="cat-arrow">→</div>
+    </a>
 
-<div class="search-box">
+    <!-- Home Appliances -->
+    <a href="/homeappliances" class="cat-card">
+      <div class="placeholder-img" style="background:linear-gradient(135deg,#0d1a0a,#142d0e)">🏠</div>
+      <div class="cat-overlay"></div>
+      <div class="cat-label">
+        <span class="cat-tag">Lifestyle</span>
+        <span class="cat-name">Home Appliances</span>
+      </div>
+      <div class="cat-arrow">→</div>
+    </a>
 
-<form action="/search" method="get">
+    <!-- Cosmetics -->
+    <a href="/beauty" class="cat-card">
+      <div class="placeholder-img" style="background:linear-gradient(135deg,#1a160a,#2d230e)">💄</div>
+      <div class="cat-overlay"></div>
+      <div class="cat-label">
+        <span class="cat-tag">Beauty</span>
+        <span class="cat-name">Cosmetics</span>
+      </div>
+      <div class="cat-arrow">→</div>
+    </a>
 
-<input 
-type="text"
-name="category"
-placeholder="Search by category"
-class="search-input"
->
-<a href="/search"></a>
-<button type="submit">Search</button>
-</a>
-</form>
+    <!-- Books -->
+    <a href="/books" class="cat-card">
+      <div class="placeholder-img" style="background:linear-gradient(135deg,#0a1a16,#0e2d23)">📚</div>
+      <div class="cat-overlay"></div>
+      <div class="cat-label">
+        <span class="cat-tag">Education</span>
+        <span class="cat-name">Books</span>
+      </div>
+      <div class="cat-arrow">→</div>
+    </a>
 
-</div>
+    <!-- Groceries -->
+    <a href="/groceries" class="cat-card">
+      <div class="placeholder-img" style="background:linear-gradient(135deg,#1a0a0a,#2d0e0e)">🥦</div>
+      <div class="cat-overlay"></div>
+      <div class="cat-label">
+        <span class="cat-tag">Fresh</span>
+        <span class="cat-name">Groceries</span>
+      </div>
+      <div class="cat-arrow">→</div>
+    </a>
 
-<div class="container">
+    <!-- Furniture -->
+    <a href="/furniture" class="cat-card">
+      <div class="placeholder-img" style="background:linear-gradient(135deg,#0a0f1a,#0e1a2d)">📱</div>
+      <div class="cat-overlay"></div>
+      <div class="cat-label">
+        <span class="cat-tag">furniture</span>
+        <span class="cat-name">Furniture</span>
+      </div>
+      <div class="cat-arrow">→</div>
+    </a>
 
-<a href="/womens" class="card">
-<img src="/static/images/4_addece25-38ff-4970-8109-fbd4f424145d.webp">
-<h3>Women Wear</h3>
-</a>
+    <!-- Sports -->
+    <a href="/kids" class="cat-card">
+      <div class="placeholder-img" style="background:linear-gradient(135deg,#0a1a0f,#0e2d18)">⚽</div>
+      <div class="cat-overlay"></div>
+      <div class="cat-label">
+        <span class="cat-tag">Study</span>
+        <span class="cat-name">Kids</span>
+      </div>
+      <div class="cat-arrow">→</div>
+    </a>
 
-<a href="/men" class="card">
-<img src="/static/images/mens-clothing-with-personal-accessories-isolated-on-white-background.webp">
-<h3>Mens Wear</h3>
-</a>
+    <!-- Toys -->
+    <a href="/pharma" class="cat-card">
+      <div class="placeholder-img" style="background:linear-gradient(135deg,#1a0a14,#2d0e22)">🧸</div>
+      <div class="cat-overlay"></div>
+      <div class="cat-label">
+        <span class="cat-tag">medicine</span>
+        <span class="cat-name">Pharma</span>
+      </div>
+      <div class="cat-arrow">→</div>
+    </a>
+  </div>
 
-<a href="/homeappliances" class="card">
-<img src="/static/images/83f551e22a77d6c513ea6a61805fd643.webp">
-<h3>Home Appliances</h3>
-</a>
-
-<a href="/beauty" class="card">
-<img src="/static/images/360_F_493367969_hHVvtiTiYhIpCOZdpsHVaUA5onSodNH7.webp">
-<h3>Beauty</h3>
-</a>
-
-<a href="/books" class="card">
-<img src="static/images/books-yellow-book-reading.webp">
-<h3>Books</h3>
-</a>
-
-<a href="/groceries" class="card">
-<img src="/static/images/groceries-canned-food-bag-merchandise-shopping-bag-reusable-canvas-62892125.webp">
-<h3>Groceries</h3>
-</a>
-
-<a href="/pharma" class="card">
-<img src="/static/images/pharma.webp">
-<h3>Pharmaceuticals</h3>
-</a>
-
-<a href="/kids" class="card">
-<img src="/static/images/kids.webp">
-<h3>Kids</h3>
-</a>
-
-<a href="/furniture" class="card">
-<img src="/static/images/furniture.webp">
-<h3>Furniture</h3>
-</a>
- 
-</div>
+  <footer>
+    <span class="footer-brand">RAAG.COM</span>
+    <span class="footer-note">© 2026 Raag. All rights reserved.</span>
+  </footer>
 </div>
 </body>
 </html>
