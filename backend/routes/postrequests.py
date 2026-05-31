@@ -1,10 +1,15 @@
 from backend.database import get_connection
 from fastapi import FastAPI, HTTPException, APIRouter
 from fastapi.responses import JSONResponse
-from backend.pydanticmodels import ModelWarehouse, Orders, Order_items, apparels
+from backend.pydanticmodels import ModelWarehouse, Orders, Order_items, apparels, SignupRequest, LoginRequest
 from datetime import date
 from fastapi import Form, UploadFile, File
 import shutil, os
+from backend.database import get_connection, get_users_connection
+from passlib.context import CryptContext
+from pydantic import BaseModel
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 router = APIRouter()
 
@@ -167,5 +172,65 @@ async def add_product(
     conn.commit()
     cursor.close()
     conn.close()
-
     return {"message": "Item Added successfully"}
+
+@router.post("/POST/signup")
+def signup(data: SignupRequest):
+    conn = None
+    cursor = None
+    try:
+        conn = get_users_connection()
+        cursor = conn.cursor()
+
+        table = "manufacturer" if data.role == "manufacturer" else "retailer"
+
+        cursor.execute(f"SELECT 1 FROM {table} WHERE phone = %s", (data.phone,))
+        if cursor.fetchone():
+            raise HTTPException(status_code=400, detail="Phone number already exists.")
+
+        cursor.execute(
+            f"""INSERT INTO {table} (company_name, phone, address, password_) 
+            VALUES (%s, %s, %s, %s)""",
+            (data.company, data.phone, data.address, data.password)
+        )
+        conn.commit()
+        return {"message": "Account created successfully"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+@router.post("/POST/login")
+def login(data: LoginRequest):
+    conn = None
+    cursor = None
+    try:
+        conn = get_users_connection()
+        cursor = conn.cursor()
+
+        table = "manufacturer" if data.role == "manufacturer" else "retailer"
+
+        cursor.execute(
+    f"SELECT id FROM {table} WHERE phone = %s AND password_ = %s",
+    (data.phone, data.password)
+)
+        user = cursor.fetchone()
+
+        if not user:
+            raise HTTPException(status_code=401, detail="Invalid credentials.")
+
+        return {"message": "Login successful", "role": data.role}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()

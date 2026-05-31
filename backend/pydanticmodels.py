@@ -30,6 +30,14 @@ class apparels(BaseModel):
     Price : float
     Gender : str
 
-class Manufacturer(BaseModel):
-    username : str
-    password : str
+class SignupRequest(BaseModel):
+    company: str
+    phone: str
+    address: str
+    password: str
+    role: str
+
+class LoginRequest(BaseModel):
+    phone: str
+    password: str
+    role: str

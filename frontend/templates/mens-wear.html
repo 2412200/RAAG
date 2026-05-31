@@ -2,52 +2,71 @@
 <html>
 <head>
     <title>Mens Wear</title>
-    <link rel="stylesheet" href="frontend/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/style.css">
 </head>
-
 <body>
 
-    <!-- NAVBAR -->
-
     <div class="navbar">
-
         <div class="nav-left">
             <a href="/">Home</a>
             <a href="/orders">My Orders</a>
             <a href="/credit">My Credit</a>
         </div>
-
         <div class="nav-right">
             <a href="#">Make Call</a>
             <a href="#">Wholesaler Login</a>
             <a href="#">My Account</a>
         </div>
-
     </div>
-
-
-    <!-- PRODUCTS -->
 
     <div class="products-container">
-
         {% for product in Products %}
-
         <div class="product-card">
-
             <img src="{{ url_for('static', path='images/' + product.image) }}">
-
             <p>{{ product.name }}</p>
+            <p>Buy {{ product.quantity }} at ₹{{ product.price }}</p>
 
-            <p>
-                Buy {{ product.quantity }}
-                at ₹{{ product.price }}
-            </p>
-
+            <!-- Add to Order button -->
+            <button
+                class="add-to-order-btn"
+                onclick="addToOrder({
+                    name: '{{ product.name }}',
+                    image: '{{ product.image }}',
+                    quantity: {{ product.quantity }},
+                    price: {{ product.price }}
+                })">
+                + Add to Order
+            </button>
         </div>
-
         {% endfor %}
-
     </div>
 
+    <!-- Toast notification -->
+    <div id="toast" style="display:none; position:fixed; bottom:20px; right:20px;
+        background:#222; color:#fff; padding:12px 20px; border-radius:8px; font-size:14px;">
+        ✅ Item added to order!
+    </div>
+
+    <script>
+        function addToOrder(product) {
+            // Get existing order from localStorage
+            let orders = JSON.parse(localStorage.getItem('orderItems') || '[]');
+
+            // Check if item already exists
+            const existing = orders.find(item => item.name === product.name);
+            if (existing) {
+                existing.qty = (existing.qty || 1) + 1;
+            } else {
+                orders.push({ ...product, qty: 1 });
+            }
+
+            localStorage.setItem('orderItems', JSON.stringify(orders));
+
+            // Show toast
+            const toast = document.getElementById('toast');
+            toast.style.display = 'block';
+            setTimeout(() => toast.style.display = 'none', 2000);
+        }
+    </script>
 </body>
 </html>

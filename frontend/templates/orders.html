@@ -1,66 +1,183 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <title>My Orders</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        body { font-family: sans-serif; background: #f5f5f5; margin: 0; }
 
-<title>Orders</title>
+        .orders-container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
 
-<link rel="stylesheet" href="/static/css/style.css">
+        h1 { font-size: 28px; margin-bottom: 24px; }
 
+        .order-item {
+            display: flex;
+            align-items: center;
+            background: #fff;
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            gap: 20px;
+        }
+
+        .order-item img {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+
+        .order-info { flex: 1; }
+        .order-info h3 { margin: 0 0 6px; font-size: 18px; }
+        .order-info p { margin: 0; color: #555; font-size: 14px; }
+
+        .order-price { font-size: 18px; font-weight: bold; color: #111; }
+
+        .remove-btn {
+            background: none;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 6px 12px;
+            cursor: pointer;
+            color: #e00;
+            font-size: 13px;
+        }
+
+        .order-summary {
+            background: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: right;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            margin-top: 10px;
+        }
+
+        .order-summary h2 { margin: 0 0 16px; font-size: 22px; }
+
+        .confirm-btn {
+            background: #111;
+            color: #fff;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .confirm-btn:hover { background: #333; }
+
+        .empty-msg {
+            text-align: center;
+            color: #888;
+            margin-top: 80px;
+            font-size: 18px;
+        }
+    </style>
 </head>
-
 <body>
 
-<!-- NAVBAR -->
+    <div class="navbar">
+        <div class="nav-left">
+            <a href="/">Home</a>
+            <a href="/orders">My Orders</a>
+            <a href="/credit">My Credit</a>
+        </div>
+        <div class="nav-right">
+            <a href="#">Make Call</a>
+            <a href="#">Wholesaler Login</a>
+            <a href="#">My Account</a>
+        </div>
+    </div>
 
-<div class="navbar">
+    <div class="orders-container">
+        <h1>My Order</h1>
+        <div id="order-list"></div>
+        <div id="order-summary" style="display:none;" class="order-summary">
+            <h2>Total: ₹<span id="total-price">0</span></h2>
+            <button class="confirm-btn" onclick="confirmOrder()">Confirm Order</button>
+        </div>
+        <div id="empty-msg" class="empty-msg">No items in your order yet.</div>
+    </div>
 
-<div class="nav-left">
-<a href="/">Home</a>
-<a href="/orders">My Orders</a>
-<a href="/credits">My Credit</a>
-</div>
+    <script>
+        function loadOrders() {
+            const orders = JSON.parse(localStorage.getItem('orderItems') || '[]');
+            const list = document.getElementById('order-list');
+            const summary = document.getElementById('order-summary');
+            const emptyMsg = document.getElementById('empty-msg');
+            const totalEl = document.getElementById('total-price');
 
-<div class="nav-right">
-<a href="#">Make Call</a>
-<a href="#">Wholesaler Login</a>
-<a href="#">My Account</a>
-</div>
+            list.innerHTML = '';
 
-</div>
+            if (orders.length === 0) {
+                emptyMsg.style.display = 'block';
+                summary.style.display = 'none';
+                return;
+            }
 
+            emptyMsg.style.display = 'none';
+            summary.style.display = 'block';
 
-<!-- ORDERS HEADER -->
+            let total = 0;
 
-<div class="orders-header">
+            orders.forEach((item, index) => {
+                const itemTotal = item.price * item.qty;
+                total += itemTotal;
 
-<h2>YOUR ORDERS</h2>
+                list.innerHTML += `
+                    <div class="order-item">
+                        <img src="/static/images/${item.image}" alt="${item.name}">
+                        <div class="order-info">
+                            <h3>${item.name}</h3>
+                            <p>Qty: ${item.qty} &nbsp;|&nbsp; ₹${item.price} each</p>
+                        </div>
+                        <div class="order-price">₹${itemTotal.toLocaleString()}</div>
+                        <button class="remove-btn" onclick="removeItem(${index})">Remove</button>
+                    </div>
+                `;
+            });
 
-<input type="text" placeholder="Search Orders" class="search-orders">
+            totalEl.textContent = total.toLocaleString();
+        }
 
-</div>
+        function removeItem(index) {
+            let orders = JSON.parse(localStorage.getItem('orderItems') || '[]');
+            orders.splice(index, 1);
+            localStorage.setItem('orderItems', JSON.stringify(orders));
+            loadOrders();
+        }
 
+        async function confirmOrder() {
+            const orders = JSON.parse(localStorage.getItem('orderItems') || '[]');
+            if (orders.length === 0) return;
 
-<!-- ORDER TABS -->
+            try {
+                const res = await fetch('/POST/save-order', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ items: orders })
+                });
 
-<div class="order-tabs">
+                if (res.ok) {
+                    localStorage.removeItem('orderItems');
+                    alert('Order confirmed successfully!');
+                    loadOrders();
+                } else {
+                    alert('Failed to save order. Please try again.');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Network error. Please try again.');
+            }
+        }
 
-<a href="#">All Orders</a>
-<a href="#">Buy Again</a>
-
-</div>
-
-
-<hr>
-
-
-<!-- ORDER HISTORY -->
-
-<div class="orders-content">
-
-<h2>Dynamic Order History</h2>
-
-</div>
-
-
+        // Load on page ready
+        loadOrders();
+    </script>
 </body>
 </html>

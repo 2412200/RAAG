@@ -17,3 +17,5 @@ aiofiles
 motor
 python-dotenv
 python-multipart
+passlib
+bcrypt
