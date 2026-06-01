@@ -496,7 +496,7 @@
           <!-- Company Name -->
           <label class="field field-full">
             <span class="field-label">Company Name</span>
-            <input id="company" name="company" type="text" placeholder="Acme Industries Ltd." required />
+            <input id="company_name" name="company_name" type="text" placeholder="Acme Industries Ltd." required />
             <span class="field-error" id="company-error"></span>
           </label>
 
@@ -648,7 +648,7 @@
       const pw     = passwordInput.value;
       const cpw     = confirmInput.value;
 
-      if (!company) {
+      if (!company_name) {
         setError(document.getElementById('company_name'), 'company-error', 'Company name is required.');
         ok = false;
       } else {
@@ -695,7 +695,6 @@
       return ok;
     }
 
-    // ── Status helpers ───────────────────────────────
     function showStatus(msg, type = 'error') {
       status.hidden = false;
       status.className = `status ${type === 'success' ? 'is-success' : 'is-error'}`;
@@ -707,7 +706,6 @@
       status.className = 'status';
     }
 
-    // ── Submit ───────────────────────────────────────
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       clearStatus();
@@ -717,14 +715,13 @@
       const originalLabel = submitBtn.querySelector('.cta-label').textContent;
       submitBtn.querySelector('.cta-label').textContent = 'Creating account…';
 
-      const payload = {
-        company_name : document.getElementById('company_name').value.trim(),
+     const payload = {
+        company : document.getElementById('company_name').value.trim(),
         phone   : document.getElementById('phone').value.trim(),
         address : document.getElementById('address').value.trim(),
-        password_: passwordInput.value,
+        password: passwordInput.value,
         role    : selectedRole,
       };
-
       try {
         const res = await fetch('/POST/signup', {
           method : 'POST',
@@ -744,9 +741,8 @@
 
         showStatus('Account created! Redirecting…', 'success');
         setTimeout(() => {
-          window.location.href = selectedRole === 'retailer' ? '/retailer' : '/manufacturer';
+          window.location.href = selectedRole === 'manufacturer' ? '/manufacturer' : '/home';
         }, 1200);
-
       } catch (err) {
         console.error(err);
         showStatus('Network error. Please try again.', 'error');

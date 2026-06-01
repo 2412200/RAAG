@@ -20,7 +20,6 @@
     }
     body,html{background:var(--black);color:var(--white);font-family:'DM Sans',sans-serif}
 
-    /* ── NAVBAR ── */
     nav{
       background:var(--black2);
       border-bottom:1px solid var(--red-dark);
@@ -50,7 +49,6 @@
     }
     .btn-account:hover{background:var(--red-light)!important}
 
-    /* ── PAGE HEADER ── */
     .page-header{
       padding:2.5rem 5%;
       border-bottom:1px solid #2a2a2a;
@@ -64,7 +62,6 @@
     .breadcrumb a:hover{color:var(--red-light)}
     .page-title{font-family:'Playfair Display',serif;font-size:32px;font-weight:900;color:var(--white);line-height:1}
 
-    /* ── PRODUCT GRID ── */
     .products-container{
       display:grid;
       grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
@@ -73,7 +70,6 @@
       width:90%;
       margin:2rem auto 3rem;
     }
-
     .product-card{
       background:var(--black2);
       overflow:hidden;
@@ -88,7 +84,6 @@
       box-shadow:0 12px 40px rgba(192,23,42,.25);
       z-index:2;
     }
-
     .product-img-wrap{
       position:relative;
       overflow:hidden;
@@ -130,7 +125,6 @@
       opacity:1;
       transform:translateX(-50%) translateY(0);
     }
-
     .product-info{
       padding:1rem 1rem 1.25rem;
       display:flex;
@@ -173,7 +167,6 @@
     }
     .add-btn:hover{background:var(--red);color:var(--white);border-color:var(--red)}
 
-    /* ── FOOTER ── */
     footer{
       background:var(--black2);
       border-top:1px solid var(--red-dark);
@@ -184,11 +177,20 @@
     }
     .footer-brand{font-family:'Playfair Display',serif;color:var(--red);font-size:16px;font-weight:700;letter-spacing:2px}
     .footer-note{font-size:12px;color:var(--muted)}
+
+    #toast{
+      display:none;
+      position:fixed;bottom:20px;right:20px;
+      background:var(--red);color:var(--white);
+      padding:12px 20px;border-radius:4px;
+      font-size:13px;letter-spacing:1px;
+      box-shadow:0 8px 24px rgba(192,23,42,.4);
+      z-index:100;
+    }
   </style>
 </head>
 <body>
 
-  <!-- NAVBAR -->
   <nav>
     <div class="nav-left">
       <a class="nav-logo" href="/">RAAG</a>
@@ -204,7 +206,6 @@
     </div>
   </nav>
 
-  <!-- PAGE HEADER -->
   <div class="page-header">
     <div class="page-header-accent"></div>
     <div>
@@ -213,126 +214,56 @@
     </div>
   </div>
 
-
-<!-- PRODUCTS -->
   <div class="products-container">
-
+    {% for product in Products %}
     <div class="product-card">
       <div class="product-img-wrap">
-        <img src="/static/images/Paracetamol.webp" alt="Paracetamol" />
+        <img src="{{ url_for('static', path='images/' + product.image) }}" alt="{{ product.name }}" />
         <div class="product-img-overlay"></div>
         <span class="quick-view">View Details</span>
       </div>
       <div class="product-info">
-        <p class="product-name">Paracetamol</p>
-        <p class="product-price">₹50,000</p>
-        <p class="product-moq">Min. order: 10 units</p>
-        <button class="add-btn">Add to Order</button>
+        <p class="product-name">{{ product.name }}</p>
+        <p class="product-price">₹{{ product.price }}</p>
+        <p class="product-moq">Min. order: {{ product.quantity }} units</p>
+        <button
+          class="add-btn"
+          onclick="addToOrder({
+            name: '{{ product.name }}',
+            image: '{{ product.image }}',
+            quantity: {{ product.quantity }},
+            price: {{ product.price }}
+          })">
+          Add to Order
+        </button>
       </div>
     </div>
+    {% endfor %}
+  </div>
 
-    <div class="product-card">
-      <div class="product-img-wrap">
-        <img src="/static/images/Ibuprofen.webp" alt="Iboprofen" />
-        <div class="product-img-overlay"></div>
-        <span class="quick-view">View Details</span>
-      </div>
-      <div class="product-info">
-        <p class="product-name">Iboprofen</p>
-        <p class="product-price">₹50,000</p>
-        <p class="product-moq">Min. order: 10 units</p>
-        <button class="add-btn">Add to Order</button>
-      </div>
-    </div>
-
-    <div class="product-card">
-      <div class="product-img-wrap">
-        <img src="/static/images/Aspirin.webp" alt="Aspirin" />
-        <div class="product-img-overlay"></div>
-        <span class="quick-view">View Details</span>
-      </div>
-      <div class="product-info">
-        <p class="product-name">Aspirin</p>
-        <p class="product-price">₹50,000</p>
-        <p class="product-moq">Min. order: 10 units</p>
-        <button class="add-btn">Add to Order</button>
-      </div>
-    </div>
-
-    <div class="product-card">
-      <div class="product-img-wrap">
-        <img src="/static/images/Cetirizine.webp" alt="Citrizine" />
-        <div class="product-img-overlay"></div>
-        <span class="quick-view">View Details</span>
-      </div>
-      <div class="product-info">
-        <p class="product-name">Citrizine</p>
-        <p class="product-price">₹50,000</p>
-        <p class="product-moq">Min. order: 10 units</p>
-        <button class="add-btn">Add to Order</button>
-      </div>
-    </div>
-
-    <div class="product-card">
-      <div class="product-img-wrap">
-        <img src="/static/images/Omeprazole.webp" alt="Omeprazole" />
-        <div class="product-img-overlay"></div>
-        <span class="quick-view">View Details</span>
-      </div>
-      <div class="product-info">
-        <p class="product-name">Omeprazole</p>
-        <p class="product-price">₹70,000</p>
-        <p class="product-moq">Min. order: 10 units</p>
-        <button class="add-btn">Add to Order</button>
-      </div>
-    </div>
-
-    <div class="product-card">
-      <div class="product-img-wrap">
-        <img src="/static/images/Loperamide.webp" alt="Loperamide" />
-        <div class="product-img-overlay"></div>
-        <span class="quick-view">View Details</span>
-      </div>
-      <div class="product-info">
-        <p class="product-name">Loperamide</p>
-        <p class="product-price">₹50,000</p>
-        <p class="product-moq">Min. order: 10 units</p>
-        <button class="add-btn">Add to Order</button>
-      </div>
-    </div>
-
-    <div class="product-card">
-      <div class="product-img-wrap">
-        <img src="/static/images/Amoxicillin.webp" alt="Amoxicillin" />
-        <div class="product-img-overlay"></div>
-        <span class="quick-view">View Details</span>
-      </div>
-      <div class="product-info">
-        <p class="product-name">Amoxicillin</p>
-        <p class="product-price">₹80,000</p>
-        <p class="product-moq">Min. order: 10 units</p>
-        <button class="add-btn">Add to Order</button>
-      </div>
-    </div>
-
-    <div class="product-card">
-      <div class="product-img-wrap">
-        <img src="/static/images/Metformin.webp" alt="Metformin" />
-        <div class="product-img-overlay"></div>
-        <span class="quick-view">View Details</span>
-      </div>
-      <div class="product-info">
-        <p class="product-name">Metformin</p>
-        <p class="product-price">₹80,000</p>
-        <p class="product-moq">Min. order: 10 units</p>
-        <button class="add-btn">Add to Order</button>
-      </div>
-    </div>
-</div>
   <footer>
     <span class="footer-brand">RAAG.COM</span>
     <span class="footer-note">© 2026 Raag. All rights reserved.</span>
   </footer>
-</div>
+
+  <div id="toast">✅ Item added to order!</div>
+
+  <script>
+    function addToOrder(product) {
+      let orders = JSON.parse(localStorage.getItem('orderItems') || '[]');
+      const existing = orders.find(item => item.name === product.name);
+      if (existing) {
+        existing.qty = (existing.qty || 1) + 1;
+      } else {
+        orders.push({ ...product, qty: 1 });
+      }
+      localStorage.setItem('orderItems', JSON.stringify(orders));
+
+      const toast = document.getElementById('toast');
+      toast.style.display = 'block';
+      setTimeout(() => toast.style.display = 'none', 2000);
+    }
+  </script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v833ccba57c9e4d2798f2e76cebdd09a11778172276447" integrity="sha512-57MDmcccJXYtNnH+ZiBwzC4jb2rvgVCEokYN+L/nLlmO8rfYT/gIpW2A569iJ/3b+0UEasghjuZH/ma3wIs/EQ==" data-cf-beacon='{"version":"2024.11.0","token":"7f7b0fd8732c4326aae4b9d58d5c514a","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 </body>
 </html>
