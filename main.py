@@ -62,8 +62,11 @@ async def credits(request : Request):
     return templates.TemplateResponse("credits.html",{"request" : request})
 
 @app.get("/manufacturer")
-async def manufacture(request : Request):
-    return templates.TemplateResponse("manufacturer.html",{"request" : request})
+async def manufacturer(request: Request):
+    return templates.TemplateResponse(
+        "manufacturer.html",
+        {"request": request}
+    )
 
 @app.get("/search")
 async def search(request : Request):

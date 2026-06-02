@@ -21,3 +21,12 @@ def get_users_connection():
         password="Abhishek",
         port = "5433"
     )
+
+def add_product():
+    return psycopg2.connect(
+        host="localhost",
+        database="product",
+        user="postgres",
+        password="Abhishek",
+        port = "5433"
+    )
