@@ -5,13 +5,10 @@ requests==2.32.3
 psycopg2-binary==2.9.9
 faker==40.5.1
 pandas
-typing
 email-validator
 numpy
 scikit-learn
 seaborn
-typing
-datetime
 aiofiles
 motor
 python-dotenv
