@@ -4,6 +4,7 @@ import psycopg
 
 load_dotenv()
 
-conn = psycopg.connect(
-    os.getenv("POSTGRES_URL")
-)
+DATABASE_URL = os.getenv("POSTGRES_URL")
+
+def get_pg_connection():
+    return psycopg.connect(DATABASE_URL)

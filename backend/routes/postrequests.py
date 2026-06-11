@@ -1,8 +1,7 @@
 from fastapi import HTTPException, APIRouter
 from fastapi.responses import JSONResponse
 from backend.pydanticmodels import  OrderItem, SignupRequest, LoginRequest, apparel, fmcg, mobile_accessories, steel_work, Order
-from backend.helper.database import get_connection, get_users_connection
-from backend.helper.database import add_product
+from backend.helper.database import get_pg_connection
 from dotenv import load_dotenv
 import os
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -25,7 +24,7 @@ db = client["Products"]
 @router.post("/POST/signup")
 def signup(data: SignupRequest):
 
-    conn = get_users_connection()
+    conn = get_pg_connection()
     cursor = conn.cursor()
 
     if data.role == "manufacturer":
@@ -79,7 +78,7 @@ def login(data: LoginRequest):
     conn = None
     cursor = None
     try:
-        conn = get_users_connection()
+        conn = get_pg_connection()
         cursor = conn.cursor()
 
         table = "manufacturer" if data.role == "manufacturer" else "retailer"
