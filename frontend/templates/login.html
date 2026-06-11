@@ -337,9 +337,9 @@
         </div>
 
         <label class="field">
-          <span class="field-label">Email</span>
-          <input id="email" name="email" type="email" autocomplete="email" required placeholder="you@company.com" />
-          <span class="field-error" id="email-error"></span>
+          <span class="field-label">Phone Number</span>
+          <input id="number" name="number" type="number" required placeholder="94xxxxxx90" />
+          <span class="field-error" id="number-error"></span>
         </label>
 
         <label class="field">
@@ -379,20 +379,112 @@
   </main>
 
 <script>
-  document.querySelectorAll('.role-btn').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.role-btn').forEach((b) => {
-        b.classList.remove('is-active');
-        b.setAttribute('aria-selected', 'false');
-      });
-      btn.classList.add('is-active');
-      btn.setAttribute('aria-selected', 'true');
 
-      const role = btn.dataset.role;
-      document.getElementById('role-display').textContent =
-        role.charAt(0).toUpperCase() + role.slice(1);
+let selectedRole = "manufacturer";
+
+document.querySelectorAll('.role-btn').forEach((btn) => {
+
+  btn.addEventListener('click', () => {
+
+    document.querySelectorAll('.role-btn').forEach((b) => {
+
+      b.classList.remove('is-active');
+      b.setAttribute('aria-selected', 'false');
+
     });
+
+    btn.classList.add('is-active');
+    btn.setAttribute('aria-selected', 'true');
+
+    selectedRole = btn.dataset.role;
+
+    document.getElementById('role-display').textContent =
+      selectedRole.charAt(0).toUpperCase() +
+      selectedRole.slice(1);
   });
+
+});
+
+document
+  .getElementById("login-form")
+  .addEventListener("submit", async (e) => {
+
+    e.preventDefault();
+
+    const phone =
+      document.getElementById("number").value;
+
+    const password =
+      document.getElementById("password").value;
+
+    const payload = {
+      phone: phone,
+      password: password,
+      role: selectedRole
+    };
+
+    try {
+
+      const response = await fetch(
+        "/POST/login",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+
+        alert(
+          data.detail ||
+          "Invalid credentials"
+        );
+
+        return;
+      }
+
+      // Save JWT if backend returns it
+
+      if (data.token) {
+
+        localStorage.setItem(
+          "token",
+          data.token
+        );
+
+      }
+
+      // Redirect based on role
+
+      if (data.role === "manufacturer") {
+
+        window.location.href =
+          "/manufacturer";
+
+      } else {
+
+        window.location.href =
+          "/home";
+
+      }
+
+    } catch (error) {
+
+      console.error(error);
+
+      alert(
+        "Unable to connect to server"
+      );
+
+    }
+
+  });
+
 </script>
 </body>
 </html>

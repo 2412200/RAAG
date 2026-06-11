@@ -495,9 +495,22 @@
 
           <!-- Company Name -->
           <label class="field field-full">
-            <span class="field-label">Company Name</span>
-            <input id="company_name" name="company_name" type="text" placeholder="Acme Industries Ltd." required />
+            <span class="field-label" id="business-label"> Company Name </span>
+            <input id="company_name" placeholder="Acme Industries Ltd." required />
             <span class="field-error" id="company-error"></span>
+          </label>
+
+          <!-- Owner Name -->
+          <label class="field field-full">
+              <span class="field-label">Owner Name</span>
+              <input
+                  id="owner_name"
+                  name="owner_name"
+                  type="text"
+                  placeholder="John Doe"
+                  required
+              />
+              <span class="field-error" id="owner-error"></span>
           </label>
 
           <!-- Phone -->
@@ -565,193 +578,451 @@
 
   <script>
   (() => {
-    'use strict';
+  'use strict';
 
-    // DOM refs
-    const form         = document.getElementById('signup-form');
-    const roleButtons  = document.querySelectorAll('.role-btn');
-    const roleDisplay  = document.getElementById('role-display');
-    const submitBtn    = document.getElementById('submit-btn');
-    const status       = document.getElementById('status');
-    const togglePwBtn  = document.getElementById('toggle-password');
-    const passwordInput = document.getElementById('password');
-    const confirmInput  = document.getElementById('confirm-password');
+  const form = document.getElementById('signup-form');
+  const roleButtons = document.querySelectorAll('.role-btn');
+  const roleDisplay = document.getElementById('role-display');
+  const submitBtn = document.getElementById('submit-btn');
+  const status = document.getElementById('status');
 
-    let selectedRole = 'manufacturer';
+  const togglePwBtn = document.getElementById('toggle-password');
+  const passwordInput = document.getElementById('password');
+  const confirmInput = document.getElementById('confirm-password');
 
-    // ── Role toggle ──────────────────────────────────
-    roleButtons.forEach(btn => {
-      btn.addEventListener('click', () => {
-        roleButtons.forEach(b => {
-          b.classList.remove('is-active');
-          b.setAttribute('aria-selected', 'false');
-        });
-        btn.classList.add('is-active');
-        btn.setAttribute('aria-selected', 'true');
-        selectedRole = btn.dataset.role;
-        roleDisplay.textContent =
-          selectedRole.charAt(0).toUpperCase() + selectedRole.slice(1);
+  const companyInput = document.getElementById('company_name');
+  const businessLabel = document.getElementById('business-label');
+  const ownerInput = document.getElementById('owner_name');
+
+  let selectedRole = 'manufacturer';
+
+  // ------------------------------
+  // Role Toggle
+  // ------------------------------
+  roleButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+
+      roleButtons.forEach(b => {
+        b.classList.remove('is-active');
+        b.setAttribute('aria-selected', 'false');
       });
+
+      btn.classList.add('is-active');
+      btn.setAttribute('aria-selected', 'true');
+
+      selectedRole = btn.dataset.role;
+
+      roleDisplay.textContent =
+        selectedRole.charAt(0).toUpperCase() +
+        selectedRole.slice(1);
+
+      if (selectedRole === "manufacturer") {
+
+        businessLabel.textContent = "Company Name";
+        companyInput.placeholder = "Acme Industries Ltd.";
+
+      } else {
+
+        businessLabel.textContent = "Shop Name";
+        companyInput.placeholder = "ABC Retail Store";
+
+      }
     });
+  });
 
-    // ── Show/hide password ───────────────────────────
-    togglePwBtn.addEventListener('click', () => {
-      const show = passwordInput.type === 'password';
-      passwordInput.type = show ? 'text' : 'password';
-      togglePwBtn.textContent = show ? 'hide' : 'show';
+  // ------------------------------
+  // Show / Hide Password
+  // ------------------------------
+  togglePwBtn.addEventListener('click', () => {
+
+    const show = passwordInput.type === 'password';
+
+    passwordInput.type = show ? 'text' : 'password';
+
+    togglePwBtn.textContent =
+      show ? 'hide' : 'show';
+  });
+
+  // ------------------------------
+  // Password Strength
+  // ------------------------------
+  const segs = [
+    document.getElementById('seg1'),
+    document.getElementById('seg2'),
+    document.getElementById('seg3'),
+    document.getElementById('seg4')
+  ];
+
+  const strengthColors = [
+    '#e03030',
+    '#c44020',
+    '#ff6b6b',
+    '#ff9999'
+  ];
+
+  function calcStrength(password) {
+
+    let score = 0;
+
+    if (password.length >= 6) score++;
+    if (password.length >= 10) score++;
+    if (/[A-Z]/.test(password) && /[0-9]/.test(password))
+      score++;
+    if (/[^A-Za-z0-9]/.test(password))
+      score++;
+
+    return score;
+  }
+
+  passwordInput.addEventListener('input', () => {
+
+    const score =
+      calcStrength(passwordInput.value);
+
+    segs.forEach((seg, index) => {
+
+      seg.style.background =
+        index < score
+          ? strengthColors[score - 1]
+          : 'var(--border)';
     });
+  });
 
-    // ── Password strength ────────────────────────────
-    const segs = [
-      document.getElementById('seg1'),
-      document.getElementById('seg2'),
-      document.getElementById('seg3'),
-      document.getElementById('seg4'),
-    ];
+  // ------------------------------
+  // Validation Helpers
+  // ------------------------------
+  function setError(inputEl, errorId, message) {
 
-    const strengthColors = ['#e03030', '#c44020', '#ff6b6b', '#ff9999'];
+    const errorEl =
+      document.getElementById(errorId);
 
-    function calcStrength(pw) {
-      let score = 0;
-      if (pw.length >= 6)  score++;
-      if (pw.length >= 10) score++;
-      if (/[A-Z]/.test(pw) && /[0-9]/.test(pw)) score++;
-      if (/[^A-Za-z0-9]/.test(pw)) score++;
-      return score;
+    if (message) {
+
+      inputEl.classList.add('is-invalid');
+      errorEl.textContent = message;
+
+    } else {
+
+      inputEl.classList.remove('is-invalid');
+      errorEl.textContent = '';
+    }
+  }
+
+  function validate() {
+
+    let valid = true;
+
+    const company =
+      companyInput.value.trim();
+
+    const owner =
+      ownerInput.value.trim();
+
+    const phone =
+      document.getElementById('phone')
+        .value.trim();
+
+    const address =
+      document.getElementById('address')
+        .value.trim();
+
+    const password =
+      passwordInput.value;
+
+    const confirmPassword =
+      confirmInput.value;
+
+    // Company / Shop
+
+    if (!company) {
+
+      setError(
+        companyInput,
+        'company-error',
+        selectedRole === "manufacturer"
+          ? "Company name is required."
+          : "Shop name is required."
+      );
+
+      valid = false;
+
+    } else {
+
+      setError(
+        companyInput,
+        'company-error',
+        ''
+      );
     }
 
-    passwordInput.addEventListener('input', () => {
-      const score = calcStrength(passwordInput.value);
-      segs.forEach((seg, i) => {
-        seg.style.background = i < score ? strengthColors[score - 1] : 'var(--border)';
-      });
-    });
+    // Owner
 
-    // ── Validation ───────────────────────────────────
-    function setError(inputEl, errorId, msg) {
-      const errorEl = document.getElementById(errorId);
-      if (msg) {
-        inputEl.classList.add('is-invalid');
-        errorEl.textContent = msg;
-      } else {
-        inputEl.classList.remove('is-invalid');
-        errorEl.textContent = '';
-      }
+    if (!owner) {
+
+      setError(
+        ownerInput,
+        'owner-error',
+        'Owner name is required.'
+      );
+
+      valid = false;
+
+    } else {
+
+      setError(
+        ownerInput,
+        'owner-error',
+        ''
+      );
     }
 
-    function validate() {
-      let ok = true;
+    // Phone
 
-      const company_name = document.getElementById('company_name').value.trim();
-      const phone   = document.getElementById('phone').value.trim();
-      const address = document.getElementById('address').value.trim();
-      const pw     = passwordInput.value;
-      const cpw     = confirmInput.value;
+    if (!phone) {
 
-      if (!company_name) {
-        setError(document.getElementById('company_name'), 'company-error', 'Company name is required.');
-        ok = false;
-      } else {
-        setError(document.getElementById('company_name'), 'company-error', '');
-      }
+      setError(
+        document.getElementById('phone'),
+        'phone-error',
+        'Phone number is required.'
+      );
 
-      if (!phone) {
-        setError(document.getElementById('phone'), 'phone-error', 'Phone number is required.');
-        ok = false;
-      } else if (!/^[+\d\s\-()]{7,15}$/.test(phone)) {
-        setError(document.getElementById('phone'), 'phone-error', 'Enter a valid phone number.');
-        ok = false;
-      } else {
-        setError(document.getElementById('phone'), 'phone-error', '');
-      }
+      valid = false;
 
-      if (!address) {
-        setError(document.getElementById('address'), 'address-error', 'Address is required.');
-        ok = false;
-      } else {
-        setError(document.getElementById('address'), 'address-error', '');
-      }
+    } else if (
+      !/^[+\d\s\-()]{7,15}$/.test(phone)
+    ) {
 
-      if (!pw) {
-        setError(passwordInput, 'password-error', 'Password is required.');
-        ok = false;
-      } else if (pw.length < 6) {
-        setError(passwordInput, 'password-error', 'At least 6 characters.');
-        ok = false;
-      } else {
-        setError(passwordInput, 'password-error', '');
-      }
+      setError(
+        document.getElementById('phone'),
+        'phone-error',
+        'Enter a valid phone number.'
+      );
 
-      if (!cpw) {
-        setError(confirmInput, 'confirm-error', 'Please confirm your password.');
-        ok = false;
-      } else if (pw !== cpw) {
-        setError(confirmInput, 'confirm-error', 'Passwords do not match.');
-        ok = false;
-      } else {
-        setError(confirmInput, 'confirm-error', '');
-      }
+      valid = false;
 
-      return ok;
+    } else {
+
+      setError(
+        document.getElementById('phone'),
+        'phone-error',
+        ''
+      );
     }
 
-    function showStatus(msg, type = 'error') {
-      status.hidden = false;
-      status.className = `status ${type === 'success' ? 'is-success' : 'is-error'}`;
-      status.textContent = msg;
+    // Address
+
+    if (!address) {
+
+      setError(
+        document.getElementById('address'),
+        'address-error',
+        'Address is required.'
+      );
+
+      valid = false;
+
+    } else {
+
+      setError(
+        document.getElementById('address'),
+        'address-error',
+        ''
+      );
     }
 
-    function clearStatus() {
-      status.hidden = true;
-      status.className = 'status';
+    // Password
+
+    if (!password) {
+
+      setError(
+        passwordInput,
+        'password-error',
+        'Password is required.'
+      );
+
+      valid = false;
+
+    } else if (password.length < 6) {
+
+      setError(
+        passwordInput,
+        'password-error',
+        'Minimum 6 characters.'
+      );
+
+      valid = false;
+
+    } else {
+
+      setError(
+        passwordInput,
+        'password-error',
+        ''
+      );
     }
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      clearStatus();
-      if (!validate()) return;
+    // Confirm Password
 
-      submitBtn.disabled = true;
-      const originalLabel = submitBtn.querySelector('.cta-label').textContent;
-      submitBtn.querySelector('.cta-label').textContent = 'Creating account…';
+    if (!confirmPassword) {
 
-     const payload = {
-        company : document.getElementById('company_name').value.trim(),
-        phone   : document.getElementById('phone').value.trim(),
-        address : document.getElementById('address').value.trim(),
-        password: passwordInput.value,
-        role    : selectedRole,
-      };
-      try {
-        const res = await fetch('/POST/signup', {
-          method : 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body   : JSON.stringify(payload),
-        });
+      setError(
+        confirmInput,
+        'confirm-error',
+        'Confirm your password.'
+      );
 
-        if (!res.ok) {
-          let msg = 'Registration failed. Please try again.';
-          try {
-            const data = await res.json();
-            if (typeof data.detail === 'string') msg = data.detail;
-          } catch (_) {}
-          showStatus(msg, 'error');
-          return;
+      valid = false;
+
+    } else if (
+      password !== confirmPassword
+    ) {
+
+      setError(
+        confirmInput,
+        'confirm-error',
+        'Passwords do not match.'
+      );
+
+      valid = false;
+
+    } else {
+
+      setError(
+        confirmInput,
+        'confirm-error',
+        ''
+      );
+    }
+
+    return valid;
+  }
+
+  // ------------------------------
+  // Status Message
+  // ------------------------------
+  function showStatus(message, type) {
+
+    status.hidden = false;
+
+    status.className =
+      `status ${
+        type === 'success'
+          ? 'is-success'
+          : 'is-error'
+      }`;
+
+    status.textContent = message;
+  }
+
+  function clearStatus() {
+
+    status.hidden = true;
+    status.className = 'status';
+  }
+
+  // ------------------------------
+  // Submit Form
+  // ------------------------------
+  form.addEventListener('submit', async e => {
+
+    e.preventDefault();
+
+    clearStatus();
+
+    if (!validate()) return;
+
+    submitBtn.disabled = true;
+
+    const originalLabel =
+      submitBtn.querySelector('.cta-label')
+        .textContent;
+
+    submitBtn.querySelector('.cta-label')
+      .textContent =
+      'Creating account...';
+
+    const payload = {
+
+      business_name:
+        companyInput.value.trim(),
+
+      owner_name:
+        ownerInput.value.trim(),
+
+      phone:
+        document.getElementById('phone')
+          .value.trim(),
+
+      address:
+        document.getElementById('address')
+          .value.trim(),
+
+      password:
+        passwordInput.value,
+
+      role:
+        selectedRole
+    };
+
+    try {
+
+      const response = await fetch(
+        '/POST/signup',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type':
+              'application/json'
+          },
+          body: JSON.stringify(payload)
         }
+      );
 
-        showStatus('Account created! Redirecting…', 'success');
-        setTimeout(() => {
-          window.location.href = selectedRole === 'manufacturer' ? '/manufacturer' : '/home';
-        }, 1200);
-      } catch (err) {
-        console.error(err);
-        showStatus('Network error. Please try again.', 'error');
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.querySelector('.cta-label').textContent = originalLabel;
+      const data =
+        await response.json();
+
+      if (!response.ok) {
+
+        showStatus(
+          data.detail ||
+          'Signup failed.',
+          'error'
+        );
+
+        return;
       }
-    });
-  })();
+
+      showStatus(
+        'Account created successfully!',
+        'success'
+      );
+
+      setTimeout(() => {
+
+        window.location.href = '/';
+
+      }, 1500);
+
+    } catch (error) {
+
+      console.error(error);
+
+      showStatus(
+        'Network error.',
+        'error'
+      );
+
+    } finally {
+
+      submitBtn.disabled = false;
+
+      submitBtn.querySelector('.cta-label')
+        .textContent =
+        originalLabel;
+    }
+  });
+
+})();
   </script>
 </body>
 </html>

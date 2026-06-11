@@ -1,16 +1,29 @@
-from pydantic import BaseModel ,EmailStr
+from pydantic import BaseModel , model_validator
 from pydantic.fields import Field
-from typing import Literal,LiteralString, List
-from datetime import datetime
+from typing import Literal, List
 from enum import Enum
 from datetime import date
+from datetime import datetime
 
-class Order_items(BaseModel):
-    itemname : List[str]
-    quantity : List[int] = Field(gt=1)
+class OrderItem(BaseModel):
+    product_name: str
+    quantity: int
+    price: float
+
+class Order(BaseModel):
+    customer_name: str
+    customer_number: int
+
+    products: List[OrderItem]
+
+    total_amount: float
+    order_status: str = "Pending"
+
+    created_at: datetime = datetime.now()
 
 class SignupRequest(BaseModel):
-    company: str
+    business_name: str
+    owner_name: str
     phone: str
     address: str
     password: str
@@ -53,7 +66,14 @@ class fmcg(BaseModel):
     quantity : int = Field(gt=1)
     mrp : float = Field(gt=1)
     manufacturing_date : date
-    expiry_date : date
+    expiry_date : date 
+    @model_validator(mode="after")
+    def validate_dates(self):
+        if self.expiry_date <= self.manufacturing_date:
+            raise ValueError(
+                "expiry_date must be later than manufacturing_date"
+            )
+        return self
 
 class mobile_accessories(BaseModel):
     product_name : str

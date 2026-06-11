@@ -1,17 +1,13 @@
-from backend.database import get_connection
-from fastapi import FastAPI, HTTPException, APIRouter
+from fastapi import HTTPException, APIRouter
 from fastapi.responses import JSONResponse
-from backend.pydanticmodels import  Order_items, SignupRequest, LoginRequest, apparel, fmcg, mobile_accessories, steel_work
-from datetime import date
-from fastapi import Form, UploadFile, File
-from backend.database import get_connection, get_users_connection
-from passlib.context import CryptContext
-from pydantic import BaseModel
-from backend.database import add_product
+from backend.pydanticmodels import  OrderItem, SignupRequest, LoginRequest, apparel, fmcg, mobile_accessories, steel_work, Order
+from backend.helper.database import get_connection, get_users_connection
+from backend.helper.database import add_product
 from dotenv import load_dotenv
 import os
 from motor.motor_asyncio import AsyncIOMotorClient
 from fastapi import Request
+from backend.helper.jwt_handler import create_access_token
 
 load_dotenv()
 
@@ -27,46 +23,57 @@ client = AsyncIOMotorClient(MONGO_URI)
 
 db = client["Products"]
 
-
-@router.post("/POST/order_items")
-def order_items(order_items : Order_items):
-    for i in order_items.itemname:
-        print(i)
-    for i in order_items.quantity:
-        print(i)
-    return "hello"
-
 @router.post("/POST/signup")
 def signup(data: SignupRequest):
-    conn = None
-    cursor = None
-    try:
-        conn = get_users_connection()
-        cursor = conn.cursor()
 
-        table = "manufacturer" if data.role == "manufacturer" else "retailer"
+    conn = get_users_connection()
+    cursor = conn.cursor()
 
-        cursor.execute(f"SELECT 1 FROM {table} WHERE phone = %s", (data.phone,))
-        if cursor.fetchone():
-            raise HTTPException(status_code=400, detail="Phone number already exists.")
+    if data.role == "manufacturer":
 
-        cursor.execute(
-            f"""INSERT INTO {table} (company_name, phone, address, password_) 
-            VALUES (%s, %s, %s, %s)""",
-            (data.company, data.phone, data.address, data.password)
-        )
-        conn.commit()
-        return {"message": "Account created successfully"}
+        cursor.execute("""
+            INSERT INTO manufacturer
+            (
+                company_name,
+                owner_name,
+                phone,
+                address,
+                password_
+            )
+            VALUES (%s,%s,%s,%s,%s)
+        """, (
+            data.business_name,
+            data.owner_name,
+            data.phone,
+            data.address,
+            data.password
+        ))
 
-    except HTTPException:
-        raise
-    except Exception as e:
-        if conn:
-            conn.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        if cursor: cursor.close()
-        if conn: conn.close()
+    else:
+
+        cursor.execute("""
+            INSERT INTO retailer
+            (
+                shop_name,
+                owner_name,
+                phone,
+                address,
+                password_
+            )
+            VALUES (%s,%s,%s,%s,%s)
+        """, (
+            data.business_name,
+            data.owner_name,
+            data.phone,
+            data.address,
+            data.password
+        ))
+
+    conn.commit()
+
+    return {
+        "message": "Account created"
+    }
 
 @router.post("/POST/login")
 def login(data: LoginRequest):
@@ -125,20 +132,22 @@ async def add_product(request : Request):
         }
 
     elif product_specification == "fmcg":
-
         fmcg_product = fmcg(
-            product_name=form.get("product_name"),
-            brand=form.get("brand"),
-            category= form.get("category"),
-            quantity = form.get("quantity"),
-            mrp = form.get("mrp"),
-            manufacturing_date = form.get("manufacturing_date"),
-            expiry_date = form.get("expiry_date"),
+        product_name=form.get("product_name"),
+        brand=form.get("brand"),
+        category=form.get("category"),
+        quantity=form.get("quantity"),
+        mrp=form.get("mrp"),
+        manufacturing_date=form.get("manufacturing_date"),
+        expiry_date=form.get("expiry_date"),
         )
 
-        result = await db["fmcg"].insert_one(
-            fmcg_product.model_dump()
-        )
+        data = fmcg_product.model_dump()
+
+        data["manufacturing_date"] = data["manufacturing_date"].isoformat()
+        data["expiry_date"] = data["expiry_date"].isoformat()
+
+        result = await db["fmcg"].insert_one(data)
 
         return {
             "message": "FMCG product added",
@@ -187,3 +196,14 @@ async def add_product(request : Request):
         status_code=400,
         detail="Invalid product specification"
     )
+
+
+@router.post("/POST/order")
+async def post_order(order : Order):
+    db = client["Orders"]
+    result = await db["orders"].insert_one(order.model_dump())
+    return {
+        "message" : "Order placed successfully",
+        "id" : str(result.inserted_id)
+    }
+    

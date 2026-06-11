@@ -2,7 +2,6 @@ from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from backend.routes import getrequests, postrequests
-from backend.helper import search
 from fastapi.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 from dotenv import load_dotenv
@@ -15,7 +14,6 @@ app = FastAPI()
 
 app.include_router(getrequests.router)
 app.include_router(postrequests.router)
-app.include_router(search.router)
 app.mount(
     "/static",
     StaticFiles(directory="frontend/static"),
