@@ -1,13 +1,13 @@
 from fastapi import FastAPI, HTTPException, APIRouter
 from fastapi.responses import JSONResponse
-from backend.helper.database import get_connection
+from backend.helper.database import get_pg_connection
 
 router = APIRouter()
 
 # GET request for all warehouses
 @router.get("/GET/warehouses")
 def get_warehouses():
-    conn = get_connection()
+    conn = get_pg_connection()
     cursor = conn.cursor()
 
     cursor.execute('SELECT * FROM Warehouses limit 5')
@@ -25,7 +25,7 @@ def get_warehouses():
 # GET request for warehouse by warehouse id
 @router.get("/GET/warehouses/{warehouse_id}")
 def get_warehouse(warehouse_id: int):
-    conn = get_connection()
+    conn = get_pg_connection()
     cursor = conn.cursor()
 
     cursor.execute(
