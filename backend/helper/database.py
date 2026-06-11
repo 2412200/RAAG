@@ -1,9 +1,9 @@
 import os
 from dotenv import load_dotenv
-import psycopg2
+import psycopg
 
 load_dotenv()
 
-conn = psycopg2.connect(
+conn = psycopg.connect(
     os.getenv("POSTGRES_URL")
 )
