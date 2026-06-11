@@ -7,7 +7,6 @@ from dotenv import load_dotenv
 import os
 from motor.motor_asyncio import AsyncIOMotorClient
 from fastapi import Request
-from backend.helper.jwt_handler import create_access_token
 
 load_dotenv()
 
