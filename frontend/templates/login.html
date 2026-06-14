@@ -382,6 +382,19 @@
 
 let selectedRole = "manufacturer";
 
+// Handle password visibility toggle
+const togglePwBtn = document.getElementById('toggle-password');
+const passwordInput = document.getElementById('password');
+
+if (togglePwBtn && passwordInput) {
+  togglePwBtn.addEventListener('click', () => {
+    const isPw = passwordInput.type === 'password';
+    passwordInput.type = isPw ? 'text' : 'password';
+    togglePwBtn.textContent = isPw ? 'hide' : 'show';
+    togglePwBtn.setAttribute('aria-label', isPw ? 'Hide password' : 'Show password');
+  });
+}
+
 document.querySelectorAll('.role-btn').forEach((btn) => {
 
   btn.addEventListener('click', () => {
@@ -448,19 +461,15 @@ document
         return;
       }
 
-      // Save JWT if backend returns it
-
+      // Save JWT in localStorage (optional)
       if (data.token) {
-
         localStorage.setItem(
           "token",
           data.token
         );
-
       }
 
       // Redirect based on role
-
       if (data.role === "manufacturer") {
 
         window.location.href =

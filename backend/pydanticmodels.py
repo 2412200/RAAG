@@ -5,21 +5,21 @@ from enum import Enum
 from datetime import date
 from datetime import datetime
 
-class OrderItem(BaseModel):
+class order_item(BaseModel):
     product_name: str
     quantity: int
     price: float
 
-class Order(BaseModel):
+class orders(BaseModel):
     customer_name: str
     customer_number: int
 
-    products: List[OrderItem]
+    products: List[order_item]
 
     total_amount: float
     order_status: str = "Pending"
 
-    created_at: datetime = datetime.now()
+    created_at: datetime = Field(default_factory=datetime.now)
 
 class SignupRequest(BaseModel):
     business_name: str

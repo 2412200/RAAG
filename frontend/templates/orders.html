@@ -1,10 +1,15 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>My Orders</title>
     <link rel="stylesheet" href="/static/css/style.css">
     <style>
-        body { font-family: sans-serif; background: #f5f5f5; margin: 0; }
+        body {
+            font-family: sans-serif;
+            background: #f5f5f5;
+            margin: 0;
+        }
 
         .orders-container {
             max-width: 900px;
@@ -12,7 +17,10 @@
             padding: 0 20px;
         }
 
-        h1 { font-size: 28px; margin-bottom: 24px; }
+        h1 {
+            font-size: 28px;
+            margin-bottom: 24px;
+        }
 
         .order-item {
             display: flex;
@@ -21,7 +29,7 @@
             border-radius: 10px;
             padding: 16px;
             margin-bottom: 16px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
             gap: 20px;
         }
 
@@ -32,11 +40,26 @@
             border-radius: 8px;
         }
 
-        .order-info { flex: 1; }
-        .order-info h3 { margin: 0 0 6px; font-size: 18px; }
-        .order-info p { margin: 0; color: #555; font-size: 14px; }
+        .order-info {
+            flex: 1;
+        }
 
-        .order-price { font-size: 18px; font-weight: bold; color: #111; }
+        .order-info h3 {
+            margin: 0 0 6px;
+            font-size: 18px;
+        }
+
+        .order-info p {
+            margin: 0;
+            color: #555;
+            font-size: 14px;
+        }
+
+        .order-price {
+            font-size: 18px;
+            font-weight: bold;
+            color: #111;
+        }
 
         .remove-btn {
             background: none;
@@ -53,11 +76,14 @@
             border-radius: 10px;
             padding: 20px;
             text-align: right;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
             margin-top: 10px;
         }
 
-        .order-summary h2 { margin: 0 0 16px; font-size: 22px; }
+        .order-summary h2 {
+            margin: 0 0 16px;
+            font-size: 22px;
+        }
 
         .confirm-btn {
             background: #111;
@@ -69,7 +95,9 @@
             cursor: pointer;
         }
 
-        .confirm-btn:hover { background: #333; }
+        .confirm-btn:hover {
+            background: #333;
+        }
 
         .empty-msg {
             text-align: center;
@@ -79,13 +107,14 @@
         }
     </style>
 </head>
+
 <body>
 
     <div class="navbar">
         <div class="nav-left">
-            <a href="/">Home</a>
+            <a href="/home">Home</a>
             <a href="/orders">My Orders</a>
-            <a href="/credit">My Credit</a>
+            <a href="/credits">My Credit</a>
         </div>
         <div class="nav-right">
             <a href="#">Make Call</a>
@@ -156,11 +185,25 @@
             const orders = JSON.parse(localStorage.getItem('orderItems') || '[]');
             if (orders.length === 0) return;
 
+            const products = orders.map(item => ({
+                product_name: item.name,
+                quantity: parseInt(item.qty),
+                price: parseFloat(item.price)
+            }));
+            const total_amount = orders.reduce((sum, item) => sum + (item.price * item.qty), 0);
+
+            const payload = {
+                customer_name: "Retailer Customer",
+                customer_number: 9999999999,
+                products: products,
+                total_amount: total_amount
+            };
+
             try {
-                const res = await fetch('/POST/save-order', {
+                const res = await fetch('/POST/order', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ items: orders })
+                    body: JSON.stringify(payload)
                 });
 
                 if (res.ok) {
@@ -180,4 +223,5 @@
         loadOrders();
     </script>
 </body>
+
 </html>

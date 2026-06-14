@@ -3,9 +3,12 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from backend.routes import getrequests, postrequests
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse, RedirectResponse
+from jose import jwt, JWTError
 from motor.motor_asyncio import AsyncIOMotorClient
 from dotenv import load_dotenv
 import os
+from urllib.parse import quote_plus
 
 load_dotenv()
 
@@ -22,9 +25,9 @@ app.mount(
 
 templates = Jinja2Templates(directory="frontend/templates")
 
-username = os.getenv("MONGO_USERNAME")
-password = os.getenv("MONGO_PASSWORD")
-cluster = os.getenv("MONGO_CLUSTER")
+username = quote_plus(os.getenv("MONGO_USERNAME"))
+password = quote_plus(os.getenv("MONGO_PASSWORD"))
+cluster = quote_plus(os.getenv("MONGO_CLUSTER"))
 
 MONGO_URI = f"mongodb+srv://{username}:{password}@{cluster}/?retryWrites=true&w=majority"
 
@@ -39,36 +42,65 @@ app.add_middleware(
     allow_headers=["*"]
 )
 
+SECRET_KEY = os.getenv("SECRET_KEY", "fallback_secret_key_please_change")
+ALGORITHM = "HS256"
+
+@app.middleware("http")
+async def auth_middleware(request: Request, call_next):
+    # Paths that don't require authentication
+    public_paths = ["/", "/signup", "/POST/login", "/POST/signup"]
+    
+    if request.url.path in public_paths or request.url.path.startswith("/static"):
+        return await call_next(request)
+        
+    token = request.cookies.get("access_token")
+    if not token:
+        if request.method == "GET":
+            return RedirectResponse(url="/", status_code=303)
+        return JSONResponse(status_code=401, content={"detail": "Not authenticated. Please login."})
+        
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        # Attach user data to request state for access in endpoints
+        request.state.user = payload
+    except JWTError:
+        if request.method == "GET":
+            return RedirectResponse(url="/", status_code=303)
+        return JSONResponse(status_code=401, content={"detail": "Invalid or expired token. Please login again."})
+        
+    return await call_next(request)
+
+
 @app.get("/")
 async def login_page(request : Request):
-    return templates.TemplateResponse("login.html",{"request" : request})
+    return templates.TemplateResponse(request, "login.html",{"request" : request})
 
 @app.get("/signup")
-async def login_page(request : Request):
-    return templates.TemplateResponse("signup.html",{"request" : request})
+async def signup_page(request : Request):
+    return templates.TemplateResponse(request, "signup.html",{"request" : request})
 
 @app.get("/home")
 async def home(request: Request):
-    return templates.TemplateResponse("home.html", {"request": request})
+    return templates.TemplateResponse(request, "home.html", {"request": request})
 
 @app.get("/orders")
 async def orders(request : Request):
-    return templates.TemplateResponse("orders.html",{"request":request})
+    return templates.TemplateResponse(request, "orders.html",{"request":request})
 
 @app.get("/credits")
 async def credits(request : Request):
-    return templates.TemplateResponse("credits.html",{"request" : request})
+    return templates.TemplateResponse(request, "credits.html",{"request" : request})
 
 @app.get("/manufacturer")
 async def manufacturer(request: Request):
-    return templates.TemplateResponse(
+    return templates.TemplateResponse(request, 
         "manufacturer.html",
         {"request": request}
     )
 
 @app.get("/search")
 async def search(request : Request):
-    return templates.TemplateResponse("search.html",{"request":request})
+    return templates.TemplateResponse(request, "search.html",{"request":request})
 
 @app.get("/womens")
 async def womens_wear(request: Request):
@@ -77,7 +109,7 @@ async def womens_wear(request: Request):
         {}, {"_id": 0}
     ).to_list(length=100)
 
-    return templates.TemplateResponse(
+    return templates.TemplateResponse(request, 
         "womens.html",
         {
             "request": request,
@@ -92,7 +124,7 @@ async def homeappliances(request: Request):
         {}, {"_id": 0}
     ).to_list(length=100)
 
-    return templates.TemplateResponse(
+    return templates.TemplateResponse(request, 
         "homeappliances.html",
         {
             "request": request,
@@ -107,7 +139,7 @@ async def beauty(request: Request):
         {}, {"_id": 0}
     ).to_list(length=100)
 
-    return templates.TemplateResponse(
+    return templates.TemplateResponse(request, 
         "beauty.html",
         {
             "request": request,
@@ -122,7 +154,7 @@ async def books(request: Request):
         {}, {"_id": 0}
     ).to_list(length=100)
 
-    return templates.TemplateResponse(
+    return templates.TemplateResponse(request, 
         "books.html",
         {
             "request": request,
@@ -137,7 +169,7 @@ async def groceries(request: Request):
         {}, {"_id": 0}
     ).to_list(length=100)
 
-    return templates.TemplateResponse(
+    return templates.TemplateResponse(request, 
         "groceries.html",
         {
             "request": request,
@@ -152,7 +184,7 @@ async def pharma(request: Request):
         {}, {"_id": 0}
     ).to_list(length=100)
 
-    return templates.TemplateResponse(
+    return templates.TemplateResponse(request, 
         "pharma.html",
         {
             "request": request,
@@ -167,7 +199,7 @@ async def kids(request: Request):
         {}, {"_id": 0}
     ).to_list(length=100)
 
-    return templates.TemplateResponse(
+    return templates.TemplateResponse(request, 
         "kids.html",
         {
             "request": request,
@@ -182,7 +214,7 @@ async def furniture(request: Request):
         {}, {"_id": 0}
     ).to_list(length=100)
 
-    return templates.TemplateResponse(
+    return templates.TemplateResponse(request, 
         "furniture.html",
         {
             "request": request,
@@ -197,10 +229,14 @@ async def mens_wear(request: Request):
         {}, {"_id": 0}
     ).to_list(length=100)
 
-    return templates.TemplateResponse(
+    return templates.TemplateResponse(request, 
         "mens-wear.html",
         {
             "request": request,
             "Products": menswear
         }
     )
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)

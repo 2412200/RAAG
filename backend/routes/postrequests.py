@@ -1,19 +1,28 @@
-from fastapi import HTTPException, APIRouter
+from fastapi import HTTPException, APIRouter, Response
 from fastapi.responses import JSONResponse
-from backend.pydanticmodels import  OrderItem, SignupRequest, LoginRequest, apparel, fmcg, mobile_accessories, steel_work, Order
+from backend.pydanticmodels import SignupRequest, LoginRequest, apparel, fmcg, mobile_accessories, steel_work, orders
 from backend.helper.database import get_pg_connection
 from dotenv import load_dotenv
 import os
 from motor.motor_asyncio import AsyncIOMotorClient
 from fastapi import Request
+from urllib.parse import quote_plus
+from jose import jwt
+from passlib.context import CryptContext
+
+SECRET_KEY = os.getenv("SECRET_KEY", "fallback_secret_key_please_change")
+ALGORITHM = "HS256"
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
 
 load_dotenv()
 
 router = APIRouter()
 
-username = os.getenv("MONGO_USERNAME")
-password = os.getenv("MONGO_PASSWORD")
-cluster = os.getenv("MONGO_CLUSTER")
+username = quote_plus(os.getenv("MONGO_USERNAME"))
+password = quote_plus(os.getenv("MONGO_PASSWORD"))
+cluster = quote_plus(os.getenv("MONGO_CLUSTER"))
 
 MONGO_URI = f"mongodb+srv://{username}:{password}@{cluster}/?retryWrites=true&w=majority"
 
@@ -23,58 +32,69 @@ db = client["Products"]
 
 @router.post("/POST/signup")
 def signup(data: SignupRequest):
+    conn = None
+    cursor = None
+    try:
+        conn = get_pg_connection()
+        cursor = conn.cursor()
 
-    conn = get_pg_connection()
-    cursor = conn.cursor()
+        hashed_password = pwd_context.hash(data.password)
 
-    if data.role == "manufacturer":
+        if data.role == "manufacturer":
 
-        cursor.execute("""
-            INSERT INTO manufacturer
-            (
-                company_name,
-                owner_name,
-                phone,
-                address,
-                password_
-            )
-            VALUES (%s,%s,%s,%s,%s)
-        """, (
-            data.business_name,
-            data.owner_name,
-            data.phone,
-            data.address,
-            data.password
-        ))
+            cursor.execute("""
+                INSERT INTO manufacturer
+                (
+                    company_name,
+                    owner_name,
+                    phone,
+                    address,
+                    password_
+                )
+                VALUES (%s,%s,%s,%s,%s)
+            """, (
+                data.business_name,
+                data.owner_name,
+                data.phone,
+                data.address,
+                hashed_password
+            ))
 
-    else:
+        else:
 
-        cursor.execute("""
-            INSERT INTO retailer
-            (
-                shop_name,
-                owner_name,
-                phone,
-                address,
-                password_
-            )
-            VALUES (%s,%s,%s,%s,%s)
-        """, (
-            data.business_name,
-            data.owner_name,
-            data.phone,
-            data.address,
-            data.password
-        ))
+            cursor.execute("""
+                INSERT INTO retailer
+                (
+                    shop_name,
+                    owner_name,
+                    phone,
+                    address,
+                    password_
+                )
+                VALUES (%s,%s,%s,%s,%s)
+            """, (
+                data.business_name,
+                data.owner_name,
+                data.phone,
+                data.address,
+                hashed_password
+            ))
 
-    conn.commit()
+        conn.commit()
 
-    return {
-        "message": "Account created"
-    }
+        return {
+            "message": "Account created"
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
 
 @router.post("/POST/login")
-def login(data: LoginRequest):
+def login(data: LoginRequest, response: Response):
     conn = None
     cursor = None
     try:
@@ -84,15 +104,27 @@ def login(data: LoginRequest):
         table = "manufacturer" if data.role == "manufacturer" else "retailer"
 
         cursor.execute(
-    f"SELECT id FROM {table} WHERE phone = %s AND password_ = %s",
-    (data.phone, data.password)
-)
+            f"SELECT id, password_ FROM {table} WHERE phone = %s",
+            (data.phone,)
+        )
         user = cursor.fetchone()
 
-        if not user:
+        if not user or not pwd_context.verify(data.password, user[1]):
             raise HTTPException(status_code=401, detail="Invalid credentials.")
 
-        return {"message": "Login successful", "role": data.role}
+        token_data = {"phone": data.phone, "role": data.role}
+        token = jwt.encode(token_data, SECRET_KEY, algorithm=ALGORITHM)
+
+        response.set_cookie(
+            key="access_token",
+            value=token,
+            httponly=True,
+            secure=False,  # Set to True if using HTTPS in production
+            samesite="lax",
+            max_age=86400
+        )
+
+        return {"message": "Login successful", "role": data.role, "token": token}
 
     except HTTPException:
         raise
@@ -197,7 +229,7 @@ async def add_product(request : Request):
 
 
 @router.post("/POST/order")
-async def post_order(order : Order):
+async def post_order(order : orders):
     db = client["Orders"]
     result = await db["orders"].insert_one(order.model_dump())
     return {

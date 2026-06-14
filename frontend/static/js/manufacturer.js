@@ -49,20 +49,40 @@ document.addEventListener("DOMContentLoaded", () => {
         showSection(this.value);
     });
 
-    // Form validation
-    form.addEventListener("submit", function (e) {
+    // Form validation and async submission
+    form.addEventListener("submit", async function (e) {
+        e.preventDefault();
 
         if (!specSelect.value) {
-            e.preventDefault();
             alert("Please select a Product Specification.");
             return;
         }
 
-        console.log("Form submitted");
+        const formData = new FormData(form);
+
+        try {
+            const response = await fetch(form.action, {
+                method: "POST",
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                alert(data.message || "Product added successfully!");
+                form.reset();
+                // Hide all sections initially after reset
+                sections.forEach(section => {
+                    setSectionActive(section, false);
+                });
+                specSelect.value = "";
+            } else {
+                alert("Error: " + (data.detail || "Unable to add product."));
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Network error. Please try again.");
+        }
     });
 
-});
-specSelect.addEventListener("change", function () {
-    console.log("Selected:", this.value);
-    showSection(this.value);
 });
