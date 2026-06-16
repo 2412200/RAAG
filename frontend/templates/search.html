@@ -1,24 +1,171 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>RAAG.com</title>
-<link rel="stylesheet" href="/static/css/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Search Results - RAAG.com</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <style>
+    .search-header {
+      padding: 40px 40px 20px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    .search-title {
+      font-family: var(--font-display);
+      font-size: 32px;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+    .search-title span {
+      color: var(--accent);
+    }
+    .search-subtitle {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .search-bar-inline {
+      margin-top: 20px;
+      max-width: 480px;
+    }
+    .search-wrap-inline {
+      display: flex;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .search-wrap-inline input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      padding: 12px 16px;
+      color: var(--text);
+      font-size: 14px;
+      outline: none;
+    }
+    .search-wrap-inline button {
+      background: var(--accent);
+      border: none;
+      color: #fff;
+      padding: 12px 24px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: var(--font-display);
+      transition: background 0.2s, opacity 0.2s;
+    }
+    .search-wrap-inline button:hover {
+      opacity: 0.9;
+    }
+    .product-category-tag {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      padding: 14px 14px 0 !important;
+      display: block;
+    }
+    #toast {
+      display: none;
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--accent);
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: var(--font-mono);
+      letter-spacing: 0.05em;
+      box-shadow: 0 8px 24px rgba(224, 48, 48, 0.3);
+      z-index: 200;
+    }
+    .no-results {
+      text-align: center;
+      padding: 80px 20px;
+      font-family: var(--font-mono);
+      color: var(--muted);
+      font-size: 15px;
+    }
+  </style>
 </head>
-
 <body>
 
-<div class="navbar">
+  <!-- NAVBAR -->
+  <div class="navbar">
     <div class="nav-left">
-        <a href="/home">Home</a>
-        <a href="/orders">My Orders</a>
-        <a href="/credits">My Credit</a>
+      <a href="/home">Home</a>
+      <a href="/orders">My Orders</a>
+      <a href="/credits">My Credit</a>
     </div>
     <div class="nav-right">
-        <a href="#">Make Call</a>
-        <a href="#">Wholesaler Login</a>
-        <a href="#">Account</a>
+      <a href="/">Manufacturer Login</a>
+      <a class="btn-account" href="#">My Account</a>
     </div>
-</div>
+  </div>
 
+  <div class="search-header">
+    <h1 class="search-title">Search Results{% if query %} for "<span>{{ query }}</span>"{% endif %}</h1>
+    <p class="search-subtitle">
+      {% if Products %}
+        Found {{ Products|length }} matching product(s)
+      {% else %}
+        No products found matching your search
+      {% endif %}
+    </p>
+
+    <!-- Inline Search Form -->
+    <form class="search-bar-inline" action="/search" method="get">
+      <div class="search-wrap-inline">
+        <input type="text" name="q" value="{{ query }}" placeholder="Search products..." required />
+        <button type="submit">Search</button>
+      </div>
+    </form>
+  </div>
+
+  {% if Products %}
+    <div class="products-container">
+      {% for product in Products %}
+      <div class="product-card">
+        <span class="product-category-tag">{{ product.category }}</span>
+        <img src="/static/images/{{ product.image }}" alt="{{ product.name }}" onerror="this.src='/static/images/default.webp'">
+        <p>{{ product.name }}</p>
+        <p>₹{{ product.price }}</p>
+        <p>Min. order: {{ product.quantity }} units</p>
+        <button class="add-to-order-btn" onclick="addToOrder({
+          name: '{{ product.name }}',
+          image: '{{ product.image }}',
+          quantity: {{ product.quantity }},
+          price: {{ product.price }}
+        })">Add to Order</button>
+      </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="no-results">
+      <p>Try searching for other terms like "shirt", "sofa", "toys", or "spices".</p>
+    </div>
+  {% endif %}
+
+  <div id="toast">✅ Item added to order!</div>
+
+  <script>
+    function addToOrder(product) {
+      let orders = JSON.parse(localStorage.getItem('orderItems') || '[]');
+      const existing = orders.find(item => item.name === product.name);
+      if (existing) {
+        existing.qty = (existing.qty || 1) + 1;
+      } else {
+        orders.push({ ...product, qty: 1 });
+      }
+      localStorage.setItem('orderItems', JSON.stringify(orders));
+
+      const toast = document.getElementById('toast');
+      toast.style.display = 'block';
+      setTimeout(() => toast.style.display = 'none', 2000);
+    }
+  </script>
 </body>
 </html>

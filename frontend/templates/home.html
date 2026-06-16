@@ -320,16 +320,18 @@
       </div>
       <div class="nav-right">
         <a href="/">Manufacturer Login</a>
+        <a href="/logout" class="btn-logout">Logout</a>
+
         <a class="btn-account" href="#">Account</a>
       </div>
     </nav>
 
-    <div class="search-bar">
+    <form class="search-bar" action="/search" method="get">
       <div class="search-wrap">
-        <input type="text" placeholder="Search by category…" />
-        <button>Search</button>
+        <input type="text" name="q" placeholder="Search products..." required />
+        <button type="submit">Search</button>
       </div>
-    </div>
+    </form>
 
     <div style="padding:2rem 1.5px 0;">
       <div style="display:flex;align-items:center;gap:8px;padding:0 .5rem 1rem;">

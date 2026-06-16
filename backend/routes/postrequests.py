@@ -229,7 +229,31 @@ async def add_product(request : Request):
 
 
 @router.post("/POST/order")
-async def post_order(order : orders):
+async def post_order(order: orders, request: Request):
+    user = getattr(request.state, "user", None)
+    if user and user.get("phone"):
+        conn = None
+        cursor = None
+        try:
+            conn = get_pg_connection()
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT shop_name, phone FROM retailer WHERE phone = %s",
+                (user["phone"],)
+            )
+            row = cursor.fetchone()
+            if row:
+                shop_name, phone_str = row
+                order.customer_name = shop_name
+                digits = "".join(filter(str.isdigit, phone_str))
+                if digits:
+                    order.customer_number = int(digits)
+        except Exception as e:
+            print("Postgres lookup error during order placement:", e)
+        finally:
+            if cursor: cursor.close()
+            if conn: conn.close()
+            
     db = client["Orders"]
     result = await db["orders"].insert_one(order.model_dump())
     return {

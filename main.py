@@ -88,8 +88,42 @@ async def orders(request : Request):
     return templates.TemplateResponse(request, "orders.html",{"request":request})
 
 @app.get("/credits")
-async def credits(request : Request):
-    return templates.TemplateResponse(request, "credits.html",{"request" : request})
+async def credits(request: Request):
+    user = getattr(request.state, "user", None)
+    shop_name = "Retailer Account"
+    
+    if user and user.get("phone"):
+        try:
+            from backend.helper.database import get_pg_connection
+            with get_pg_connection() as conn:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT shop_name FROM retailer WHERE phone = %s", (user["phone"],))
+                    row = cur.fetchone()
+                    if row:
+                        shop_name = row[0]
+        except Exception as e:
+            print("Postgres credit lookup error:", e)
+
+    # Mock dynamic credit details
+    credit_limit = 500000.0
+    used_credit = 145000.0
+    available_credit = credit_limit - used_credit
+    
+    ledger = [
+        {"date": "2026-06-12", "ref": "INV-2026-089", "desc": "Purchase - Apparel & FMCG", "amount": -85000.0, "status": "Settled"},
+        {"date": "2026-06-05", "ref": "PAY-10022", "desc": "Bank Transfer Payment", "amount": 50000.0, "status": "Completed"},
+        {"date": "2026-05-28", "ref": "INV-2026-054", "desc": "Purchase - Kids Toys", "amount": -110000.0, "status": "Settled"},
+        {"date": "2026-05-20", "ref": "PAY-10009", "desc": "Cheque Settlement", "amount": 100000.0, "status": "Completed"}
+    ]
+    
+    return templates.TemplateResponse(request, "credits.html", {
+        "request": request,
+        "shop_name": shop_name,
+        "credit_limit": credit_limit,
+        "used_credit": used_credit,
+        "available_credit": available_credit,
+        "ledger": ledger
+    })
 
 @app.get("/manufacturer")
 async def manufacturer(request: Request):
@@ -99,8 +133,56 @@ async def manufacturer(request: Request):
     )
 
 @app.get("/search")
-async def search(request : Request):
-    return templates.TemplateResponse(request, "search.html",{"request":request})
+async def search(request: Request, q: str = None):
+    results = []
+    if q:
+        query_regex = {"$regex": q, "$options": "i"}
+        collections_to_search = [
+            "menswear", "womenswear", "kids", "books", "beauty", 
+            "homeappliances", "pharma", "groceries", "furniture",
+            "apparel", "fmcg", "mobile_accessories", "steel_work"
+        ]
+        for col_name in collections_to_search:
+            col = db[col_name]
+            cursor = col.find({
+                "$or": [
+                    {"name": query_regex},
+                    {"product_name": query_regex}
+                ]
+            })
+            async for doc in cursor:
+                name = doc.get("name") or doc.get("product_name") or "Unnamed Product"
+                price = doc.get("price") or doc.get("mrp") or 0.0
+                qty = doc.get("quantity") or doc.get("qty") or 1
+                
+                # Check for image or fallback to smart defaults
+                image = doc.get("image")
+                if not image:
+                    if col_name == "apparel":
+                        gender = doc.get("gender", "")
+                        image = "menjeans.webp" if gender == "Male" else "womentshirt.webp"
+                    elif col_name == "fmcg":
+                        image = "groceries.webp"
+                    elif col_name == "mobile_accessories":
+                        image = "bottle.webp"
+                    elif col_name == "steel_work":
+                        image = "Dining Table.webp"
+                    else:
+                        image = "default.webp"
+                
+                results.append({
+                    "name": name,
+                    "price": price,
+                    "quantity": qty,
+                    "image": image,
+                    "category": col_name.replace("_", " ").title()
+                })
+    
+    return templates.TemplateResponse(request, "search.html", {
+        "request": request,
+        "Products": results,
+        "query": q or ""
+    })
 
 @app.get("/womens")
 async def womens_wear(request: Request):

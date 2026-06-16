@@ -305,6 +305,21 @@
       font-size: 12px;
       color: var(--muted)
     }
+
+    #toast {
+      display: none;
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--red);
+      color: var(--white);
+      padding: 12px 20px;
+      border-radius: 4px;
+      font-size: 13px;
+      letter-spacing: 1px;
+      box-shadow: 0 8px 24px rgba(192, 23, 42, .4);
+      z-index: 100;
+    }
   </style>
 </head>
 
@@ -321,7 +336,8 @@
       </div>
     </div>
     <div class="nav-right">
-      <a href="/">Wholesaler Login</a>
+      <a href="/">Manufacturer Login</a>
+      <a href="/logout" class="btn-logout">Logout</a>
       <a class="btn-account" href="#">My Account</a>
     </div>
   </nav>
@@ -338,112 +354,51 @@
 
   <!-- PRODUCTS -->
   <div class="products-container">
-
+    {% for product in Products %}
     <div class="product-card">
       <div class="product-img-wrap">
-        <img src="/static/images/toys.webp" alt="toys" />
+        <img src="{{ url_for('static', path='images/' + product.image) }}" alt="{{ product.name }}" />
         <div class="product-img-overlay"></div>
         <span class="quick-view">View Details</span>
       </div>
       <div class="product-info">
-        <p class="product-name">Toys</p>
-        <p class="product-price">₹50,000</p>
-        <p class="product-moq">Min. order: 10 units</p>
-        <button class="add-btn">Add to Order</button>
+        <p class="product-name">{{ product.name }}</p>
+        <p class="product-price">₹{{ product.price }}</p>
+        <p class="product-moq">Min. order: {{ product.quantity }} units</p>
+        <button class="add-btn" onclick="addToOrder({
+            name: '{{ product.name }}',
+            image: '{{ product.image }}',
+            quantity: {{ product.quantity }},
+            price: {{ product.price }}
+          })">Add to Order</button>
       </div>
     </div>
-
-    <div class="product-card">
-      <div class="product-img-wrap">
-        <img src="/static/images/Teddy bear.webp" alt="teddy" />
-        <div class="product-img-overlay"></div>
-        <span class="quick-view">View Details</span>
-      </div>
-      <div class="product-info">
-        <p class="product-name">Teddy Bear</p>
-        <p class="product-price">₹50,000</p>
-        <p class="product-moq">Min. order: 10 units</p>
-        <button class="add-btn">Add to Order</button>
-      </div>
-    </div>
-
-    <div class="product-card">
-      <div class="product-img-wrap">
-        <img src="/static/images/Toy cars.webp" alt="toy car" />
-        <div class="product-img-overlay"></div>
-        <span class="quick-view">View Details</span>
-      </div>
-      <div class="product-info">
-        <p class="product-name">Toy car</p>
-        <p class="product-price">₹50,000</p>
-        <p class="product-moq">Min. order: 10 units</p>
-        <button class="add-btn">Add to Order</button>
-      </div>
-    </div>
-
-    <div class="product-card">
-      <div class="product-img-wrap">
-        <img src="/static/images/Baby shampoo.webp" alt="baby shampoo" />
-        <div class="product-img-overlay"></div>
-        <span class="quick-view">View Details</span>
-      </div>
-      <div class="product-info">
-        <p class="product-name">baby shampoo</p>
-        <p class="product-price">₹1,00,000</p>
-        <p class="product-moq">Min. order: 10 units</p>
-        <button class="add-btn">Add to Order</button>
-      </div>
-    </div>
-
-    <div class="product-card">
-      <div class="product-img-wrap">
-        <img src="/static/images/Feeding bottles.webp" alt="Feeding bottle" />
-        <div class="product-img-overlay"></div>
-        <span class="quick-view">View Details</span>
-      </div>
-      <div class="product-info">
-        <p class="product-name">Feeding Bottle</p>
-        <p class="product-price">₹80,000</p>
-        <p class="product-moq">Min. order: 10 units</p>
-        <button class="add-btn">Add to Order</button>
-      </div>
-    </div>
-
-    <div class="product-card">
-      <div class="product-img-wrap">
-        <img src="/static/images/Diapers.webp" alt="Diaper" />
-        <div class="product-img-overlay"></div>
-        <span class="quick-view">View Details</span>
-      </div>
-      <div class="product-info">
-        <p class="product-name">Diapers</p>
-        <p class="product-price">₹80,000</p>
-        <p class="product-moq">Min. order: 10 units</p>
-        <button class="add-btn">Add to Order</button>
-      </div>
-    </div>
-
-    <div class="product-card">
-      <div class="product-img-wrap">
-        <img src="/static/images/Puzzle toys.webp" alt="puzzle toys" />
-        <div class="product-img-overlay"></div>
-        <span class="quick-view">View Details</span>
-      </div>
-      <div class="product-info">
-        <p class="product-name">Puzzle Toys</p>
-        <p class="product-price">₹1,00,000</p>
-        <p class="product-moq">Min. order: 10 units</p>
-        <button class="add-btn">Add to Order</button>
-      </div>
-    </div>
-
+    {% endfor %}
   </div>
 
   <footer>
     <span class="footer-brand">RAAG.COM</span>
     <span class="footer-note">© 2026 Raag. All rights reserved.</span>
   </footer>
-  </div>
+
+  <div id="toast">✅ Item added to order!</div>
+
+  <script>
+    function addToOrder(product) {
+      let orders = JSON.parse(localStorage.getItem('orderItems') || '[]');
+      const existing = orders.find(item => item.name === product.name);
+      if (existing) {
+        existing.qty = (existing.qty || 1) + 1;
+      } else {
+        orders.push({ ...product, qty: 1 });
+      }
+      localStorage.setItem('orderItems', JSON.stringify(orders));
+
+      const toast = document.getElementById('toast');
+      toast.style.display = 'block';
+      setTimeout(() => toast.style.display = 'none', 2000);
+    }
+  </script>
 </body>
 
 </html>

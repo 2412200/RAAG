@@ -1,6 +1,10 @@
-from fastapi import FastAPI, HTTPException, APIRouter
-from fastapi.responses import JSONResponse
-from backend.helper.database import get_pg_connection
+from fastapi import APIRouter
+from fastapi.responses import RedirectResponse
 
 router = APIRouter()
 
+@router.get("/logout")
+async def logout():
+    response = RedirectResponse(url="/", status_code=303)
+    response.delete_cookie(key="access_token")
+    return response
