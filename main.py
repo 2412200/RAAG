@@ -48,9 +48,22 @@ ALGORITHM = "HS256"
 @app.middleware("http")
 async def auth_middleware(request: Request, call_next):
     # Paths that don't require authentication
-    public_paths = ["/", "/signup", "/POST/login", "/POST/signup"]
+    public_paths = ["/", "/signup", "/POST/login", "/POST/signup", "/logout"]
     
     if request.url.path in public_paths or request.url.path.startswith("/static"):
+        # Redirect authenticated users away from Login and Signup pages
+        if request.url.path in ["/", "/signup"] and request.method == "GET":
+            token = request.cookies.get("access_token")
+            if token:
+                try:
+                    payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+                    role = payload.get("role")
+                    if role == "seller":
+                        return RedirectResponse(url="/seller", status_code=303)
+                    elif role == "buyer":
+                        return RedirectResponse(url="/home", status_code=303)
+                except JWTError:
+                    pass
         return await call_next(request)
         
     token = request.cookies.get("access_token")
@@ -63,6 +76,30 @@ async def auth_middleware(request: Request, call_next):
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         # Attach user data to request state for access in endpoints
         request.state.user = payload
+        
+        # Enforce role-based access control (RBAC)
+        role = payload.get("role")
+        path = request.url.path
+        
+        # Seller paths
+        seller_paths = ["/seller", "/POST/product"]
+        # Buyer paths
+        buyer_paths = [
+            "/home", "/orders", "/credits", "/search", "/womens", "/mens-wear", 
+            "/homeappliances", "/beauty", "/books", "/groceries", "/pharma", "/kids", "/furniture",
+            "/POST/order"
+        ]
+        
+        if role == "buyer" and path in seller_paths:
+            if request.method == "GET":
+                return RedirectResponse(url="/home", status_code=303)
+            return JSONResponse(status_code=403, content={"detail": "Access denied. Sellers only."})
+            
+        if role == "seller" and path in buyer_paths:
+            if request.method == "GET":
+                return RedirectResponse(url="/seller", status_code=303)
+            return JSONResponse(status_code=403, content={"detail": "Access denied. Buyers only."})
+            
     except JWTError:
         if request.method == "GET":
             return RedirectResponse(url="/", status_code=303)
@@ -90,14 +127,14 @@ async def orders(request : Request):
 @app.get("/credits")
 async def credits(request: Request):
     user = getattr(request.state, "user", None)
-    shop_name = "Retailer Account"
+    shop_name = "Buyer Account"
     
     if user and user.get("phone"):
         try:
             from backend.helper.database import get_pg_connection
             with get_pg_connection() as conn:
                 with conn.cursor() as cur:
-                    cur.execute("SELECT shop_name FROM retailer WHERE phone = %s", (user["phone"],))
+                    cur.execute("SELECT shop_name FROM buyer WHERE phone = %s", (user["phone"],))
                     row = cur.fetchone()
                     if row:
                         shop_name = row[0]
@@ -125,10 +162,10 @@ async def credits(request: Request):
         "ledger": ledger
     })
 
-@app.get("/manufacturer")
-async def manufacturer(request: Request):
+@app.get("/seller")
+async def seller(request: Request):
     return templates.TemplateResponse(request, 
-        "manufacturer.html",
+        "seller.html",
         {"request": request}
     )
 

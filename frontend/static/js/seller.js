@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
 
-    console.log("manufacturer.js loaded");
+    console.log("seller.js loaded");
 
     const specSelect = document.getElementById("specification");
     const form = document.getElementById("productform");

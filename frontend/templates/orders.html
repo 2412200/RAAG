@@ -117,7 +117,7 @@
             <a href="/credits">My Credit</a>
         </div>
         <div class="nav-right">
-            <a href="/">Manufacturer Login</a>
+            <a href="/">Seller Login</a>
             <a href="/logout" class="btn-logout">Logout</a>
             <a href="#">My Account</a>
         </div>
@@ -193,7 +193,7 @@
             const total_amount = orders.reduce((sum, item) => sum + (item.price * item.qty), 0);
 
             const payload = {
-                customer_name: "Retailer Customer",
+                customer_name: "Buyer Customer",
                 customer_number: 9999999999,
                 products: products,
                 total_amount: total_amount

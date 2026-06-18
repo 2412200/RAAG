@@ -4,13 +4,16 @@
 <head>
   <meta charset="UTF-8" />
   <title>Add Product - RAAG.com</title>
-  <link rel="stylesheet" href="{{ url_for('static', path='css/manufacturer.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', path='css/seller.css') }}">
 </head>
 
 <body>
 
   <div class="form-container">
-    <h2>Add New Product</h2>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 1px solid #1f1f1f; padding-bottom: 15px;">
+      <h2 style="margin-bottom: 0; text-align: left;">Add New Product</h2>
+      <a href="/logout" style="color: #ef4444; text-decoration: none; font-size: 14px; font-weight: 600; border: 1px solid #ef4444; padding: 8px 16px; border-radius: 8px; transition: all 0.2s;" onmouseover="this.style.background='#ef4444'; this.style.color='white'" onmouseout="this.style.background='transparent'; this.style.color='#ef4444'">Logout</a>
+    </div>
 
     <form id="productform" action="{{ url_for('add_product') }}" method="post" enctype="multipart/form-data">
 
@@ -222,7 +225,7 @@
       <button type="submit" class="btn-submit">Add Product</button>
     </form>
   </div>
-  <script src="{{ url_for('static', path='js/manufacturer.js') }}"></script>
+  <script src="{{ url_for('static', path='js/seller.js') }}"></script>
 </body>
 
 </html>

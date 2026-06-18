@@ -326,13 +326,13 @@
 
         <!-- Role toggle -->
         <div class="role-toggle" role="tablist" aria-label="Select profile">
-          <button type="button" class="role-btn is-active" data-role="manufacturer" role="tab" aria-selected="true">
+          <button type="button" class="role-btn is-active" data-role="seller" role="tab" aria-selected="true">
             <span class="role-num">01</span>
-            <span class="role-name">Manufacturer</span>
+            <span class="role-name">Seller</span>
           </button>
-          <button type="button" class="role-btn" data-role="retailer" role="tab" aria-selected="false">
+          <button type="button" class="role-btn" data-role="buyer" role="tab" aria-selected="false">
             <span class="role-num">02</span>
-            <span class="role-name">Retailer</span>
+            <span class="role-name">Buyer</span>
           </button>
         </div>
 
@@ -362,7 +362,7 @@
 
         <!-- Submit -->
         <button type="submit" id="submit-btn" class="cta">
-          <span class="cta-label">Sign in as <span id="role-display">Manufacturer</span></span>
+          <span class="cta-label">Sign in as <span id="role-display">Seller</span></span>
           <span class="cta-arrow">→</span>
         </button>
 
@@ -380,7 +380,10 @@
 
 <script>
 
-let selectedRole = "manufacturer";
+// Clear any token from localStorage when visiting the login page
+localStorage.removeItem("token");
+
+let selectedRole = "seller";
 
 // Handle password visibility toggle
 const togglePwBtn = document.getElementById('toggle-password');
@@ -470,10 +473,10 @@ document
       }
 
       // Redirect based on role
-      if (data.role === "manufacturer") {
+      if (data.role === "seller") {
 
         window.location.href =
-          "/manufacturer";
+          "/seller";
 
       } else {
 

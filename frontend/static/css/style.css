@@ -539,3 +539,13 @@ a {
     grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   }
 }
+
+/* Logout Button Hover Micro-interaction */
+.nav-right .btn-logout:hover {
+  color: var(--error) !important;
+}
+
+.nav-right .btn-logout:hover::after {
+  background: var(--error) !important;
+  width: 100% !important;
+}

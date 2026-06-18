@@ -20,7 +20,7 @@
   const roleDisplay = document.getElementById('role-display');
   const roleButtons = document.querySelectorAll('.role-btn');
 
-  let selectedRole = 'manufacturer';
+  let selectedRole = 'seller';
 
   // Role toggle ------------------------------------------------
   roleButtons.forEach((btn) => {

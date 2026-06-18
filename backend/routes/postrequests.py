@@ -40,10 +40,10 @@ def signup(data: SignupRequest):
 
         hashed_password = pwd_context.hash(data.password)
 
-        if data.role == "manufacturer":
+        if data.role == "seller":
 
             cursor.execute("""
-                INSERT INTO manufacturer
+                INSERT INTO seller
                 (
                     company_name,
                     owner_name,
@@ -63,7 +63,7 @@ def signup(data: SignupRequest):
         else:
 
             cursor.execute("""
-                INSERT INTO retailer
+                INSERT INTO buyer
                 (
                     shop_name,
                     owner_name,
@@ -101,7 +101,7 @@ def login(data: LoginRequest, response: Response):
         conn = get_pg_connection()
         cursor = conn.cursor()
 
-        table = "manufacturer" if data.role == "manufacturer" else "retailer"
+        table = "seller" if data.role == "seller" else "buyer"
 
         cursor.execute(
             f"SELECT id, password_ FROM {table} WHERE phone = %s",
@@ -238,7 +238,7 @@ async def post_order(order: orders, request: Request):
             conn = get_pg_connection()
             cursor = conn.cursor()
             cursor.execute(
-                "SELECT shop_name, phone FROM retailer WHERE phone = %s",
+                "SELECT shop_name, phone FROM buyer WHERE phone = %s",
                 (user["phone"],)
             )
             row = cursor.fetchone()
