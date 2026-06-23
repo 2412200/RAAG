@@ -9,6 +9,7 @@ from fastapi import Request
 from urllib.parse import quote_plus
 from jose import jwt
 from passlib.context import CryptContext
+import requests
 
 SECRET_KEY = os.getenv("SECRET_KEY", "fallback_secret_key_please_change")
 ALGORITHM = "HS256"
@@ -32,11 +33,54 @@ db = client["Products"]
 
 @router.post("/POST/signup")
 def signup(data: SignupRequest):
+    # Normalize phone number to E.164 format
+    phone_num = data.phone.strip().replace(" ", "")
+    if not phone_num.startswith("+"):
+        if len(phone_num) == 10:
+            phone_num = "+91" + phone_num
+        else:
+            phone_num = "+" + phone_num
+    data.phone = phone_num
+
     conn = None
     cursor = None
     try:
         conn = get_pg_connection()
         cursor = conn.cursor()
+
+        # Check if user with this phone number already exists for this role
+        table = "seller" if data.role == "seller" else "buyer"
+        cursor.execute(f"SELECT 1 FROM {table} WHERE phone = %s", (data.phone,))
+        if cursor.fetchone():
+            raise HTTPException(
+                status_code=400,
+                detail=f'user with {data.phone} already exists'
+            )
+
+        # Verify the OTP via Twilio VerificationCheck
+        if not data.otp:
+            raise HTTPException(
+                status_code=400,
+                detail="OTP is required to sign up"
+            )
+
+        twilio_check_url = f"https://verify.twilio.com/v2/Services/VA8615c88e13880d52c82e08acb4f51171/VerificationCheck"
+        account_ssid = os.getenv("ACCOUNT_SID")
+        auth_token = os.getenv("Twilio_auth_token")
+        check_payload = {
+            "To": data.phone,
+            "Code": data.otp
+        }
+        response = requests.post(
+            twilio_check_url,
+            data=check_payload,
+            auth=(account_ssid, auth_token)
+        )
+        if response.status_code != 200 or response.json().get("status") != "approved":
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid or expired OTP"
+            )
 
         hashed_password = pwd_context.hash(data.password)
 
@@ -48,15 +92,21 @@ def signup(data: SignupRequest):
                     company_name,
                     owner_name,
                     phone,
-                    address,
+                    city,
+                    state,
+                    gst_pan,
+                    category,
                     password_
                 )
-                VALUES (%s,%s,%s,%s,%s)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
             """, (
                 data.business_name,
                 data.owner_name,
                 data.phone,
-                data.address,
+                data.city,
+                data.state,
+                data.gst_pan,
+                data.category,
                 hashed_password
             ))
 
@@ -68,15 +118,19 @@ def signup(data: SignupRequest):
                     shop_name,
                     owner_name,
                     phone,
-                    address,
+                    city,
+                    state,
+                    category,
                     password_
                 )
-                VALUES (%s,%s,%s,%s,%s)
+                VALUES (%s,%s,%s,%s,%s,%s,%s)
             """, (
                 data.business_name,
                 data.owner_name,
                 data.phone,
-                data.address,
+                data.city,
+                data.state,
+                data.category,
                 hashed_password
             ))
 
@@ -95,6 +149,15 @@ def signup(data: SignupRequest):
 
 @router.post("/POST/login")
 def login(data: LoginRequest, response: Response):
+    # Normalize phone number to E.164 format
+    phone_num = data.phone.strip().replace(" ", "")
+    if not phone_num.startswith("+"):
+        if len(phone_num) == 10:
+            phone_num = "+91" + phone_num
+        else:
+            phone_num = "+" + phone_num
+    data.phone = phone_num
+
     conn = None
     cursor = None
     try:
@@ -260,4 +323,60 @@ async def post_order(order: orders, request: Request):
         "message" : "Order placed successfully",
         "id" : str(result.inserted_id)
     }
+    
+@router.post("/POST/request-otp")
+async def request_otp(data: SignupRequest):
+    # Normalize phone number to E.164 format
+    phone_num = data.phone.strip().replace(" ", "")
+    if not phone_num.startswith("+"):
+        if len(phone_num) == 10:
+            phone_num = "+91" + phone_num
+        else:
+            phone_num = "+" + phone_num
+    data.phone = phone_num
+
+    conn = None
+    cursor = None
+    try:
+        table = "buyer" if data.role == "buyer" else "seller"
+        
+        conn =get_pg_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+                f"SELECT id FROM {table} WHERE phone = %s",
+                (data.phone,)
+            )
+        response = cursor.fetchone()
+        if response:
+            raise HTTPException(
+                status_code=400,
+                detail=f'user with {data.phone} already exists'
+            )
+        else:
+            twilio_url = f"https://verify.twilio.com/v2/Services/VA8615c88e13880d52c82e08acb4f51171/Verifications"
+            account_sid = os.getenv("ACCOUNT_SID")
+            auth_token = os.getenv("Twilio_auth_token")
+            payload = {
+                "To" : data.phone,
+                "Channel" : "sms"
+            }
+            response = requests.post(twilio_url,
+            data=payload,
+            auth=(account_sid,auth_token))
+            if response.status_code == 201:
+                return {"message": "otp sent successfully"}
+            else:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"OTP dispatch failed: {response.text}"
+                )
+            
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
     

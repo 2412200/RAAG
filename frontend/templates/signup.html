@@ -343,7 +343,8 @@
       align-items: center;
     }
 
-    .field input {
+    .field input,
+    .field select {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 8px;
@@ -356,20 +357,27 @@
       width: 100%;
     }
 
+    #gst_pan {
+      text-transform: uppercase;
+    }
+
     .field input::placeholder {
       color: #333;
     }
 
-    .field input:focus {
+    .field input:focus,
+    .field select:focus {
       border-color: var(--border-active);
       box-shadow: 0 0 0 3px rgba(224, 48, 48, 0.08);
     }
 
-    .field input.is-invalid {
+    .field input.is-invalid,
+    .field select.is-invalid {
       border-color: var(--error);
     }
 
-    .field.has-error input {
+    .field.has-error input,
+    .field.has-error select {
       border-color: var(--error);
     }
 
@@ -395,20 +403,7 @@
       color: var(--text);
     }
 
-    /* Password strength */
-    .strength-bar {
-      display: flex;
-      gap: 4px;
-      margin-top: 4px;
-    }
 
-    .strength-seg {
-      height: 3px;
-      flex: 1;
-      border-radius: 2px;
-      background: var(--border);
-      transition: background 0.3s;
-    }
 
     /* CTA button */
     .cta {
@@ -615,12 +610,81 @@
             <span class="field-error" id="phone-error"></span>
           </label>
 
-          <!-- Address -->
+          <!-- City -->
           <label class="field">
-            <span class="field-label">Address</span>
-            <input id="address" name="address" type="text" placeholder="City, State" required />
-            <span class="field-error" id="address-error"></span>
+            <span class="field-label">City</span>
+            <input id="city" name="city" type="text" placeholder="New Delhi" required />
+            <span class="field-error" id="city-error"></span>
           </label>
+
+          <!-- State -->
+          <label class="field">
+            <span class="field-label">State / UT</span>
+            <select id="state" name="state" required>
+              <option value="" disabled selected>Select State / UT</option>
+              <option value="Andhra Pradesh">Andhra Pradesh</option>
+              <option value="Arunachal Pradesh">Arunachal Pradesh</option>
+              <option value="Assam">Assam</option>
+              <option value="Bihar">Bihar</option>
+              <option value="Chhattisgarh">Chhattisgarh</option>
+              <option value="Goa">Goa</option>
+              <option value="Gujarat">Gujarat</option>
+              <option value="Haryana">Haryana</option>
+              <option value="Himachal Pradesh">Himachal Pradesh</option>
+              <option value="Jharkhand">Jharkhand</option>
+              <option value="Karnataka">Karnataka</option>
+              <option value="Kerala">Kerala</option>
+              <option value="Madhya Pradesh">Madhya Pradesh</option>
+              <option value="Maharashtra">Maharashtra</option>
+              <option value="Manipur">Manipur</option>
+              <option value="Meghalaya">Meghalaya</option>
+              <option value="Mizoram">Mizoram</option>
+              <option value="Nagaland">Nagaland</option>
+              <option value="Odisha">Odisha</option>
+              <option value="Punjab">Punjab</option>
+              <option value="Rajasthan">Rajasthan</option>
+              <option value="Sikkim">Sikkim</option>
+              <option value="Tamil Nadu">Tamil Nadu</option>
+              <option value="Telangana">Telangana</option>
+              <option value="Tripura">Tripura</option>
+              <option value="Uttar Pradesh">Uttar Pradesh</option>
+              <option value="Uttarakhand">Uttarakhand</option>
+              <option value="West Bengal">West Bengal</option>
+              <option value="Andaman and Nicobar Islands">Andaman and Nicobar Islands</option>
+              <option value="Chandigarh">Chandigarh</option>
+              <option value="Dadra and Nagar Haveli and Daman and Diu">Dadra and Nagar Haveli and Daman and Diu</option>
+              <option value="Delhi">Delhi</option>
+              <option value="Jammu and Kashmir">Jammu and Kashmir</option>
+              <option value="Ladakh">Ladakh</option>
+              <option value="Lakshadweep">Lakshadweep</option>
+              <option value="Puducherry">Puducherry</option>
+            </select>
+            <span class="field-error" id="state-error"></span>
+          </label>
+
+          <!-- Category -->
+          <label class="field">
+            <span class="field-label">Category</span>
+            <select id="category" name="category" required>
+              <option value="" disabled selected>Select Category</option>
+              <option value="home appliances">Home Appliances</option>
+              <option value="apparels">Apparels</option>
+              <option value="pharmacy">Pharmacy</option>
+              <option value="steel work">Steel Work</option>
+              <option value="fmcg">FMCG</option>
+            </select>
+            <span class="field-error" id="category-error"></span>
+          </label>
+
+          <!-- Seller Only Fields -->
+          <div id="seller-only-fields" style="display: contents;">
+            <!-- GST/PAN Number -->
+            <label class="field">
+              <span class="field-label">GST / PAN Number(optional)</span>
+              <input id="gst_pan" name="gst_pan" type="text" placeholder="22AAAAA0000A1Z5 / ABCDE1234F" optional />
+              <span class="field-error" id="gst_pan-error"></span>
+            </label>
+          </div>
 
         </div>
 
@@ -635,12 +699,7 @@
               <button type="button" id="toggle-password" class="link-btn" aria-label="Show password">show</button>
             </span>
             <input id="password" name="password" type="password" placeholder="••••••••" required minlength="6" />
-            <div class="strength-bar">
-              <div class="strength-seg" id="seg1"></div>
-              <div class="strength-seg" id="seg2"></div>
-              <div class="strength-seg" id="seg3"></div>
-              <div class="strength-seg" id="seg4"></div>
-            </div>
+
             <span class="field-error" id="password-error"></span>
           </label>
 
@@ -651,6 +710,15 @@
             <span class="field-error" id="confirm-error"></span>
           </label>
 
+        </div>
+
+        <!-- OTP Container -->
+        <div id="otp-container" class="fields-grid" style="display: none; margin-top: 16px;">
+          <label class="field field-full">
+            <span class="field-label">Verification Code (OTP)</span>
+            <input id="otp" name="otp" type="text" placeholder="Enter OTP code" maxlength="6" autocomplete="one-time-code" />
+            <span class="field-error" id="otp-error"></span>
+          </label>
         </div>
 
         <!-- Submit -->
@@ -691,6 +759,13 @@
       const companyInput = document.getElementById('company_name');
       const businessLabel = document.getElementById('business-label');
       const ownerInput = document.getElementById('owner_name');
+      const sellerOnlyFields = document.getElementById('seller-only-fields');
+      const gstInput = document.getElementById('gst_pan');
+
+      // Auto-capitalize GST/PAN input value
+      gstInput.addEventListener('input', () => {
+        gstInput.value = gstInput.value.toUpperCase();
+      });
 
       let selectedRole = 'seller';
 
@@ -718,12 +793,17 @@
 
             businessLabel.textContent = "Company Name";
             companyInput.placeholder = "Acme Industries Ltd.";
+            sellerOnlyFields.style.display = 'contents';
 
           } else {
 
             businessLabel.textContent = "Shop Name";
             companyInput.placeholder = "ABC Retail Store";
+            sellerOnlyFields.style.display = 'none';
 
+            // Clear seller-specific fields
+            gstInput.value = '';
+            setError(gstInput, 'gst_pan-error', '');
           }
         });
       });
@@ -741,50 +821,7 @@
           show ? 'hide' : 'show';
       });
 
-      // ------------------------------
-      // Password Strength
-      // ------------------------------
-      const segs = [
-        document.getElementById('seg1'),
-        document.getElementById('seg2'),
-        document.getElementById('seg3'),
-        document.getElementById('seg4')
-      ];
 
-      const strengthColors = [
-        '#e03030',
-        '#c44020',
-        '#ff6b6b',
-        '#ff9999'
-      ];
-
-      function calcStrength(password) {
-
-        let score = 0;
-
-        if (password.length >= 6) score++;
-        if (password.length >= 10) score++;
-        if (/[A-Z]/.test(password) && /[0-9]/.test(password))
-          score++;
-        if (/[^A-Za-z0-9]/.test(password))
-          score++;
-
-        return score;
-      }
-
-      passwordInput.addEventListener('input', () => {
-
-        const score =
-          calcStrength(passwordInput.value);
-
-        segs.forEach((seg, index) => {
-
-          seg.style.background =
-            index < score
-              ? strengthColors[score - 1]
-              : 'var(--border)';
-        });
-      });
 
       // ------------------------------
       // Validation Helpers
@@ -806,7 +843,21 @@
         }
       }
 
-      function validate() {
+      function validate(checkOtpOnly = false) {
+        if (checkOtpOnly) {
+          const otpInput = document.getElementById('otp');
+          const otpVal = otpInput.value.trim();
+          if (!otpVal) {
+            setError(otpInput, 'otp-error', 'Verification code is required.');
+            return false;
+          }
+          if (!/^\d{4,8}$/.test(otpVal)) {
+            setError(otpInput, 'otp-error', 'Please enter a valid OTP code.');
+            return false;
+          }
+          setError(otpInput, 'otp-error', '');
+          return true;
+        }
 
         let valid = true;
 
@@ -820,8 +871,12 @@
           document.getElementById('phone')
             .value.trim();
 
-        const address =
-          document.getElementById('address')
+        const city =
+          document.getElementById('city')
+            .value.trim();
+
+        const state =
+          document.getElementById('state')
             .value.trim();
 
         const password =
@@ -907,14 +962,14 @@
           );
         }
 
-        // Address
+        // City
 
-        if (!address) {
+        if (!city) {
 
           setError(
-            document.getElementById('address'),
-            'address-error',
-            'Address is required.'
+            document.getElementById('city'),
+            'city-error',
+            'City is required.'
           );
 
           valid = false;
@@ -922,8 +977,29 @@
         } else {
 
           setError(
-            document.getElementById('address'),
-            'address-error',
+            document.getElementById('city'),
+            'city-error',
+            ''
+          );
+        }
+
+        // State
+
+        if (!state) {
+
+          setError(
+            document.getElementById('state'),
+            'state-error',
+            'State is required.'
+          );
+
+          valid = false;
+
+        } else {
+
+          setError(
+            document.getElementById('state'),
+            'state-error',
             ''
           );
         }
@@ -992,6 +1068,27 @@
           );
         }
 
+        // Category validation
+        const categorySelect = document.getElementById('category');
+        if (!categorySelect.value) {
+          setError(categorySelect, 'category-error', 'Category is required.');
+          valid = false;
+        } else {
+          setError(categorySelect, 'category-error', '');
+        }
+
+        // Seller fields validation
+        if (selectedRole === 'seller') {
+          const gstPanInput = document.getElementById('gst_pan');
+
+          if (!gstPanInput.value.trim()) {
+            setError(gstPanInput, 'gst_pan-error', 'GST / PAN number is required.');
+            valid = false;
+          } else {
+            setError(gstPanInput, 'gst_pan-error', '');
+          }
+        }
+
         return valid;
       }
 
@@ -1020,102 +1117,115 @@
       // ------------------------------
       // Submit Form
       // ------------------------------
+      let otpRequested = false;
+
+      function toggleInputs(disabled) {
+        const inputs = form.querySelectorAll('input, select, .role-btn');
+        inputs.forEach(el => {
+          if (el.id !== 'otp' && el.id !== 'submit-btn') {
+            if (el.classList.contains('role-btn')) {
+              el.style.pointerEvents = disabled ? 'none' : 'auto';
+            } else {
+              el.disabled = disabled;
+            }
+          }
+        });
+      }
+
       form.addEventListener('submit', async e => {
-
         e.preventDefault();
-
         clearStatus();
 
-        if (!validate()) return;
+        if (!otpRequested) {
+          if (!validate(false)) return;
 
-        submitBtn.disabled = true;
+          submitBtn.disabled = true;
+          submitBtn.querySelector('.cta-label').textContent = 'Sending verification code...';
 
-        const originalLabel =
-          submitBtn.querySelector('.cta-label')
-            .textContent;
+          const payload = {
+            business_name: companyInput.value.trim(),
+            owner_name: ownerInput.value.trim(),
+            phone: document.getElementById('phone').value.trim(),
+            city: document.getElementById('city').value.trim(),
+            state: document.getElementById('state').value.trim(),
+            password: passwordInput.value,
+            role: selectedRole,
+            gst_pan: selectedRole === 'seller' ? document.getElementById('gst_pan').value.trim() : null,
+            category: document.getElementById('category').value
+          };
 
-        submitBtn.querySelector('.cta-label')
-          .textContent =
-          'Creating account...';
-
-        const payload = {
-
-          business_name:
-            companyInput.value.trim(),
-
-          owner_name:
-            ownerInput.value.trim(),
-
-          phone:
-            document.getElementById('phone')
-              .value.trim(),
-
-          address:
-            document.getElementById('address')
-              .value.trim(),
-
-          password:
-            passwordInput.value,
-
-          role:
-            selectedRole
-        };
-
-        try {
-
-          const response = await fetch(
-            '/POST/signup',
-            {
+          try {
+            const response = await fetch('/POST/request-otp', {
               method: 'POST',
-              headers: {
-                'Content-Type':
-                  'application/json'
-              },
+              headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+              showStatus(data.detail || 'Failed to send OTP.', 'error');
+              return;
             }
-          );
 
-          const data =
-            await response.json();
+            otpRequested = true;
+            document.getElementById('otp-container').style.display = 'block';
+            document.getElementById('otp').focus();
+            toggleInputs(true);
+            submitBtn.querySelector('.cta-label').textContent = 'Verify & Create Account';
+            showStatus('Verification code sent to your phone number!', 'success');
 
-          if (!response.ok) {
-
-            showStatus(
-              data.detail ||
-              'Signup failed.',
-              'error'
-            );
-
-            return;
+          } catch (error) {
+            console.error(error);
+            showStatus('Network error requesting OTP.', 'error');
+          } finally {
+            submitBtn.disabled = false;
           }
 
-          showStatus(
-            'Account created successfully!',
-            'success'
-          );
+        } else {
+          if (!validate(true)) return;
 
-          setTimeout(() => {
+          submitBtn.disabled = true;
+          submitBtn.querySelector('.cta-label').textContent = 'Verifying account...';
 
-            window.location.href = '/';
+          const payload = {
+            business_name: companyInput.value.trim(),
+            owner_name: ownerInput.value.trim(),
+            phone: document.getElementById('phone').value.trim(),
+            city: document.getElementById('city').value.trim(),
+            state: document.getElementById('state').value.trim(),
+            password: passwordInput.value,
+            role: selectedRole,
+            gst_pan: selectedRole === 'seller' ? document.getElementById('gst_pan').value.trim() : null,
+            category: document.getElementById('category').value,
+            otp: document.getElementById('otp').value.trim()
+          };
 
-          }, 1500);
+          try {
+            const response = await fetch('/POST/signup', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
 
-        } catch (error) {
+            const data = await response.json();
 
-          console.error(error);
+            if (!response.ok) {
+              showStatus(data.detail || 'Signup failed.', 'error');
+              return;
+            }
 
-          showStatus(
-            'Network error.',
-            'error'
-          );
+            showStatus('Account created successfully!', 'success');
+            setTimeout(() => {
+              window.location.href = '/';
+            }, 1500);
 
-        } finally {
-
-          submitBtn.disabled = false;
-
-          submitBtn.querySelector('.cta-label')
-            .textContent =
-            originalLabel;
+          } catch (error) {
+            console.error(error);
+            showStatus('Network error.', 'error');
+          } finally {
+            submitBtn.disabled = false;
+          }
         }
       });
 

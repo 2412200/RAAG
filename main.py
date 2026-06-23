@@ -48,7 +48,7 @@ ALGORITHM = "HS256"
 @app.middleware("http")
 async def auth_middleware(request: Request, call_next):
     # Paths that don't require authentication
-    public_paths = ["/", "/signup", "/POST/login", "/POST/signup", "/logout"]
+    public_paths = ["/", "/signup", "/POST/login", "/POST/signup", "/logout", "/POST/request-otp"]
     
     if request.url.path in public_paths or request.url.path.startswith("/static"):
         # Redirect authenticated users away from Login and Signup pages
