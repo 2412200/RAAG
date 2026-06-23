@@ -3,24 +3,111 @@
 
 <head>
   <meta charset="UTF-8" />
-  <title>Add Product - RAAG.com</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Seller Dashboard - RAAG</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="{{ url_for('static', path='css/seller.css') }}">
+  <link rel="icon" type="image/png" href="{{ url_for('static', path='favicon.png') }}">
 </head>
 
 <body>
-
-  <div class="form-container">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 1px solid #1f1f1f; padding-bottom: 15px;">
-      <h2 style="margin-bottom: 0; text-align: left;">Add New Product</h2>
-      <a href="/logout" style="color: #ef4444; text-decoration: none; font-size: 14px; font-weight: 600; border: 1px solid #ef4444; padding: 8px 16px; border-radius: 8px; transition: all 0.2s;" onmouseover="this.style.background='#ef4444'; this.style.color='white'" onmouseout="this.style.background='transparent'; this.style.color='#ef4444'">Logout</a>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div>
+      <div class="sidebar-brand">RAAG</div>
+      <nav class="sidebar-menu">
+        <a href="#" class="menu-item active" data-tab="tab-overview">
+          <span style="font-size: 16px;">📊</span> Overview
+        </a>
+        <a href="#" class="menu-item" data-tab="tab-products">
+          <span style="font-size: 16px;">📦</span> My Products
+        </a>
+        <a href="#" class="menu-item" data-tab="tab-add-product">
+          <span style="font-size: 16px;">➕</span> Add Product
+        </a>
+      </nav>
     </div>
+    
+    <div class="sidebar-profile">
+      <div class="profile-name">{{ seller_details.owner_name or 'Owner' }}</div>
+      <div class="profile-business">{{ seller_details.company_name or 'Seller Account' }}</div>
+      {% if seller_details.category %}
+      <div class="profile-tag">{{ seller_details.category }}</div>
+      {% endif %}
+    </div>
+  </aside>
 
-    <form id="productform" action="{{ url_for('add_product') }}" method="post" enctype="multipart/form-data">
+  <!-- Main Content -->
+  <main class="main-content">
+    <header class="dashboard-header">
+      <div class="dashboard-title">
+        <h1>Seller Dashboard</h1>
+        <p>Welcome back, {{ seller_details.company_name or 'Seller' }}</p>
+      </div>
+      <a href="/logout" class="logout-btn">Logout</a>
+    </header>
 
-      <div class="form-group">
-        <label for="specification">Product Specification</label>
-        <select id="specification" name="specification" required>
-          <option value="" disabled selected>Select specification</option>
+    <!-- TAB: Overview -->
+    <section id="tab-overview" class="tab-pane active">
+      <div class="stats-grid">
+        <div class="stat-card total-listings">
+          <div class="stat-label">Total Listings</div>
+          <div class="stat-value" id="stat-total-count">0</div>
+          <div class="stat-badge">📦</div>
+        </div>
+        <div class="stat-card active-listings">
+          <div class="stat-label">Active / Visible</div>
+          <div class="stat-value" id="stat-active-count">0</div>
+          <div class="stat-badge">✓</div>
+        </div>
+        <div class="stat-card hidden-listings">
+          <div class="stat-label">Hidden</div>
+          <div class="stat-value" id="stat-hidden-count">0</div>
+          <div class="stat-badge">✕</div>
+        </div>
+      </div>
+
+      <div class="info-row">
+        <div class="panel-card">
+          <h2 class="panel-title">💡 Quick Dashboard Guide</h2>
+          <ul class="panel-bullet-list">
+            <li>
+              <span class="bullet-icon">✦</span>
+              <div>
+                <strong>Visibility Control:</strong> You can hide products instantly if you are out of stock or want to temporarily disable sales. Toggle the visibility check on the "My Products" list.
+              </div>
+            </li>
+            <li>
+              <span class="bullet-icon">✦</span>
+              <div>
+                <strong>Detailed Info:</strong> When creating a product, make sure to add descriptive highlights and upload a custom image (or URL) so buyers get a clean view of your catalog items.
+              </div>
+            </li>
+            <li>
+              <span class="bullet-icon">✦</span>
+              <div>
+                <strong>Global Catalog Search:</strong> All visible seller products automatically sync with the global customer-facing category queries and buyer search bar.
+              </div>
+            </li>
+          </ul>
+        </div>
+        <div class="panel-card" style="display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; gap: 10px;">
+          <div style="font-size: 40px; color: var(--gold)">🛡️</div>
+          <h3 style="font-size: 16px; font-weight: 600">GST/PAN Verification</h3>
+          <p style="font-size: 13px; color: var(--muted)">Verified Code: {{ seller_details.gst_pan or 'N/A' }}</p>
+          <span style="font-size: 11px; background: rgba(212, 168, 71, 0.15); border: 1px solid var(--gold); color: var(--gold); padding: 4px 10px; border-radius: 20px; font-weight: 500">Active Business</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB: My Products -->
+    <section id="tab-products" class="tab-pane">
+      <div class="list-controls">
+        <div class="search-input-wrap">
+          <input type="text" id="product-search" placeholder="Search product name..." />
+        </div>
+        <select id="product-category-filter" class="filter-select">
+          <option value="all">All Specifications</option>
           <option value="apparel">Apparel</option>
           <option value="fmcg">FMCG</option>
           <option value="mobile_accessories">Mobile Accessories</option>
@@ -28,203 +115,335 @@
         </select>
       </div>
 
-      <div class="spec-section" data-spec="apparel" hidden>
-        <div class="form-group">
-          <label for="product_name">Product Name</label>
-          <input type="text" id="product_name" name="product_name" placeholder="Enter product name" required />
-        </div>
-
-        <div class="form-group">
-          <label for="size">Size</label>
-          <select id="size" name="size" required>
-            <option value="" disabled selected>Select size</option>
-            <option value="S">S</option>
-            <option value="M">M</option>
-            <option value="L">L</option>
-            <option value="XL">XL</option>
-            <option value="XXL">XXL</option>
-            <option value="XXXL">XXXL</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label for="fabric">Fabric Name</label>
-          <input type="text" id="fabric" name="fabric" placeholder="Enter Fabric name" required />
-        </div>
-
-        <div class="form-group">
-          <label for="category">Category</label>
-          <select id="category" name="category" required>
-            <option value="" disabled selected>Select product type</option>
-            <option value="Mens Shirt">Mens Shirt</option>
-            <option value="Mens TShirt">Mens TShirt</option>
-            <option value="Mens Lower">Mens Lower</option>
-            <option value="Mens Jeans">Mens Jeans</option>
-            <option value="Mens Shorts">Mens Shorts</option>
-            <option value="Pyjama">Pyjama</option>
-            <option value="Mens Inner Wear">Mens Inner Wear</option>
-            <option value="Womens Shirt">Womens Shirt</option>
-            <option value="Womens TShirt">Womens TShirt</option>
-            <option value="Womens Lower">Womens Lower</option>
-            <option value="Womens Jeans">Womens Jeans</option>
-            <option value="Womens Pyjama">Womens Pyjama</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label for="gsm">GSM</label>
-          <input type="number" id="gsm" name="gsm" placeholder="Enter GSM" min="0" required />
-        </div>
-
-        <div class="form-group">
-          <label for="mrp">Price</label>
-          <input type="number" id="mrp" name="mrp" placeholder="Enter price" min="0" required />
-        </div>
-
-        <div class="form-group">
-          <label for="gender">Gender</label>
-          <select id="gender" name="gender" required>
-            <option value="" disabled selected>Select Gender</option>
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-          </select>
-        </div>
+      <div class="products-grid" id="products-list-container">
+        <!-- Rendered by JS -->
       </div>
+    </section>
 
-      <div class="spec-section" data-spec="fmcg" hidden>
-        <div class="form-group">
-          <label for="product_name">Product Name</label>
-          <input type="text" id="product_name" name="product_name" placeholder="Enter product name" required />
-        </div>
+    <!-- TAB: Add Product -->
+    <section id="tab-add-product" class="tab-pane">
+      <div class="form-container">
+        <h2 class="form-title">Create New Listing</h2>
+        
+        <form id="productform" action="{{ url_for('add_product') }}" method="post" enctype="multipart/form-data">
+          <!-- Specification Dropdown -->
+          <div class="form-group">
+            <label for="specification">Product Specification Collection</label>
+            <select id="specification" name="specification" required>
+              {% if seller_details.category == 'apparels' %}
+                <option value="apparel" selected>Apparel</option>
+              {% elif seller_details.category == 'fmcg' %}
+                <option value="fmcg" selected>FMCG</option>
+              {% elif seller_details.category == 'steel work' %}
+                <option value="steel_work" selected>Steel Work</option>
+              {% elif seller_details.category == 'home appliances' %}
+                <option value="home_appliances" selected>Home Appliances</option>
+              {% elif seller_details.category == 'pharmacy' %}
+                <option value="pharmacy" selected>Pharmacy</option>
+              {% else %}
+                <option value="" disabled selected>Select specifications</option>
+                <option value="apparel">Apparel</option>
+                <option value="fmcg">FMCG</option>
+                <option value="mobile_accessories">Mobile Accessories</option>
+                <option value="steel_work">Steel Work</option>
+                <option value="home_appliances">Home Appliances</option>
+                <option value="pharmacy">Pharmacy</option>
+              {% endif %}
+            </select>
+          </div>
 
-        <div class="form-group">
-          <label for="brand">Brand</label>
-          <input type="text" id="brand" name="brand" placeholder="Enter brand name" required />
-        </div>
+          <!-- Description and Image Fields (Shown for all specs) -->
+          <div class="form-group">
+            <label for="description">Product Description</label>
+            <textarea id="description" name="description" placeholder="Provide description, highlights, and bullet points..." rows="3"></textarea>
+          </div>
 
-        <div class="form-group">
-          <label for="category">Category</label>
-          <select id="category" name="category" required>
-            <option value="" disabled selected>Select category</option>
-            <option value="Food">Food</option>
-            <option value="Beverage">Beverage</option>
-            <option value="Personal Care">Personal Care</option>
-            <option value="Household">Household</option>
-          </select>
-        </div>
+          <div class="form-group image-input-container">
+            <label>Product Display Image</label>
+            <div class="toggle-group">
+              <div class="toggle-option active" id="image-upload-choice">Upload File</div>
+              <div class="toggle-option" id="image-url-choice">Image URL</div>
+            </div>
+            
+            <div id="file-input-group">
+              <input type="file" id="image_file" name="image_file" accept="image/*" />
+            </div>
+            
+            <div id="url-input-group" style="display: none;">
+              <input type="text" id="image_url" name="image_url" placeholder="https://example.com/image.jpg" />
+            </div>
+          </div>
 
-        <div class="form-group">
-          <label for="quantity">Quantity</label>
-          <input type="number" id="quantity" name="quantity" placeholder="50" required />
-        </div>
+          <!-- Spec sections -->
+          <div class="spec-section" data-spec="apparel" hidden>
+            <div class="form-group">
+              <label for="product_name_app">Product Name</label>
+              <input type="text" id="product_name_app" name="product_name" placeholder="Enter product name" required />
+            </div>
 
-        <div class="form-group">
-          <label for="mrp">MRP</label>
-          <input type="number" id="mrp" name="mrp" placeholder="Enter MRP" min="0" step="10" required />
-        </div>
+            <div class="form-group">
+              <label for="size">Size</label>
+              <select id="size" name="size" required>
+                <option value="" disabled selected>Select size</option>
+                <option value="S">S</option>
+                <option value="M">M</option>
+                <option value="L">L</option>
+                <option value="XL">XL</option>
+                <option value="XXL">XXL</option>
+                <option value="XXXL">XXXL</option>
+              </select>
+            </div>
 
-        <div class="form-group">
-          <label for="manufacturing_date">Manufacturing Date</label>
-          <input type="date" id="manufacturing_date" name="manufacturing_date" required />
-        </div>
+            <div class="form-group">
+              <label for="fabric">Fabric Name</label>
+              <input type="text" id="fabric" name="fabric" placeholder="Enter Fabric name" required />
+            </div>
 
-        <div class="form-group">
-          <label for="expiry_date">Expiry Date</label>
-          <input type="date" id="expiry_date" name="expiry_date" required />
-        </div>
+            <div class="form-group">
+              <label for="category_app">Category</label>
+              <select id="category_app" name="category" required>
+                <option value="" disabled selected>Select product type</option>
+                <option value="Mens Shirt">Mens Shirt</option>
+                <option value="Mens TShirt">Mens TShirt</option>
+                <option value="Mens Lower">Mens Lower</option>
+                <option value="Mens Jeans">Mens Jeans</option>
+                <option value="Mens Shorts">Mens Shorts</option>
+                <option value="Pyjama">Pyjama</option>
+                <option value="Mens Inner Wear">Mens Inner Wear</option>
+                <option value="Womens Shirt">Womens Shirt</option>
+                <option value="Womens TShirt">Womens TShirt</option>
+                <option value="Womens Lower">Womens Lower</option>
+                <option value="Womens Jeans">Womens Jeans</option>
+                <option value="Womens Pyjama">Womens Pyjama</option>
+              </select>
+            </div>
+
+            <div class="dim-row">
+              <div class="form-group">
+                <label for="gsm">GSM</label>
+                <input type="number" id="gsm" name="gsm" placeholder="Enter GSM" min="0" required />
+              </div>
+
+              <div class="form-group">
+                <label for="mrp_app">Price</label>
+                <input type="number" id="mrp_app" name="mrp" placeholder="Enter price" min="0" required />
+              </div>
+
+              <div class="form-group">
+                <label for="gender">Gender</label>
+                <select id="gender" name="gender" required>
+                  <option value="" disabled selected>Select Gender</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="spec-section" data-spec="fmcg" hidden>
+            <div class="form-group">
+              <label for="product_name_fmcg">Product Name</label>
+              <input type="text" id="product_name_fmcg" name="product_name" placeholder="Enter product name" required />
+            </div>
+
+            <div class="form-group">
+              <label for="brand_fmcg">Brand</label>
+              <input type="text" id="brand_fmcg" name="brand" placeholder="Enter brand name" required />
+            </div>
+
+            <div class="form-group">
+              <label for="category_fmcg">Category</label>
+              <select id="category_fmcg" name="category" required>
+                <option value="" disabled selected>Select category</option>
+                <option value="Food">Food</option>
+                <option value="Beverage">Beverage</option>
+                <option value="Personal Care">Personal Care</option>
+                <option value="Household">Household</option>
+              </select>
+            </div>
+
+            <div class="dim-row">
+              <div class="form-group">
+                <label for="quantity">Quantity</label>
+                <input type="number" id="quantity" name="quantity" placeholder="50" min="1" required />
+              </div>
+
+              <div class="form-group">
+                <label for="mrp_fmcg">MRP</label>
+                <input type="number" id="mrp_fmcg" name="mrp" placeholder="Enter MRP" min="0" required />
+              </div>
+            </div>
+
+            <div class="dim-row">
+              <div class="form-group">
+                <label for="manufacturing_date">Manufacturing Date</label>
+                <input type="date" id="manufacturing_date" name="manufacturing_date" required />
+              </div>
+
+              <div class="form-group">
+                <label for="expiry_date">Expiry Date</label>
+                <input type="date" id="expiry_date" name="expiry_date" required />
+              </div>
+            </div>
+          </div>
+
+          <div class="spec-section" data-spec="mobile_accessories" hidden>
+            <div class="form-group">
+              <label for="product_name_ma">Product Name</label>
+              <input type="text" id="product_name_ma" name="product_name" placeholder="Enter product name" required />
+            </div>
+
+            <div class="form-group">
+              <label for="brand_ma">Brand</label>
+              <input type="text" id="brand_ma" name="brand" placeholder="Enter brand name" required />
+            </div>
+
+            <div class="form-group">
+              <label for="compatible_model">Compatible Models</label>
+              <input type="text" id="compatible_model" name="compatible_model" placeholder="e.g. iPhone 15, Samsung S24" required />
+            </div>
+
+            <div class="form-group">
+              <label for="accessory_type">Accessory Type</label>
+              <select id="accessory_type" name="accessory_type" required>
+                <option value="" disabled selected>Select accessory type</option>
+                <option value="Charger">Charger</option>
+                <option value="Case">Case</option>
+                <option value="Cable">Cable</option>
+                <option value="Earphone">Earphone</option>
+                <option value="Power Bank">Power Bank</option>
+                <option value="Screen Protector">Screen Protector</option>
+                <option value="Holder/Stand">Holder/Stand</option>
+              </select>
+            </div>
+
+            <div class="dim-row">
+              <div class="form-group">
+                <label for="color">Color</label>
+                <input type="text" id="color" name="color" placeholder="Enter color" required />
+              </div>
+
+              <div class="form-group">
+                <label for="warranty">Warranty (months)</label>
+                <input type="number" id="warranty" name="warranty" placeholder="e.g. 12" min="0" required />
+              </div>
+
+              <div class="form-group">
+                <label for="mrp_ma">MRP</label>
+                <input type="number" id="mrp_ma" name="mrp" placeholder="Enter price" min="0" step="0.01" required />
+              </div>
+            </div>
+          </div>
+
+          <div class="spec-section" data-spec="steel_work" hidden>
+            <div class="form-group">
+              <label for="product_name_sw">Product Name</label>
+              <input type="text" id="product_name_sw" name="product_name" placeholder="Enter product name" required />
+            </div>
+
+            <div class="form-group">
+              <label for="steel_grade">Steel Grade</label>
+              <input type="text" id="steel_grade" name="steel_grade" placeholder="e.g. SS304" required />
+            </div>
+
+            <div class="dim-row">
+              <div class="form-group">
+                <label for="thickness">Thickness (mm)</label>
+                <input type="number" id="thickness" name="thickness" placeholder="Thickness" min="0" step="0.01" required />
+              </div>
+
+              <div class="form-group">
+                <label for="weight">Weight (kg)</label>
+                <input type="number" id="weight" name="weight" placeholder="Weight" min="0" step="0.01" required />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="finish_type">Finish Type</label>
+              <select id="finish_type" name="finish_type" required>
+                <option value="" disabled selected>Select finish</option>
+                <option value="Mill Finish">Mill Finish</option>
+                <option value="Polished">Polished</option>
+                <option value="Brushed">Brushed</option>
+                <option value="Matte">Matte</option>
+                <option value="Galvanized">Galvanized</option>
+                <option value="Powder Coated">Powder Coated</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="mrp_sw">Price</label>
+              <input type="number" id="mrp_sw" name="mrp" placeholder="Enter price" min="0" step="0.01" required />
+            </div>
+          </div>
+
+          <div class="spec-section" data-spec="home_appliances" hidden>
+            <div class="form-group">
+              <label for="product_name_ha">Product Name</label>
+              <input type="text" id="product_name_ha" name="product_name" placeholder="Enter product name" required />
+            </div>
+
+            <div class="form-group">
+              <label for="brand_ha">Brand</label>
+              <input type="text" id="brand_ha" name="brand" placeholder="Enter brand name" required />
+            </div>
+
+            <div class="dim-row">
+              <div class="form-group">
+                <label for="warranty_ha">Warranty (months)</label>
+                <input type="number" id="warranty_ha" name="warranty" placeholder="e.g. 12" min="1" required />
+              </div>
+
+              <div class="form-group">
+                <label for="mrp_ha">MRP / Price</label>
+                <input type="number" id="mrp_ha" name="mrp" placeholder="Enter price" min="1" required />
+              </div>
+            </div>
+          </div>
+
+          <div class="spec-section" data-spec="pharmacy" hidden>
+            <div class="form-group">
+              <label for="product_name_ph">Product Name</label>
+              <input type="text" id="product_name_ph" name="product_name" placeholder="Enter product name" required />
+            </div>
+
+            <div class="form-group">
+              <label for="brand_ph">Brand</label>
+              <input type="text" id="brand_ph" name="brand" placeholder="Enter brand name" required />
+            </div>
+
+            <div class="form-group">
+              <label for="category_ph">Category</label>
+              <select id="category_ph" name="category" required>
+                <option value="" disabled selected>Select category</option>
+                <option value="Food">Food</option>
+                <option value="Beverage">Beverage</option>
+                <option value="Personal Care">Personal Care</option>
+                <option value="Household">Household</option>
+                <option value="Medicine">Medicine</option>
+                <option value="First Aid">First Aid</option>
+              </select>
+            </div>
+
+            <div class="dim-row">
+              <div class="form-group">
+                <label for="mrp_ph">Price</label>
+                <input type="number" id="mrp_ph" name="mrp" placeholder="Enter price" min="1" required />
+              </div>
+
+              <div class="form-group">
+                <label for="expiry_date_ph">Expiry Date</label>
+                <input type="date" id="expiry_date_ph" name="expiry_date" required />
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-submit">Add Product Listing</button>
+        </form>
       </div>
+    </section>
+  </main>
 
-      <div class="spec-section" data-spec="mobile_accessories" hidden>
-        <div class="form-group">
-          <label for="product_name">Product Name</label>
-          <input type="text" id="product_name" name="product_name" placeholder="Enter product name" required />
-        </div>
-
-        <div class="form-group">
-          <label for="brand">Brand</label>
-          <input type="text" id="brand" name="brand" placeholder="Enter brand name" required />
-        </div>
-
-        <div class="form-group">
-          <label for="compatible_model">Compatible Models</label>
-          <input type="text" id="compatible_model" name="compatible_model" placeholder="e.g. iPhone 15, Samsung S24"
-            required />
-        </div>
-
-        <div class="form-group">
-          <label for="accessory_type">Accessory Type</label>
-          <select id="accessory_type" name="accessory_type" required>
-            <option value="" disabled selected>Select accessory type</option>
-            <option value="Charger">Charger</option>
-            <option value="Case">Case</option>
-            <option value="Cable">Cable</option>
-            <option value="Earphone">Earphone</option>
-            <option value="Power Bank">Power Bank</option>
-            <option value="Screen Protector">Screen Protector</option>
-            <option value="Holder/Stand">Holder/Stand</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label for="color">Color</label>
-          <input type="text" id="color" name="color" placeholder="Enter color" required />
-        </div>
-
-        <div class="form-group">
-          <label for="warranty">Warranty(months)</label>
-          <input type="number" id="warranty" name="warranty" placeholder="e.g. 6 months, 1 year" required />
-        </div>
-
-        <div class="form-group">
-          <label for="mrp">MRP</label>
-          <input type="number" id="mrp" name="mrp" placeholder="Enter price" min="0" step="0.01" required />
-        </div>
-      </div>
-
-      <div class="spec-section" data-spec="steel_work" hidden>
-        <div class="form-group">
-          <label for="product_name">Product Name</label>
-          <input type="text" id="product_name" name="product_name" placeholder="Enter product name" required />
-        </div>
-
-        <div class="form-group">
-          <label for="steel_grade">Steel Grade</label>
-          <input type="text" id="steel_grade" name="steel_grade" placeholder="e.g. SS304, MS, IS 2062" required />
-        </div>
-
-        <div class="form-group">
-          <label for="thickness">Thickness (mm)</label>
-          <input type="number" id="thickness" name="thickness" placeholder="Enter thickness" min="0" step="0.01"
-            required />
-        </div>
-
-        <div class="form-group">
-          <label for="weight">Weight (kg)</label>
-          <input type="number" id="weight" name="weight" placeholder="Enter weight" min="0" step="0.01" required />
-        </div>
-
-        <div class="form-group">
-          <label for="finish_type">Finish Type</label>
-          <select id="finish_type" name="finish_type" required>
-            <option value="" disabled selected>Select finish</option>
-            <option value="Mill Finish">Mill Finish</option>
-            <option value="Polished">Polished</option>
-            <option value="Brushed">Brushed</option>
-            <option value="Matte">Matte</option>
-            <option value="Galvanized">Galvanized</option>
-            <option value="Powder Coated">Powder Coated</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label for="mrp">Price</label>
-          <input type="number" id="mrp" name="mrp" placeholder="Enter price" min="0" step="0.01" required />
-        </div>
-      </div>
-
-      <button type="submit" class="btn-submit">Add Product</button>
-    </form>
-  </div>
   <script src="{{ url_for('static', path='js/seller.js') }}"></script>
 </body>
 

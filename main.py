@@ -164,9 +164,33 @@ async def credits(request: Request):
 
 @app.get("/seller")
 async def seller(request: Request):
+    user = getattr(request.state, "user", None)
+    seller_details = {}
+    if user and user.get("phone"):
+        try:
+            from backend.helper.database import get_pg_connection
+            with get_pg_connection() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        "SELECT company_name, owner_name, city, state, gst_pan, category FROM seller WHERE phone = %s",
+                        (user["phone"],)
+                    )
+                    row = cur.fetchone()
+                    if row:
+                        seller_details = {
+                            "company_name": row[0],
+                            "owner_name": row[1],
+                            "city": row[2],
+                            "state": row[3],
+                            "gst_pan": row[4],
+                            "category": row[5]
+                        }
+        except Exception as e:
+            print("Postgres seller details lookup error:", e)
+            
     return templates.TemplateResponse(request, 
         "seller.html",
-        {"request": request}
+        {"request": request, "seller_details": seller_details}
     )
 
 @app.get("/search")
@@ -182,6 +206,7 @@ async def search(request: Request, q: str = None):
         for col_name in collections_to_search:
             col = db[col_name]
             cursor = col.find({
+                "is_hidden": {"$ne": True},
                 "$or": [
                     {"name": query_regex},
                     {"product_name": query_regex}
@@ -225,7 +250,7 @@ async def search(request: Request, q: str = None):
 async def womens_wear(request: Request):
 
     womenswear = await db["womenswear"].find(
-        {}, {"_id": 0}
+        {"is_hidden": {"$ne": True}}, {"_id": 0}
     ).to_list(length=100)
 
     return templates.TemplateResponse(request, 
@@ -240,7 +265,7 @@ async def womens_wear(request: Request):
 async def homeappliances(request: Request):
 
     homeappliances = await db["homeappliances"].find(
-        {}, {"_id": 0}
+        {"is_hidden": {"$ne": True}}, {"_id": 0}
     ).to_list(length=100)
 
     return templates.TemplateResponse(request, 
@@ -255,7 +280,7 @@ async def homeappliances(request: Request):
 async def beauty(request: Request):
 
     beauty = await db["beauty"].find(
-        {}, {"_id": 0}
+        {"is_hidden": {"$ne": True}}, {"_id": 0}
     ).to_list(length=100)
 
     return templates.TemplateResponse(request, 
@@ -270,7 +295,7 @@ async def beauty(request: Request):
 async def books(request: Request):
 
     books = await db["books"].find(
-        {}, {"_id": 0}
+        {"is_hidden": {"$ne": True}}, {"_id": 0}
     ).to_list(length=100)
 
     return templates.TemplateResponse(request, 
@@ -285,7 +310,7 @@ async def books(request: Request):
 async def groceries(request: Request):
 
     groceries = await db["groceries"].find(
-        {}, {"_id": 0}
+        {"is_hidden": {"$ne": True}}, {"_id": 0}
     ).to_list(length=100)
 
     return templates.TemplateResponse(request, 
@@ -300,7 +325,7 @@ async def groceries(request: Request):
 async def pharma(request: Request):
 
     pharma = await db["pharma"].find(
-        {}, {"_id": 0}
+        {"is_hidden": {"$ne": True}}, {"_id": 0}
     ).to_list(length=100)
 
     return templates.TemplateResponse(request, 
@@ -315,7 +340,7 @@ async def pharma(request: Request):
 async def kids(request: Request):
 
     kids = await db["kids"].find(
-        {}, {"_id": 0}
+        {"is_hidden": {"$ne": True}}, {"_id": 0}
     ).to_list(length=100)
 
     return templates.TemplateResponse(request, 
@@ -330,7 +355,7 @@ async def kids(request: Request):
 async def furniture(request: Request):
 
     furniture = await db["furniture"].find(
-        {}, {"_id": 0}
+        {"is_hidden": {"$ne": True}}, {"_id": 0}
     ).to_list(length=100)
 
     return templates.TemplateResponse(request, 
@@ -345,7 +370,7 @@ async def furniture(request: Request):
 async def mens_wear(request: Request):
 
     menswear = await db["menswear"].find(
-        {}, {"_id": 0}
+        {"is_hidden": {"$ne": True}}, {"_id": 0}
     ).to_list(length=100)
 
     return templates.TemplateResponse(request, 

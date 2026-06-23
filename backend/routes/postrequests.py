@@ -1,6 +1,6 @@
 from fastapi import HTTPException, APIRouter, Response
 from fastapi.responses import JSONResponse
-from backend.pydanticmodels import SignupRequest, LoginRequest, apparel, fmcg, mobile_accessories, steel_work, orders
+from backend.pydanticmodels import SignupRequest, LoginRequest, apparel, fmcg, mobile_accessories, steel_work, orders, ToggleVisibilityRequest, DeleteProductRequest, home_appliances, pharmacy
 from backend.helper.database import get_pg_connection
 from dotenv import load_dotenv
 import os
@@ -10,6 +10,8 @@ from urllib.parse import quote_plus
 from jose import jwt
 from passlib.context import CryptContext
 import requests
+from bson import ObjectId
+
 
 SECRET_KEY = os.getenv("SECRET_KEY", "fallback_secret_key_please_change")
 ALGORITHM = "HS256"
@@ -203,6 +205,62 @@ async def add_product(request : Request):
 
     product_specification = form.get("specification")
 
+    user = getattr(request.state, "user", None)
+    seller_phone = user.get("phone") if user else None
+    
+    # Fetch category from postgres
+    seller_category = None
+    conn = None
+    cursor = None
+    try:
+        conn = get_pg_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT category FROM seller WHERE phone = %s", (seller_phone,))
+        row = cursor.fetchone()
+        if row:
+            seller_category = row[0]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database lookup failed: {str(e)}")
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+        
+    if not seller_category:
+        raise HTTPException(status_code=400, detail="Seller category not found.")
+        
+    category_map = {
+        "apparels": "apparel",
+        "fmcg": "fmcg",
+        "steel work": "steel_work",
+        "home appliances": "home_appliances",
+        "pharmacy": "pharmacy"
+    }
+    
+    allowed_spec = category_map.get(seller_category)
+    if product_specification != allowed_spec:
+        raise HTTPException(
+            status_code=400,
+            detail=f"You can only add products matching your business category: {seller_category} (allowed: {allowed_spec})"
+        )
+        
+    description = form.get("description", "")
+    
+    image_url = form.get("image_url", "")
+    image_file = form.get("image_file")
+    image_filename = None
+    
+    if image_file and hasattr(image_file, "filename") and image_file.filename:
+        import uuid
+        ext = os.path.splitext(image_file.filename)[1]
+        image_filename = f"upload_{uuid.uuid4().hex}{ext}"
+        filepath = os.path.join("frontend/static/images", image_filename)
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+        contents = await image_file.read()
+        with open(filepath, "wb") as f:
+            f.write(contents)
+    elif image_url:
+        image_filename = image_url
+
     if product_specification == "apparel":
 
         apparel_product = apparel(
@@ -212,7 +270,11 @@ async def add_product(request : Request):
             category=form.get("category"),
             gsm=form.get("gsm"),
             mrp=form.get("mrp"),
-            gender=form.get("gender")
+            gender=form.get("gender"),
+            seller_phone=seller_phone,
+            is_hidden=False,
+            description=description,
+            image=image_filename
         )
 
         result = await db["apparel"].insert_one(
@@ -226,13 +288,17 @@ async def add_product(request : Request):
 
     elif product_specification == "fmcg":
         fmcg_product = fmcg(
-        product_name=form.get("product_name"),
-        brand=form.get("brand"),
-        category=form.get("category"),
-        quantity=form.get("quantity"),
-        mrp=form.get("mrp"),
-        manufacturing_date=form.get("manufacturing_date"),
-        expiry_date=form.get("expiry_date"),
+            product_name=form.get("product_name"),
+            brand=form.get("brand"),
+            category=form.get("category"),
+            quantity=form.get("quantity"),
+            mrp=form.get("mrp"),
+            manufacturing_date=form.get("manufacturing_date"),
+            expiry_date=form.get("expiry_date"),
+            seller_phone=seller_phone,
+            is_hidden=False,
+            description=description,
+            image=image_filename
         )
 
         data = fmcg_product.model_dump()
@@ -255,7 +321,11 @@ async def add_product(request : Request):
             accessory_type = form.get("accessory_type"),
             color = form.get("color"),
             warranty = form.get("warranty"),
-            mrp = form.get("mrp")
+            mrp = form.get("mrp"),
+            seller_phone=seller_phone,
+            is_hidden=False,
+            description=description,
+            image=image_filename
         )
         result = await db["mobile_accessories"].insert_one(
             ma_product.model_dump()
@@ -273,7 +343,11 @@ async def add_product(request : Request):
             thickness = form.get("thickness"),
             weight = form.get("weight"),
             finish_type = form.get("finish_type"),
-            mrp = form.get("mrp")
+            mrp = form.get("mrp"),
+            seller_phone=seller_phone,
+            is_hidden=False,
+            description=description,
+            image=image_filename
         )
         result = await db["steel_work"].insert_one(
             sw_product.model_dump()
@@ -284,11 +358,118 @@ async def add_product(request : Request):
             "id": str(result.inserted_id)
         }
 
+    elif product_specification == "home_appliances":
+        ha_product = home_appliances(
+            product_name=form.get("product_name"),
+            brand=form.get("brand"),
+            mrp=form.get("mrp"),
+            warranty=form.get("warranty"),
+            seller_phone=seller_phone,
+            is_hidden=False,
+            description=description,
+            image=image_filename
+        )
+        result = await db["homeappliances"].insert_one(
+            ha_product.model_dump()
+        )
+        return {
+            "message": "Home Appliance product added",
+            "id": str(result.inserted_id)
+        }
+
+    elif product_specification == "pharmacy":
+        ph_product = pharmacy(
+            product_name=form.get("product_name"),
+            brand=form.get("brand"),
+            category=form.get("category"),
+            mrp=form.get("mrp"),
+            expiry_date=form.get("expiry_date"),
+            seller_phone=seller_phone,
+            is_hidden=False,
+            description=description,
+            image=image_filename
+        )
+        data = ph_product.model_dump()
+        data["expiry_date"] = data["expiry_date"].isoformat()
+        
+        result = await db["pharma"].insert_one(data)
+        return {
+            "message": "Pharmacy product added",
+            "id": str(result.inserted_id)
+        }
 
     raise HTTPException(
         status_code=400,
         detail="Invalid product specification"
     )
+
+@router.post("/POST/seller/product/toggle-visibility")
+async def toggle_visibility(data: ToggleVisibilityRequest, request: Request):
+    user = getattr(request.state, "user", None)
+    if not user or user.get("role") != "seller":
+        raise HTTPException(status_code=403, detail="Access denied. Sellers only.")
+        
+    seller_phone = user.get("phone")
+    
+    specification_to_collection = {
+        "apparel": "apparel",
+        "fmcg": "fmcg",
+        "mobile_accessories": "mobile_accessories",
+        "steel_work": "steel_work",
+        "home_appliances": "homeappliances",
+        "pharmacy": "pharma"
+    }
+    
+    col_name = specification_to_collection.get(data.specification)
+    if not col_name:
+        raise HTTPException(status_code=400, detail="Invalid product specification")
+        
+    try:
+        result = await db[col_name].update_one(
+            {"_id": ObjectId(data.product_id), "seller_phone": seller_phone},
+            {"$set": {"is_hidden": data.is_hidden}}
+        )
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="Product not found or not owned by you.")
+            
+        status_str = "hidden" if data.is_hidden else "visible"
+        return {"message": f"Product is now {status_str}"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/POST/seller/product/delete")
+async def delete_product(data: DeleteProductRequest, request: Request):
+    user = getattr(request.state, "user", None)
+    if not user or user.get("role") != "seller":
+        raise HTTPException(status_code=403, detail="Access denied. Sellers only.")
+        
+    seller_phone = user.get("phone")
+    
+    specification_to_collection = {
+        "apparel": "apparel",
+        "fmcg": "fmcg",
+        "mobile_accessories": "mobile_accessories",
+        "steel_work": "steel_work",
+        "home_appliances": "homeappliances",
+        "pharmacy": "pharma"
+    }
+    
+    col_name = specification_to_collection.get(data.specification)
+    if not col_name:
+        raise HTTPException(status_code=400, detail="Invalid product specification")
+        
+    try:
+        result = await db[col_name].delete_one(
+            {"_id": ObjectId(data.product_id), "seller_phone": seller_phone}
+        )
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="Product not found or not owned by you.")
+            
+        return {"message": "Product deleted successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 
 
 @router.post("/POST/order")

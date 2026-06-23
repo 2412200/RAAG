@@ -75,6 +75,10 @@ class apparel(BaseModel):
     gsm : int = Field(gt=1)
     mrp : float = Field(gt=1)
     gender : Literal["Male", "Female"]
+    seller_phone: Optional[str] = None
+    is_hidden: bool = False
+    description: Optional[str] = ""
+    image: Optional[str] = None
 
 class fmcg(BaseModel):
     product_name : str
@@ -84,6 +88,11 @@ class fmcg(BaseModel):
     mrp : float = Field(gt=1)
     manufacturing_date : date
     expiry_date : date 
+    seller_phone: Optional[str] = None
+    is_hidden: bool = False
+    description: Optional[str] = ""
+    image: Optional[str] = None
+
     @model_validator(mode="after")
     def validate_dates(self):
         if self.expiry_date <= self.manufacturing_date:
@@ -101,6 +110,10 @@ class mobile_accessories(BaseModel):
     color : str
     warranty : int = Field(gt = 1)
     mrp : float = Field(gt = 1)
+    seller_phone: Optional[str] = None
+    is_hidden: bool = False
+    description: Optional[str] = ""
+    image: Optional[str] = None
 
 class steel_work(BaseModel):
     product_name : str
@@ -109,10 +122,46 @@ class steel_work(BaseModel):
     weight : float
     finish_type : Literal["Mill Finish", "Polished", "Brushed", "Matte", "Galvanized", "Powder Coated"]
     mrp : float
+    seller_phone: Optional[str] = None
+    is_hidden: bool = False
+    description: Optional[str] = ""
+    image: Optional[str] = None
 
 class otp_request(BaseModel):
     phone : str
     verification_code : int
     role : str
+
+class ToggleVisibilityRequest(BaseModel):
+    product_id: str
+    specification: str
+    is_hidden: bool
+
+class DeleteProductRequest(BaseModel):
+    product_id: str
+    specification: str
+
+class home_appliances(BaseModel):
+    product_name : str
+    brand : str
+    mrp : float = Field(gt = 1)
+    warranty : int = Field(gt = 1)
+    seller_phone: Optional[str] = None
+    is_hidden: bool = False
+    description: Optional[str] = ""
+    image: Optional[str] = None
+
+class pharmacy(BaseModel):
+    product_name : str
+    brand : str
+    category : Literal["Food", "Beverage", "Personal Care", "Household", "Medicine", "First Aid"]
+    mrp : float = Field(gt = 1)
+    expiry_date : date
+    seller_phone: Optional[str] = None
+    is_hidden: bool = False
+    description: Optional[str] = ""
+    image: Optional[str] = None
+
+
 
             
