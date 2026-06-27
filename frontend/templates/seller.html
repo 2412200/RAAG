@@ -5,8 +5,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Seller Dashboard - RAAG</title>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="{{ url_for('static', path='css/seller.css') }}">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;700&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', path='css/seller.css') }}?v=1.0.1">
   <link rel="icon" type="image/png" href="{{ url_for('static', path='favicon.png') }}">
 </head>
 
@@ -22,12 +24,15 @@
         <a href="#" class="menu-item" data-tab="tab-products">
           <span style="font-size: 16px;">📦</span> My Products
         </a>
+        <a href="#" class="menu-item" data-tab="tab-orders">
+          <span style="font-size: 16px;">📋</span> My Orders
+        </a>
         <a href="#" class="menu-item" data-tab="tab-add-product">
           <span style="font-size: 16px;">➕</span> Add Product
         </a>
       </nav>
     </div>
-    
+
     <div class="sidebar-profile">
       <div class="profile-name">{{ seller_details.owner_name or 'Owner' }}</div>
       <div class="profile-business">{{ seller_details.company_name or 'Seller Account' }}</div>
@@ -66,38 +71,6 @@
           <div class="stat-badge">✕</div>
         </div>
       </div>
-
-      <div class="info-row">
-        <div class="panel-card">
-          <h2 class="panel-title">💡 Quick Dashboard Guide</h2>
-          <ul class="panel-bullet-list">
-            <li>
-              <span class="bullet-icon">✦</span>
-              <div>
-                <strong>Visibility Control:</strong> You can hide products instantly if you are out of stock or want to temporarily disable sales. Toggle the visibility check on the "My Products" list.
-              </div>
-            </li>
-            <li>
-              <span class="bullet-icon">✦</span>
-              <div>
-                <strong>Detailed Info:</strong> When creating a product, make sure to add descriptive highlights and upload a custom image (or URL) so buyers get a clean view of your catalog items.
-              </div>
-            </li>
-            <li>
-              <span class="bullet-icon">✦</span>
-              <div>
-                <strong>Global Catalog Search:</strong> All visible seller products automatically sync with the global customer-facing category queries and buyer search bar.
-              </div>
-            </li>
-          </ul>
-        </div>
-        <div class="panel-card" style="display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; gap: 10px;">
-          <div style="font-size: 40px; color: var(--gold)">🛡️</div>
-          <h3 style="font-size: 16px; font-weight: 600">GST/PAN Verification</h3>
-          <p style="font-size: 13px; color: var(--muted)">Verified Code: {{ seller_details.gst_pan or 'N/A' }}</p>
-          <span style="font-size: 11px; background: rgba(212, 168, 71, 0.15); border: 1px solid var(--gold); color: var(--gold); padding: 4px 10px; border-radius: 20px; font-weight: 500">Active Business</span>
-        </div>
-      </div>
     </section>
 
     <!-- TAB: My Products -->
@@ -120,34 +93,75 @@
       </div>
     </section>
 
+    <!-- TAB: My Orders -->
+    <section id="tab-orders" class="tab-pane">
+      <div class="list-controls">
+        <h2 style="font-size: 20px; font-weight: 700;">Customer Orders</h2>
+      </div>
+      <div class="orders-board">
+        <!-- Pending Section -->
+        <div class="orders-section">
+          <div class="orders-section-header pending">
+            <h3>Pending</h3>
+            <span class="orders-count" id="pending-orders-count">0</span>
+          </div>
+          <div class="orders-grid" id="orders-pending-container">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+        <!-- Processing Section -->
+        <div class="orders-section">
+          <div class="orders-section-header processing">
+            <h3>Processing</h3>
+            <span class="orders-count" id="processing-orders-count">0</span>
+          </div>
+          <div class="orders-grid" id="orders-processing-container">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+        <!-- Completed Section -->
+        <div class="orders-section">
+          <div class="orders-section-header completed">
+            <h3>Completed</h3>
+            <span class="orders-count" id="completed-orders-count">0</span>
+          </div>
+          <div class="orders-grid" id="orders-completed-container">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- TAB: Add Product -->
     <section id="tab-add-product" class="tab-pane">
       <div class="form-container">
         <h2 class="form-title">Create New Listing</h2>
-        
+
         <form id="productform" action="{{ url_for('add_product') }}" method="post" enctype="multipart/form-data">
           <!-- Specification Dropdown -->
           <div class="form-group">
             <label for="specification">Product Specification Collection</label>
             <select id="specification" name="specification" required>
               {% if seller_details.category == 'apparels' %}
-                <option value="apparel" selected>Apparel</option>
+              <option value="apparel" selected>Apparel</option>
               {% elif seller_details.category == 'fmcg' %}
-                <option value="fmcg" selected>FMCG</option>
+              <option value="fmcg" selected>FMCG</option>
               {% elif seller_details.category == 'steel work' %}
-                <option value="steel_work" selected>Steel Work</option>
+              <option value="steel_work" selected>Steel Work</option>
               {% elif seller_details.category == 'home appliances' %}
-                <option value="home_appliances" selected>Home Appliances</option>
+              <option value="home_appliances" selected>Home Appliances</option>
               {% elif seller_details.category == 'pharmacy' %}
-                <option value="pharmacy" selected>Pharmacy</option>
+              <option value="pharmacy" selected>Pharmacy</option>
               {% else %}
-                <option value="" disabled selected>Select specifications</option>
-                <option value="apparel">Apparel</option>
-                <option value="fmcg">FMCG</option>
-                <option value="mobile_accessories">Mobile Accessories</option>
-                <option value="steel_work">Steel Work</option>
-                <option value="home_appliances">Home Appliances</option>
-                <option value="pharmacy">Pharmacy</option>
+              <option value="" disabled selected>Select specifications</option>
+              <option value="apparel">Apparel</option>
+              <option value="fmcg">FMCG</option>
+              <option value="mobile_accessories">Mobile Accessories</option>
+              <option value="steel_work">Steel Work</option>
+              <option value="home_appliances">Home Appliances</option>
+              <option value="pharmacy">Pharmacy</option>
               {% endif %}
             </select>
           </div>
@@ -155,7 +169,8 @@
           <!-- Description and Image Fields (Shown for all specs) -->
           <div class="form-group">
             <label for="description">Product Description</label>
-            <textarea id="description" name="description" placeholder="Provide description, highlights, and bullet points..." rows="3"></textarea>
+            <textarea id="description" name="description"
+              placeholder="Provide description, highlights, and bullet points..." rows="3"></textarea>
           </div>
 
           <div class="form-group image-input-container">
@@ -164,11 +179,11 @@
               <div class="toggle-option active" id="image-upload-choice">Upload File</div>
               <div class="toggle-option" id="image-url-choice">Image URL</div>
             </div>
-            
+
             <div id="file-input-group">
               <input type="file" id="image_file" name="image_file" accept="image/*" />
             </div>
-            
+
             <div id="url-input-group" style="display: none;">
               <input type="text" id="image_url" name="image_url" placeholder="https://example.com/image.jpg" />
             </div>
@@ -300,7 +315,8 @@
 
             <div class="form-group">
               <label for="compatible_model">Compatible Models</label>
-              <input type="text" id="compatible_model" name="compatible_model" placeholder="e.g. iPhone 15, Samsung S24" required />
+              <input type="text" id="compatible_model" name="compatible_model" placeholder="e.g. iPhone 15, Samsung S24"
+                required />
             </div>
 
             <div class="form-group">
@@ -349,7 +365,8 @@
             <div class="dim-row">
               <div class="form-group">
                 <label for="thickness">Thickness (mm)</label>
-                <input type="number" id="thickness" name="thickness" placeholder="Thickness" min="0" step="0.01" required />
+                <input type="number" id="thickness" name="thickness" placeholder="Thickness" min="0" step="0.01"
+                  required />
               </div>
 
               <div class="form-group">
@@ -444,7 +461,7 @@
     </section>
   </main>
 
-  <script src="{{ url_for('static', path='js/seller.js') }}"></script>
+  <script src="{{ url_for('static', path='js/seller.js') }}?v=1.0.1"></script>
 </body>
 
 </html>

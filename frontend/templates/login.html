@@ -440,6 +440,9 @@ document
       role: selectedRole
     };
 
+    const statusDiv = document.getElementById("status");
+    statusDiv.hidden = true;
+
     try {
 
       const response = await fetch(
@@ -456,12 +459,9 @@ document
       const data = await response.json();
 
       if (!response.ok) {
-
-        alert(
-          data.detail ||
-          "Invalid credentials"
-        );
-
+        statusDiv.className = "status is-error";
+        statusDiv.textContent = data.detail || "Invalid credentials";
+        statusDiv.hidden = false;
         return;
       }
 
@@ -489,10 +489,9 @@ document
     } catch (error) {
 
       console.error(error);
-
-      alert(
-        "Unable to connect to server"
-      );
+      statusDiv.className = "status is-error";
+      statusDiv.textContent = "Unable to connect to server";
+      statusDiv.hidden = false;
 
     }
 

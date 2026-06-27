@@ -15,6 +15,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Products table container
     const productsListEl = document.getElementById("products-list-container");
+    const pendingOrdersListEl = document.getElementById("orders-pending-container");
+    const processingOrdersListEl = document.getElementById("orders-processing-container");
+    const completedOrdersListEl = document.getElementById("orders-completed-container");
+
+    const pendingCountEl = document.getElementById("pending-orders-count");
+    const processingCountEl = document.getElementById("processing-orders-count");
+    const completedCountEl = document.getElementById("completed-orders-count");
 
     // Search and filter elements
     const searchInput = document.getElementById("product-search");
@@ -95,6 +102,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (targetTab === "tab-products" || targetTab === "tab-overview") {
                 fetchProducts();
+            } else if (targetTab === "tab-orders") {
+                fetchOrders();
             }
         });
     });
@@ -149,6 +158,95 @@ document.addEventListener("DOMContentLoaded", () => {
         if (specSelect.value) {
             showSection(specSelect.value);
         }
+    }
+
+    // Fetch orders from backend
+    async function fetchOrders() {
+        try {
+            const response = await fetch("/GET/seller/orders");
+            if (!response.ok) throw new Error("Failed to fetch orders");
+            
+            const data = await response.json();
+            renderOrdersList(data.orders || []);
+        } catch (error) {
+            console.error("Error fetching orders:", error);
+            showToast("Failed to load customer orders", "error");
+        }
+    }
+
+        function renderSectionOrders(containerEl, ordersList, statusName) {
+        if (!containerEl) return;
+        containerEl.innerHTML = "";
+
+        if (ordersList.length === 0) {
+            containerEl.innerHTML = `
+                <div class="empty-state" style="padding: 30px 10px; min-height: 150px; border-style: dashed; background: transparent; border-radius: 12px; box-shadow: none;">
+                    <div class="empty-icon" style="font-size: 24px; margin-bottom: 8px;">📋</div>
+                    <div class="empty-title" style="font-size: 13px;">No ${statusName.toLowerCase()} orders</div>
+                </div>
+            `;
+            return;
+        }
+
+        ordersList.forEach(order => {
+            const card = document.createElement("div");
+            card.className = "order-card";
+
+            let productsHtml = "";
+            order.products.forEach(p => {
+                productsHtml += `
+                    <div class="order-product-item">
+                        <span>📦 ${p.product_name}</span>
+                        <span>Qty: <strong>${p.quantity}</strong> &nbsp;|&nbsp; ₹${p.price.toFixed(2)} each</span>
+                    </div>
+                `;
+            });
+
+            const status = (order.order_status || "Pending");
+            const statusLower = status.toLowerCase();
+
+            card.innerHTML = `
+                <div class="order-header">
+                    <div class="order-id-date">
+                        <div class="order-id-lbl">Order #${order.order_id.slice(-6).toUpperCase()}</div>
+                        <div class="order-date-lbl">Ordered: ${order.created_at}</div>
+                    </div>
+                    <select class="order-status-select ${statusLower}" data-order-id="${order.order_id}">
+                        <option value="Pending" ${statusLower === "pending" ? "selected" : ""}>Pending</option>
+                        <option value="Processing" ${statusLower === "processing" ? "selected" : ""}>Processing</option>
+                        <option value="Completed" ${statusLower === "completed" ? "selected" : ""}>Completed</option>
+                    </select>
+                </div>
+                <div class="order-buyer-details">
+                    <div><strong>Customer:</strong> ${order.customer_name}</div>
+                    <div><strong>Phone:</strong> +${order.customer_number}</div>
+                </div>
+                <div class="order-products-list">
+                    ${productsHtml}
+                </div>
+                <div class="order-footer">
+                    <div class="order-subtotal-lbl">Subtotal:</div>
+                    <div class="order-total-amt">₹${parseFloat(order.total_amount).toFixed(2)}</div>
+                </div>
+            `;
+
+            containerEl.appendChild(card);
+        });
+    }
+
+    // Render Orders Card List
+    function renderOrdersList(orders) {
+        const pendingOrders = orders.filter(o => (o.order_status || "").toLowerCase() === "pending" || !(o.order_status));
+        const processingOrders = orders.filter(o => (o.order_status || "").toLowerCase() === "processing");
+        const completedOrders = orders.filter(o => (o.order_status || "").toLowerCase() === "completed");
+
+        if (pendingCountEl) pendingCountEl.textContent = pendingOrders.length;
+        if (processingCountEl) processingCountEl.textContent = processingOrders.length;
+        if (completedCountEl) completedCountEl.textContent = completedOrders.length;
+
+        renderSectionOrders(pendingOrdersListEl, pendingOrders, "Pending");
+        renderSectionOrders(processingOrdersListEl, processingOrders, "Processing");
+        renderSectionOrders(completedOrdersListEl, completedOrders, "Completed");
     }
 
     // Fetch products from backend
@@ -244,7 +342,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             row.innerHTML = `
                 <div class="product-image-container">
-                    <img src="${imgSrc}" alt="${product.product_name}" onerror="this.src='/static/images/default.webp'">
+                    <img src="${imgSrc}" alt="${product.product_name}" onerror="this.onerror=null;this.src='/static/images/default.webp'">
                 </div>
                 <div class="product-info-col">
                     <div class="product-name-txt">${product.product_name}</div>
@@ -374,6 +472,44 @@ document.addEventListener("DOMContentLoaded", () => {
     // Hook search and filter events
     if (searchInput) searchInput.addEventListener("input", renderProductsList);
     if (categoryFilter) categoryFilter.addEventListener("change", renderProductsList);
+
+    // Handle order status change
+    const tabOrdersPane = document.getElementById("tab-orders");
+    if (tabOrdersPane) {
+        tabOrdersPane.addEventListener("change", async (e) => {
+            if (e.target.classList.contains("order-status-select")) {
+                const orderId = e.target.getAttribute("data-order-id");
+                const newStatus = e.target.value;
+                
+                const oldClassList = Array.from(e.target.classList);
+                e.target.className = `order-status-select ${newStatus.toLowerCase()}`;
+                
+                try {
+                    const response = await fetch("/POST/order/update-status", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            order_id: orderId,
+                            status: newStatus
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.detail || "Failed to update order status");
+                    
+                    showToast(data.message || `Order status updated to ${newStatus}`, "success");
+                    fetchOrders();
+                } catch (error) {
+                    console.error(error);
+                    showToast("Failed to update status: " + error.message, "error");
+                    e.target.className = oldClassList.join(" ");
+                    fetchOrders();
+                }
+            }
+        });
+    }
 
     // Form submission
     if (form) {

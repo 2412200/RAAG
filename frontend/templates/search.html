@@ -99,7 +99,6 @@
     <div class="nav-left">
       <a href="/home">Home</a>
       <a href="/orders">My Orders</a>
-      <a href="/credits">My Credit</a>
     </div>
     <div class="nav-right">
       <a href="/">Seller Login</a>
@@ -131,7 +130,7 @@
       {% for product in Products %}
       <div class="product-card">
         <span class="product-category-tag">{{ product.category }}</span>
-        <img src="/static/images/{{ product.image }}" alt="{{ product.name }}" onerror="this.src='/static/images/default.webp'">
+        <img src="/static/images/{{ product.image }}" alt="{{ product.name }}" onerror="this.onerror=null;this.src='/static/images/default.webp'">
         <p>{{ product.name }}</p>
         <p>₹{{ product.price }}</p>
         <p>Min. order: {{ product.quantity }} units</p>

@@ -25,9 +25,9 @@ app.mount(
 
 templates = Jinja2Templates(directory="frontend/templates")
 
-username = quote_plus(os.getenv("MONGO_USERNAME"))
-password = quote_plus(os.getenv("MONGO_PASSWORD"))
-cluster = quote_plus(os.getenv("MONGO_CLUSTER"))
+username = quote_plus(os.getenv("MONGO_USERNAME") or "")
+password = quote_plus(os.getenv("MONGO_PASSWORD") or "")
+cluster = quote_plus(os.getenv("MONGO_CLUSTER") or "")
 
 MONGO_URI = f"mongodb+srv://{username}:{password}@{cluster}/?retryWrites=true&w=majority"
 
@@ -85,7 +85,7 @@ async def auth_middleware(request: Request, call_next):
         seller_paths = ["/seller", "/POST/product"]
         # Buyer paths
         buyer_paths = [
-            "/home", "/orders", "/credits", "/search", "/womens", "/mens-wear", 
+            "/home", "/orders", "/search", "/womens", "/mens-wear", 
             "/homeappliances", "/beauty", "/books", "/groceries", "/pharma", "/kids", "/furniture",
             "/POST/order"
         ]
@@ -124,46 +124,8 @@ async def home(request: Request):
 async def orders(request : Request):
     return templates.TemplateResponse(request, "orders.html",{"request":request})
 
-@app.get("/credits")
-async def credits(request: Request):
-    user = getattr(request.state, "user", None)
-    shop_name = "Buyer Account"
-    
-    if user and user.get("phone"):
-        try:
-            from backend.helper.database import get_pg_connection
-            with get_pg_connection() as conn:
-                with conn.cursor() as cur:
-                    cur.execute("SELECT shop_name FROM buyer WHERE phone = %s", (user["phone"],))
-                    row = cur.fetchone()
-                    if row:
-                        shop_name = row[0]
-        except Exception as e:
-            print("Postgres credit lookup error:", e)
-
-    # Mock dynamic credit details
-    credit_limit = 500000.0
-    used_credit = 145000.0
-    available_credit = credit_limit - used_credit
-    
-    ledger = [
-        {"date": "2026-06-12", "ref": "INV-2026-089", "desc": "Purchase - Apparel & FMCG", "amount": -85000.0, "status": "Settled"},
-        {"date": "2026-06-05", "ref": "PAY-10022", "desc": "Bank Transfer Payment", "amount": 50000.0, "status": "Completed"},
-        {"date": "2026-05-28", "ref": "INV-2026-054", "desc": "Purchase - Kids Toys", "amount": -110000.0, "status": "Settled"},
-        {"date": "2026-05-20", "ref": "PAY-10009", "desc": "Cheque Settlement", "amount": 100000.0, "status": "Completed"}
-    ]
-    
-    return templates.TemplateResponse(request, "credits.html", {
-        "request": request,
-        "shop_name": shop_name,
-        "credit_limit": credit_limit,
-        "used_credit": used_credit,
-        "available_credit": available_credit,
-        "ledger": ledger
-    })
-
 @app.get("/seller")
-async def seller(request: Request):
+def seller(request: Request):
     user = getattr(request.state, "user", None)
     seller_details = {}
     if user and user.get("phone"):
@@ -194,7 +156,7 @@ async def seller(request: Request):
     )
 
 @app.get("/search")
-async def search(request: Request, q: str = None):
+async def search(request: Request, q: str | None = None):
     results = []
     if q:
         query_regex = {"$regex": q, "$options": "i"}

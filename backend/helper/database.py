@@ -1,10 +1,10 @@
 import os
 from dotenv import load_dotenv
-import psycopg
+from psycopg_pool import ConnectionPool
 
 load_dotenv()
-
 DATABASE_URL = os.getenv("POSTGRES_URL")
+pool = ConnectionPool(conninfo=DATABASE_URL, min_size=1, max_size=10)
 
 def get_pg_connection():
-    return psycopg.connect(DATABASE_URL)
+    return pool.connection()

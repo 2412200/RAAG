@@ -2,6 +2,7 @@ from fastapi import HTTPException, APIRouter, Response
 from fastapi.responses import JSONResponse
 from backend.pydanticmodels import SignupRequest, LoginRequest, apparel, fmcg, mobile_accessories, steel_work, orders, ToggleVisibilityRequest, DeleteProductRequest, home_appliances, pharmacy
 from backend.helper.database import get_pg_connection
+from anyio.to_thread import run_sync
 from dotenv import load_dotenv
 import os
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -23,9 +24,9 @@ load_dotenv()
 
 router = APIRouter()
 
-username = quote_plus(os.getenv("MONGO_USERNAME"))
-password = quote_plus(os.getenv("MONGO_PASSWORD"))
-cluster = quote_plus(os.getenv("MONGO_CLUSTER"))
+username = quote_plus(os.getenv("MONGO_USERNAME") or "")
+password = quote_plus(os.getenv("MONGO_PASSWORD") or "")
+cluster = quote_plus(os.getenv("MONGO_CLUSTER") or "")
 
 MONGO_URI = f"mongodb+srv://{username}:{password}@{cluster}/?retryWrites=true&w=majority"
 
@@ -44,110 +45,104 @@ def signup(data: SignupRequest):
             phone_num = "+" + phone_num
     data.phone = phone_num
 
-    conn = None
-    cursor = None
     try:
-        conn = get_pg_connection()
-        cursor = conn.cursor()
+        with get_pg_connection() as conn:
+            with conn.cursor() as cursor:
+                # Check if user with this phone number already exists for this role
+                table = "seller" if data.role == "seller" else "buyer"
+                cursor.execute(f"SELECT 1 FROM {table} WHERE phone = %s", (data.phone,))
+                if cursor.fetchone():
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f'user with {data.phone} already exists'
+                    )
 
-        # Check if user with this phone number already exists for this role
-        table = "seller" if data.role == "seller" else "buyer"
-        cursor.execute(f"SELECT 1 FROM {table} WHERE phone = %s", (data.phone,))
-        if cursor.fetchone():
-            raise HTTPException(
-                status_code=400,
-                detail=f'user with {data.phone} already exists'
-            )
+                # Verify the OTP via Twilio VerificationCheck
+                if not data.otp:
+                    raise HTTPException(
+                        status_code=400,
+                        detail="OTP is required to sign up"
+                    )
 
-        # Verify the OTP via Twilio VerificationCheck
-        if not data.otp:
-            raise HTTPException(
-                status_code=400,
-                detail="OTP is required to sign up"
-            )
-
-        twilio_check_url = f"https://verify.twilio.com/v2/Services/VA8615c88e13880d52c82e08acb4f51171/VerificationCheck"
-        account_ssid = os.getenv("ACCOUNT_SID")
-        auth_token = os.getenv("Twilio_auth_token")
-        check_payload = {
-            "To": data.phone,
-            "Code": data.otp
-        }
-        response = requests.post(
-            twilio_check_url,
-            data=check_payload,
-            auth=(account_ssid, auth_token)
-        )
-        if response.status_code != 200 or response.json().get("status") != "approved":
-            raise HTTPException(
-                status_code=400,
-                detail="Invalid or expired OTP"
-            )
-
-        hashed_password = pwd_context.hash(data.password)
-
-        if data.role == "seller":
-
-            cursor.execute("""
-                INSERT INTO seller
-                (
-                    company_name,
-                    owner_name,
-                    phone,
-                    city,
-                    state,
-                    gst_pan,
-                    category,
-                    password_
+                twilio_check_url = f"https://verify.twilio.com/v2/Services/VA8615c88e13880d52c82e08acb4f51171/VerificationCheck"
+                account_ssid = os.getenv("ACCOUNT_SID")
+                auth_token = os.getenv("Twilio_auth_token")
+                check_payload = {
+                    "To": data.phone,
+                    "Code": data.otp
+                }
+                response = requests.post(
+                    twilio_check_url,
+                    data=check_payload,
+                    auth=(account_ssid, auth_token)
                 )
-                VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
-            """, (
-                data.business_name,
-                data.owner_name,
-                data.phone,
-                data.city,
-                data.state,
-                data.gst_pan,
-                data.category,
-                hashed_password
-            ))
+                if response.status_code != 200 or response.json().get("status") != "approved":
+                    raise HTTPException(
+                        status_code=400,
+                        detail="Invalid or expired OTP"
+                    )
 
-        else:
+                hashed_password = pwd_context.hash(data.password)
 
-            cursor.execute("""
-                INSERT INTO buyer
-                (
-                    shop_name,
-                    owner_name,
-                    phone,
-                    city,
-                    state,
-                    category,
-                    password_
-                )
-                VALUES (%s,%s,%s,%s,%s,%s,%s)
-            """, (
-                data.business_name,
-                data.owner_name,
-                data.phone,
-                data.city,
-                data.state,
-                data.category,
-                hashed_password
-            ))
+                if data.role == "seller":
 
-        conn.commit()
+                    cursor.execute("""
+                        INSERT INTO seller
+                        (
+                            company_name,
+                            owner_name,
+                            phone,
+                            city,
+                            state,
+                            gst_pan,
+                            category,
+                            password_
+                        )
+                        VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
+                    """, (
+                        data.business_name,
+                        data.owner_name,
+                        data.phone,
+                        data.city,
+                        data.state,
+                        data.gst_pan,
+                        data.category,
+                        hashed_password
+                    ))
 
-        return {
-            "message": "Account created"
-        }
+                else:
+
+                    cursor.execute("""
+                        INSERT INTO buyer
+                        (
+                            shop_name,
+                            owner_name,
+                            phone,
+                            city,
+                            state,
+                            category,
+                            password_
+                        )
+                        VALUES (%s,%s,%s,%s,%s,%s,%s)
+                    """, (
+                        data.business_name,
+                        data.owner_name,
+                        data.phone,
+                        data.city,
+                        data.state,
+                        data.category,
+                        hashed_password
+                    ))
+
+                conn.commit()
+
+                return {
+                    "message": "Account created"
+                }
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        if cursor: cursor.close()
-        if conn: conn.close()
 
 @router.post("/POST/login")
 def login(data: LoginRequest, response: Response):
@@ -160,44 +155,38 @@ def login(data: LoginRequest, response: Response):
             phone_num = "+" + phone_num
     data.phone = phone_num
 
-    conn = None
-    cursor = None
     try:
-        conn = get_pg_connection()
-        cursor = conn.cursor()
+        with get_pg_connection() as conn:
+            with conn.cursor() as cursor:
+                table = "seller" if data.role == "seller" else "buyer"
 
-        table = "seller" if data.role == "seller" else "buyer"
+                cursor.execute(
+                    f"SELECT id, password_ FROM {table} WHERE phone = %s",
+                    (data.phone,)
+                )
+                user = cursor.fetchone()
 
-        cursor.execute(
-            f"SELECT id, password_ FROM {table} WHERE phone = %s",
-            (data.phone,)
-        )
-        user = cursor.fetchone()
+                if not user or not pwd_context.verify(data.password, user[1]):
+                    raise HTTPException(status_code=401, detail="Invalid credentials.")
 
-        if not user or not pwd_context.verify(data.password, user[1]):
-            raise HTTPException(status_code=401, detail="Invalid credentials.")
+                token_data = {"phone": data.phone, "role": data.role}
+                token = jwt.encode(token_data, SECRET_KEY, algorithm=ALGORITHM)
 
-        token_data = {"phone": data.phone, "role": data.role}
-        token = jwt.encode(token_data, SECRET_KEY, algorithm=ALGORITHM)
+                response.set_cookie(
+                    key="access_token",
+                    value=token,
+                    httponly=True,
+                    secure=True,  # Set to True if using HTTPS in production
+                    samesite="lax",
+                    max_age=86400
+                )
 
-        response.set_cookie(
-            key="access_token",
-            value=token,
-            httponly=True,
-            secure=False,  # Set to True if using HTTPS in production
-            samesite="lax",
-            max_age=86400
-        )
-
-        return {"message": "Login successful", "role": data.role, "token": token}
+                return {"message": "Login successful", "role": data.role, "token": token}
 
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        if cursor: cursor.close()
-        if conn: conn.close()
 
 @router.post("/POST/product")
 async def add_product(request : Request):
@@ -209,21 +198,17 @@ async def add_product(request : Request):
     seller_phone = user.get("phone") if user else None
     
     # Fetch category from postgres
-    seller_category = None
-    conn = None
-    cursor = None
+    def get_seller_category_sync(phone):
+        with get_pg_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT category FROM seller WHERE phone = %s", (phone,))
+                row = cursor.fetchone()
+                return row[0] if row else None
+
     try:
-        conn = get_pg_connection()
-        cursor = conn.cursor()
-        cursor.execute("SELECT category FROM seller WHERE phone = %s", (seller_phone,))
-        row = cursor.fetchone()
-        if row:
-            seller_category = row[0]
+        seller_category = await run_sync(get_seller_category_sync, seller_phone)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Database lookup failed: {str(e)}")
-    finally:
-        if cursor: cursor.close()
-        if conn: conn.close()
         
     if not seller_category:
         raise HTTPException(status_code=400, detail="Seller category not found.")
@@ -476,16 +461,16 @@ async def delete_product(data: DeleteProductRequest, request: Request):
 async def post_order(order: orders, request: Request):
     user = getattr(request.state, "user", None)
     if user and user.get("phone"):
-        conn = None
-        cursor = None
+        def get_buyer_details_sync(phone):
+            with get_pg_connection() as conn:
+                with conn.cursor() as cursor:
+                    cursor.execute(
+                        "SELECT shop_name, phone FROM buyer WHERE phone = %s",
+                        (phone,)
+                    )
+                    return cursor.fetchone()
         try:
-            conn = get_pg_connection()
-            cursor = conn.cursor()
-            cursor.execute(
-                "SELECT shop_name, phone FROM buyer WHERE phone = %s",
-                (user["phone"],)
-            )
-            row = cursor.fetchone()
+            row = await run_sync(get_buyer_details_sync, user["phone"])
             if row:
                 shop_name, phone_str = row
                 order.customer_name = shop_name
@@ -494,9 +479,6 @@ async def post_order(order: orders, request: Request):
                     order.customer_number = int(digits)
         except Exception as e:
             print("Postgres lookup error during order placement:", e)
-        finally:
-            if cursor: cursor.close()
-            if conn: conn.close()
             
     db = client["Orders"]
     result = await db["orders"].insert_one(order.model_dump())
@@ -506,7 +488,7 @@ async def post_order(order: orders, request: Request):
     }
     
 @router.post("/POST/request-otp")
-async def request_otp(data: SignupRequest):
+def request_otp(data: SignupRequest):
     # Normalize phone number to E.164 format
     phone_num = data.phone.strip().replace(" ", "")
     if not phone_num.startswith("+"):
@@ -516,48 +498,66 @@ async def request_otp(data: SignupRequest):
             phone_num = "+" + phone_num
     data.phone = phone_num
 
-    conn = None
-    cursor = None
     try:
         table = "buyer" if data.role == "buyer" else "seller"
         
-        conn =get_pg_connection()
-        cursor = conn.cursor()
-        cursor.execute(
-                f"SELECT id FROM {table} WHERE phone = %s",
-                (data.phone,)
-            )
-        response = cursor.fetchone()
-        if response:
-            raise HTTPException(
-                status_code=400,
-                detail=f'user with {data.phone} already exists'
-            )
-        else:
-            twilio_url = f"https://verify.twilio.com/v2/Services/VA8615c88e13880d52c82e08acb4f51171/Verifications"
-            account_sid = os.getenv("ACCOUNT_SID")
-            auth_token = os.getenv("Twilio_auth_token")
-            payload = {
-                "To" : data.phone,
-                "Channel" : "sms"
-            }
-            response = requests.post(twilio_url,
-            data=payload,
-            auth=(account_sid,auth_token))
-            if response.status_code == 201:
-                return {"message": "otp sent successfully"}
-            else:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"OTP dispatch failed: {response.text}"
+        with get_pg_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    f"SELECT id FROM {table} WHERE phone = %s",
+                    (data.phone,)
                 )
-            
+                response = cursor.fetchone()
+                if response:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f'user with {data.phone} already exists'
+                    )
+                else:
+                    twilio_url = f"https://verify.twilio.com/v2/Services/VA8615c88e13880d52c82e08acb4f51171/Verifications"
+                    account_sid = os.getenv("ACCOUNT_SID")
+                    auth_token = os.getenv("Twilio_auth_token")
+                    payload = {
+                        "To" : data.phone,
+                        "Channel" : "sms"
+                    }
+                    response = requests.post(twilio_url,
+                    data=payload,
+                    auth=(account_sid,auth_token))
+                    if response.status_code == 201:
+                        return {"message": "otp sent successfully"}
+                    else:
+                        raise HTTPException(
+                            status_code=400,
+                            detail=f"OTP cannot be generated"
+                        )
             
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        if cursor: cursor.close()
-        if conn: conn.close()
+    
+
+@router.post("/POST/order/update-status")
+async def update_order_status(data: dict):
+    order_id = data.get("order_id")
+    new_status = data.get("status")
+    if not order_id or not new_status:
+        raise HTTPException(status_code=400, detail="Missing order_id or status")
+    
+    try:
+        db = client["Orders"]
+        result = await db["orders"].update_one(
+            {"_id": ObjectId(order_id)},
+            {"$set": {"order_status": new_status}}
+        )
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="Order not found")
+        
+        return {"message": f"Order status updated to {new_status}"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
     
