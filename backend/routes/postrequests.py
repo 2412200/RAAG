@@ -1,6 +1,6 @@
-from fastapi import HTTPException, APIRouter, Response
+from fastapi import HTTPException, APIRouter, Response, UploadFile
 from fastapi.responses import JSONResponse
-from backend.pydanticmodels import SignupRequest, LoginRequest, apparel, fmcg, mobile_accessories, steel_work, orders, ToggleVisibilityRequest, DeleteProductRequest, home_appliances, pharmacy
+from backend.pydanticmodels import SignupRequest, LoginRequest, apparel, fmcg, mobile_accessories, steel_work, orders, ToggleVisibilityRequest, DeleteProductRequest, home_appliances, pharmacy, ForgotPasswordOTPRequest, ResetPasswordRequest
 from backend.helper.database import get_pg_connection
 from anyio.to_thread import run_sync
 from dotenv import load_dotenv
@@ -12,6 +12,10 @@ from jose import jwt
 from passlib.context import CryptContext
 import requests
 from bson import ObjectId
+from typing import Any, cast
+from datetime import datetime, date
+from psycopg import sql
+
 
 
 SECRET_KEY = os.getenv("SECRET_KEY", "fallback_secret_key_please_change")
@@ -50,7 +54,10 @@ def signup(data: SignupRequest):
             with conn.cursor() as cursor:
                 # Check if user with this phone number already exists for this role
                 table = "seller" if data.role == "seller" else "buyer"
-                cursor.execute(f"SELECT 1 FROM {table} WHERE phone = %s", (data.phone,))
+                cursor.execute(
+                    sql.SQL("SELECT 1 FROM {} WHERE phone = %s").format(sql.Identifier(table)),
+                    (data.phone,)
+                )
                 if cursor.fetchone():
                     raise HTTPException(
                         status_code=400,
@@ -65,8 +72,8 @@ def signup(data: SignupRequest):
                     )
 
                 twilio_check_url = f"https://verify.twilio.com/v2/Services/VA8615c88e13880d52c82e08acb4f51171/VerificationCheck"
-                account_ssid = os.getenv("ACCOUNT_SID")
-                auth_token = os.getenv("Twilio_auth_token")
+                account_ssid = os.getenv("ACCOUNT_SID") or ""
+                auth_token = os.getenv("Twilio_auth_token") or ""
                 check_payload = {
                     "To": data.phone,
                     "Code": data.otp
@@ -161,7 +168,7 @@ def login(data: LoginRequest, response: Response):
                 table = "seller" if data.role == "seller" else "buyer"
 
                 cursor.execute(
-                    f"SELECT id, password_ FROM {table} WHERE phone = %s",
+                    sql.SQL("SELECT phone, password_ FROM {} WHERE phone = %s").format(sql.Identifier(table)),
                     (data.phone,)
                 )
                 user = cursor.fetchone()
@@ -228,13 +235,37 @@ async def add_product(request : Request):
             detail=f"You can only add products matching your business category: {seller_category} (allowed: {allowed_spec})"
         )
         
-    description = form.get("description", "")
+    def get_str(val: Any) -> str:
+        return val if isinstance(val, str) else ""
+
+    def get_int(val: Any) -> int:
+        if isinstance(val, str) and val.strip().isdigit():
+            return int(val)
+        return 0
+
+    def get_float(val: Any) -> float:
+        if isinstance(val, str):
+            try:
+                return float(val)
+            except ValueError:
+                pass
+        return 0.0
+
+    def get_date(val: Any) -> date:
+        if isinstance(val, str):
+            try:
+                return datetime.strptime(val.strip(), "%Y-%m-%d").date()
+            except ValueError:
+                pass
+        return date.today()
+
+    description = get_str(form.get("description", ""))
     
-    image_url = form.get("image_url", "")
+    image_url = get_str(form.get("image_url", ""))
     image_file = form.get("image_file")
     image_filename = None
     
-    if image_file and hasattr(image_file, "filename") and image_file.filename:
+    if isinstance(image_file, UploadFile) and image_file.filename:
         import uuid
         ext = os.path.splitext(image_file.filename)[1]
         image_filename = f"upload_{uuid.uuid4().hex}{ext}"
@@ -249,13 +280,14 @@ async def add_product(request : Request):
     if product_specification == "apparel":
 
         apparel_product = apparel(
-            product_name=form.get("product_name"),
-            size=form.get("size"),
-            fabric=form.get("fabric"),
-            category=form.get("category"),
-            gsm=form.get("gsm"),
-            mrp=form.get("mrp"),
-            gender=form.get("gender"),
+            product_name=get_str(form.get("product_name")),
+            size=cast(Any, [str(x) for x in form.getlist("size")]),
+            fabric=get_str(form.get("fabric")),
+            category=cast(Any, get_str(form.get("category"))),
+            gsm=get_int(form.get("gsm")),
+            mrp=get_float(form.get("mrp")),
+            gender=cast(Any, get_str(form.get("gender"))),
+            moq=get_int(form.get("moq")),
             seller_phone=seller_phone,
             is_hidden=False,
             description=description,
@@ -273,13 +305,13 @@ async def add_product(request : Request):
 
     elif product_specification == "fmcg":
         fmcg_product = fmcg(
-            product_name=form.get("product_name"),
-            brand=form.get("brand"),
-            category=form.get("category"),
-            quantity=form.get("quantity"),
-            mrp=form.get("mrp"),
-            manufacturing_date=form.get("manufacturing_date"),
-            expiry_date=form.get("expiry_date"),
+            product_name=get_str(form.get("product_name")),
+            brand=get_str(form.get("brand")),
+            category=cast(Any, get_str(form.get("category"))),
+            quantity=get_int(form.get("quantity")),
+            mrp=get_float(form.get("mrp")),
+            manufacturing_date=get_date(form.get("manufacturing_date")),
+            expiry_date=get_date(form.get("expiry_date")),
             seller_phone=seller_phone,
             is_hidden=False,
             description=description,
@@ -300,13 +332,13 @@ async def add_product(request : Request):
     
     elif product_specification == "mobile_accessories":
         ma_product = mobile_accessories(
-            product_name = form.get("product_name"),
-            brand = form.get("brand"),
-            compatible_model = form.get("compatible_model"),
-            accessory_type = form.get("accessory_type"),
-            color = form.get("color"),
-            warranty = form.get("warranty"),
-            mrp = form.get("mrp"),
+            product_name = get_str(form.get("product_name")),
+            brand = get_str(form.get("brand")),
+            compatible_model = get_str(form.get("compatible_model")),
+            accessory_type = cast(Any, get_str(form.get("accessory_type"))),
+            color = get_str(form.get("color")),
+            warranty = get_int(form.get("warranty")),
+            mrp = get_float(form.get("mrp")),
             seller_phone=seller_phone,
             is_hidden=False,
             description=description,
@@ -323,12 +355,12 @@ async def add_product(request : Request):
     
     elif product_specification == "steel_work":
         sw_product = steel_work(
-            product_name = form.get("product_name"),
-            steel_grade = form.get("steel_grade"),
-            thickness = form.get("thickness"),
-            weight = form.get("weight"),
-            finish_type = form.get("finish_type"),
-            mrp = form.get("mrp"),
+            product_name = get_str(form.get("product_name")),
+            steel_grade = get_str(form.get("steel_grade")),
+            thickness = get_float(form.get("thickness")),
+            weight = get_float(form.get("weight")),
+            finish_type = cast(Any, get_str(form.get("finish_type"))),
+            mrp = get_float(form.get("mrp")),
             seller_phone=seller_phone,
             is_hidden=False,
             description=description,
@@ -345,10 +377,10 @@ async def add_product(request : Request):
 
     elif product_specification == "home_appliances":
         ha_product = home_appliances(
-            product_name=form.get("product_name"),
-            brand=form.get("brand"),
-            mrp=form.get("mrp"),
-            warranty=form.get("warranty"),
+            product_name=get_str(form.get("product_name")),
+            brand=get_str(form.get("brand")),
+            mrp=get_float(form.get("mrp")),
+            warranty=get_int(form.get("warranty")),
             seller_phone=seller_phone,
             is_hidden=False,
             description=description,
@@ -364,11 +396,11 @@ async def add_product(request : Request):
 
     elif product_specification == "pharmacy":
         ph_product = pharmacy(
-            product_name=form.get("product_name"),
-            brand=form.get("brand"),
-            category=form.get("category"),
-            mrp=form.get("mrp"),
-            expiry_date=form.get("expiry_date"),
+            product_name=get_str(form.get("product_name")),
+            brand=get_str(form.get("brand")),
+            category=cast(Any, get_str(form.get("category"))),
+            mrp=get_float(form.get("mrp")),
+            expiry_date=get_date(form.get("expiry_date")),
             seller_phone=seller_phone,
             is_hidden=False,
             description=description,
@@ -504,7 +536,7 @@ def request_otp(data: SignupRequest):
         with get_pg_connection() as conn:
             with conn.cursor() as cursor:
                 cursor.execute(
-                    f"SELECT id FROM {table} WHERE phone = %s",
+                    sql.SQL("SELECT id FROM {} WHERE phone = %s").format(sql.Identifier(table)),
                     (data.phone,)
                 )
                 response = cursor.fetchone()
@@ -515,8 +547,8 @@ def request_otp(data: SignupRequest):
                     )
                 else:
                     twilio_url = f"https://verify.twilio.com/v2/Services/VA8615c88e13880d52c82e08acb4f51171/Verifications"
-                    account_sid = os.getenv("ACCOUNT_SID")
-                    auth_token = os.getenv("Twilio_auth_token")
+                    account_sid = os.getenv("ACCOUNT_SID") or ""
+                    auth_token = os.getenv("Twilio_auth_token") or ""
                     payload = {
                         "To" : data.phone,
                         "Channel" : "sms"
@@ -559,5 +591,123 @@ async def update_order_status(data: dict):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/POST/request-forgot-password-otp")
+def request_forgot_password_otp(data: ForgotPasswordOTPRequest):
+    # Normalize phone number to E.164 format
+    phone_num = data.phone.strip().replace(" ", "")
+    if not phone_num.startswith("+"):
+        if len(phone_num) == 10:
+            phone_num = "+91" + phone_num
+        else:
+            phone_num = "+" + phone_num
+    data.phone = phone_num
+
+    try:
+        table = "buyer" if data.role == "buyer" else "seller"
+        
+        with get_pg_connection() as conn:
+            with conn.cursor() as cursor:
+                # Check if user with this phone number exists for this role
+                cursor.execute(
+                    sql.SQL("SELECT id FROM {} WHERE phone = %s").format(sql.Identifier(table)),
+                    (data.phone,)
+                )
+                response = cursor.fetchone()
+                if not response:
+                    raise HTTPException(
+                        status_code=404,
+                        detail=f"User with phone number {data.phone} and role '{data.role}' not found"
+                    )
+                else:
+                    twilio_url = f"https://verify.twilio.com/v2/Services/VA8615c88e13880d52c82e08acb4f51171/Verifications"
+                    account_sid = os.getenv("ACCOUNT_SID") or ""
+                    auth_token = os.getenv("Twilio_auth_token") or ""
+                    payload = {
+                        "To" : data.phone,
+                        "Channel" : "sms"
+                    }
+                    res = requests.post(twilio_url,
+                                        data=payload,
+                                        auth=(account_sid, auth_token))
+                    if res.status_code == 201:
+                        return {"message": "Verification code sent successfully"}
+                    else:
+                        raise HTTPException(
+                            status_code=400,
+                            detail="Verification code cannot be generated"
+                        )
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/POST/reset-password")
+def reset_password(data: ResetPasswordRequest):
+    # Normalize phone number to E.164 format
+    phone_num = data.phone.strip().replace(" ", "")
+    if not phone_num.startswith("+"):
+        if len(phone_num) == 10:
+            phone_num = "+91" + phone_num
+        else:
+            phone_num = "+" + phone_num
+    data.phone = phone_num
+
+    try:
+        table = "buyer" if data.role == "buyer" else "seller"
+        
+        with get_pg_connection() as conn:
+            with conn.cursor() as cursor:
+                # Verify user exists
+                cursor.execute(
+                    sql.SQL("SELECT id FROM {} WHERE phone = %s").format(sql.Identifier(table)),
+                    (data.phone,)
+                )
+                if not cursor.fetchone():
+                    raise HTTPException(
+                        status_code=404,
+                        detail="User not found"
+                    )
+
+                # Verify OTP with Twilio
+                twilio_check_url = f"https://verify.twilio.com/v2/Services/VA8615c88e13880d52c82e08acb4f51171/VerificationCheck"
+                account_ssid = os.getenv("ACCOUNT_SID") or ""
+                auth_token = os.getenv("Twilio_auth_token") or ""
+                check_payload = {
+                    "To": data.phone,
+                    "Code": data.otp
+                }
+                response = requests.post(
+                    twilio_check_url,
+                    data=check_payload,
+                    auth=(account_ssid, auth_token)
+                )
+                if response.status_code != 200 or response.json().get("status") != "approved":
+                    raise HTTPException(
+                        status_code=400,
+                        detail="Invalid or expired verification code"
+                    )
+
+                hashed_password = pwd_context.hash(data.password)
+
+                cursor.execute(
+                    sql.SQL("UPDATE {} SET password_ = %s WHERE phone = %s").format(sql.Identifier(table)),
+                    (hashed_password, data.phone)
+                )
+                conn.commit()
+
+                return {
+                    "message": "Password reset successfully"
+                }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 
     

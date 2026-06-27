@@ -67,7 +67,7 @@ class SizeEnum(str,Enum):
 
 class apparel(BaseModel):
     product_name : str
-    size : SizeEnum
+    size : List[SizeEnum]
     fabric : str
     category : Literal["Mens Shirt", "Mens TShirt", "Mens Lower", "Mens Jeans", "Mens Shorts", 
                        "Pyjama", "Mens Inner Wear", "Womens Shirt", "Womens Jeans", "Womens TShirt",
@@ -75,6 +75,7 @@ class apparel(BaseModel):
     gsm : int = Field(gt=1)
     mrp : float = Field(gt=1)
     gender : Literal["Male", "Female"]
+    moq: int = Field(default=1, gt=0)
     seller_phone: Optional[str] = None
     is_hidden: bool = False
     description: Optional[str] = ""
@@ -161,6 +162,19 @@ class pharmacy(BaseModel):
     is_hidden: bool = False
     description: Optional[str] = ""
     image: Optional[str] = None
+
+
+class ForgotPasswordOTPRequest(BaseModel):
+    phone: str
+    role: Literal["buyer", "seller"]
+
+
+class ResetPasswordRequest(BaseModel):
+    phone: str
+    role: Literal["buyer", "seller"]
+    otp: str
+    password: str
+
 
 
 

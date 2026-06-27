@@ -197,16 +197,27 @@
             </div>
 
             <div class="form-group">
-              <label for="size">Size</label>
-              <select id="size" name="size" required>
-                <option value="" disabled selected>Select size</option>
-                <option value="S">S</option>
-                <option value="M">M</option>
-                <option value="L">L</option>
-                <option value="XL">XL</option>
-                <option value="XXL">XXL</option>
-                <option value="XXXL">XXXL</option>
-              </select>
+              <label>Sizes (Select all that apply)</label>
+              <div class="sizes-checkbox-group" style="display: flex; gap: 15px; flex-wrap: wrap; margin-top: 5px; background: var(--black); padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
+                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 14px; font-weight: normal; color: var(--muted);">
+                  <input type="checkbox" name="size" value="S" checked style="width: auto; height: auto; cursor: pointer;" /> S
+                </label>
+                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 14px; font-weight: normal; color: var(--muted);">
+                  <input type="checkbox" name="size" value="M" style="width: auto; height: auto; cursor: pointer;" /> M
+                </label>
+                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 14px; font-weight: normal; color: var(--muted);">
+                  <input type="checkbox" name="size" value="L" style="width: auto; height: auto; cursor: pointer;" /> L
+                </label>
+                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 14px; font-weight: normal; color: var(--muted);">
+                  <input type="checkbox" name="size" value="XL" style="width: auto; height: auto; cursor: pointer;" /> XL
+                </label>
+                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 14px; font-weight: normal; color: var(--muted);">
+                  <input type="checkbox" name="size" value="XXL" style="width: auto; height: auto; cursor: pointer;" /> XXL
+                </label>
+                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 14px; font-weight: normal; color: var(--muted);">
+                  <input type="checkbox" name="size" value="XXXL" style="width: auto; height: auto; cursor: pointer;" /> XXXL
+                </label>
+              </div>
             </div>
 
             <div class="form-group">
@@ -243,7 +254,9 @@
                 <label for="mrp_app">Price</label>
                 <input type="number" id="mrp_app" name="mrp" placeholder="Enter price" min="0" required />
               </div>
+            </div>
 
+            <div class="dim-row">
               <div class="form-group">
                 <label for="gender">Gender</label>
                 <select id="gender" name="gender" required>
@@ -251,6 +264,11 @@
                   <option value="Male">Male</option>
                   <option value="Female">Female</option>
                 </select>
+              </div>
+
+              <div class="form-group">
+                <label for="moq">MOQ (Minimum Order Quantity)</label>
+                <input type="number" id="moq" name="moq" placeholder="Enter MOQ" min="1" required value="1" />
               </div>
             </div>
           </div>

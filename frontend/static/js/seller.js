@@ -329,7 +329,8 @@ document.addEventListener("DOMContentLoaded", () => {
             // Specs descriptions
             let specDetailsHtml = "";
             if (product.specification === "apparel") {
-                specDetailsHtml = `Size: <strong>${product.size}</strong> | Fabric: <strong>${product.fabric}</strong> | GSM: <strong>${product.gsm}</strong>`;
+                const sizesStr = Array.isArray(product.size) ? product.size.join(", ") : product.size;
+                specDetailsHtml = `Sizes: <strong>${sizesStr}</strong> | Fabric: <strong>${product.fabric}</strong> | GSM: <strong>${product.gsm}</strong> | MOQ: <strong>${product.moq || 1}</strong>`;
             } else if (product.specification === "fmcg") {
                 specDetailsHtml = `Brand: <strong>${product.brand}</strong> | Stock Qty: <strong>${product.quantity}</strong>`;
             } else if (product.specification === "mobile_accessories") {

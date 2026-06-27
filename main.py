@@ -48,7 +48,7 @@ ALGORITHM = "HS256"
 @app.middleware("http")
 async def auth_middleware(request: Request, call_next):
     # Paths that don't require authentication
-    public_paths = ["/", "/signup", "/POST/login", "/POST/signup", "/logout", "/POST/request-otp"]
+    public_paths = ["/", "/signup", "/POST/login", "/POST/signup", "/logout", "/POST/request-otp", "/forgot-password", "/POST/request-forgot-password-otp", "/POST/reset-password"]
     
     if request.url.path in public_paths or request.url.path.startswith("/static"):
         # Redirect authenticated users away from Login and Signup pages
@@ -115,6 +115,10 @@ async def login_page(request : Request):
 @app.get("/signup")
 async def signup_page(request : Request):
     return templates.TemplateResponse(request, "signup.html",{"request" : request})
+
+@app.get("/forgot-password")
+async def forgot_password_page(request : Request):
+    return templates.TemplateResponse(request, "forgot_password.html", {"request" : request})
 
 @app.get("/home")
 async def home(request: Request):
