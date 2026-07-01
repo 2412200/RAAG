@@ -1,6 +1,6 @@
 from fastapi import HTTPException, APIRouter, Response, UploadFile
 from fastapi.responses import JSONResponse
-from backend.pydanticmodels import SignupRequest, LoginRequest, apparel, fmcg, mobile_accessories, steel_work, orders, ToggleVisibilityRequest, DeleteProductRequest, home_appliances, pharmacy, ForgotPasswordOTPRequest, ResetPasswordRequest
+from backend.pydanticmodels import SignupRequest, LoginRequest, apparel, fmcg, mobile_accessories, steel_work, orders, ToggleVisibilityRequest, DeleteProductRequest, home_appliances, pharmacy, ForgotPasswordOTPRequest, ResetPasswordRequest, otp_request
 from backend.helper.database import get_pg_connection
 from anyio.to_thread import run_sync
 from dotenv import load_dotenv
@@ -15,16 +15,23 @@ from bson import ObjectId
 from typing import Any, cast
 from datetime import datetime, date
 from psycopg import sql
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
 
+load_dotenv()
 
+cloudinary.config(
+    cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
+    api_key=os.getenv("CLOUDINARY_API_KEY"),
+    api_secret=os.getenv("CLOUDINARY_API_SECRET"),
+    secure=True
+)
 
 SECRET_KEY = os.getenv("SECRET_KEY", "fallback_secret_key_please_change")
 ALGORITHM = "HS256"
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-
-load_dotenv()
 
 router = APIRouter()
 
@@ -183,7 +190,7 @@ def login(data: LoginRequest, response: Response):
                     key="access_token",
                     value=token,
                     httponly=True,
-                    secure=True,  # Set to True if using HTTPS in production
+                    secure=False,  # Set to True if using HTTPS in production
                     samesite="lax",
                     max_age=86400
                 )
@@ -260,165 +267,170 @@ async def add_product(request : Request):
         return date.today()
 
     description = get_str(form.get("description", ""))
+
+    image_files = form.getlist("image_file")
+    images_list = []
     
-    image_url = get_str(form.get("image_url", ""))
-    image_file = form.get("image_file")
-    image_filename = None
-    
-    if isinstance(image_file, UploadFile) and image_file.filename:
-        import uuid
-        ext = os.path.splitext(image_file.filename)[1]
-        image_filename = f"upload_{uuid.uuid4().hex}{ext}"
-        filepath = os.path.join("frontend/static/images", image_filename)
-        os.makedirs(os.path.dirname(filepath), exist_ok=True)
-        contents = await image_file.read()
-        with open(filepath, "wb") as f:
-            f.write(contents)
-    elif image_url:
-        image_filename = image_url
-
-    if product_specification == "apparel":
-
-        apparel_product = apparel(
-            product_name=get_str(form.get("product_name")),
-            size=cast(Any, [str(x) for x in form.getlist("size")]),
-            fabric=get_str(form.get("fabric")),
-            category=cast(Any, get_str(form.get("category"))),
-            gsm=get_int(form.get("gsm")),
-            mrp=get_float(form.get("mrp")),
-            gender=cast(Any, get_str(form.get("gender"))),
-            moq=get_int(form.get("moq")),
-            seller_phone=seller_phone,
-            is_hidden=False,
-            description=description,
-            image=image_filename
-        )
-
-        result = await db["apparel"].insert_one(
-            apparel_product.model_dump()
-        )
-
-        return {
-            "message": "Apparel product added",
-            "id": str(result.inserted_id)
-        }
-
-    elif product_specification == "fmcg":
-        fmcg_product = fmcg(
-            product_name=get_str(form.get("product_name")),
-            brand=get_str(form.get("brand")),
-            category=cast(Any, get_str(form.get("category"))),
-            quantity=get_int(form.get("quantity")),
-            mrp=get_float(form.get("mrp")),
-            manufacturing_date=get_date(form.get("manufacturing_date")),
-            expiry_date=get_date(form.get("expiry_date")),
-            seller_phone=seller_phone,
-            is_hidden=False,
-            description=description,
-            image=image_filename
-        )
-
-        data = fmcg_product.model_dump()
-
-        data["manufacturing_date"] = data["manufacturing_date"].isoformat()
-        data["expiry_date"] = data["expiry_date"].isoformat()
-
-        result = await db["fmcg"].insert_one(data)
-
-        return {
-            "message": "FMCG product added",
-            "id": str(result.inserted_id)
-        }
-    
-    elif product_specification == "mobile_accessories":
-        ma_product = mobile_accessories(
-            product_name = get_str(form.get("product_name")),
-            brand = get_str(form.get("brand")),
-            compatible_model = get_str(form.get("compatible_model")),
-            accessory_type = cast(Any, get_str(form.get("accessory_type"))),
-            color = get_str(form.get("color")),
-            warranty = get_int(form.get("warranty")),
-            mrp = get_float(form.get("mrp")),
-            seller_phone=seller_phone,
-            is_hidden=False,
-            description=description,
-            image=image_filename
-        )
-        result = await db["mobile_accessories"].insert_one(
-            ma_product.model_dump()
-        )
-
-        return {
-            "message": "Mobile product added",
-            "id": str(result.inserted_id)
-        }
-    
-    elif product_specification == "steel_work":
-        sw_product = steel_work(
-            product_name = get_str(form.get("product_name")),
-            steel_grade = get_str(form.get("steel_grade")),
-            thickness = get_float(form.get("thickness")),
-            weight = get_float(form.get("weight")),
-            finish_type = cast(Any, get_str(form.get("finish_type"))),
-            mrp = get_float(form.get("mrp")),
-            seller_phone=seller_phone,
-            is_hidden=False,
-            description=description,
-            image=image_filename
-        )
-        result = await db["steel_work"].insert_one(
-            sw_product.model_dump()
-        )
-
-        return {
-            "message": "Steel product added",
-            "id": str(result.inserted_id)
-        }
-
-    elif product_specification == "home_appliances":
-        ha_product = home_appliances(
-            product_name=get_str(form.get("product_name")),
-            brand=get_str(form.get("brand")),
-            mrp=get_float(form.get("mrp")),
-            warranty=get_int(form.get("warranty")),
-            seller_phone=seller_phone,
-            is_hidden=False,
-            description=description,
-            image=image_filename
-        )
-        result = await db["homeappliances"].insert_one(
-            ha_product.model_dump()
-        )
-        return {
-            "message": "Home Appliance product added",
-            "id": str(result.inserted_id)
-        }
-
-    elif product_specification == "pharmacy":
-        ph_product = pharmacy(
-            product_name=get_str(form.get("product_name")),
-            brand=get_str(form.get("brand")),
-            category=cast(Any, get_str(form.get("category"))),
-            mrp=get_float(form.get("mrp")),
-            expiry_date=get_date(form.get("expiry_date")),
-            seller_phone=seller_phone,
-            is_hidden=False,
-            description=description,
-            image=image_filename
-        )
-        data = ph_product.model_dump()
-        data["expiry_date"] = data["expiry_date"].isoformat()
+    if image_files:
+        folder_name = f"products/{seller_phone.replace('+', '')}"
+        for file in image_files:
+            if isinstance(file, UploadFile) and file.filename:
+                contents = await file.read()
+                response = cloudinary.uploader.upload(contents, folder=folder_name)
+                secure_url = response.get("secure_url")
+                if secure_url:
+                    images_list.append(secure_url)
         
-        result = await db["pharma"].insert_one(data)
-        return {
-            "message": "Pharmacy product added",
-            "id": str(result.inserted_id)
-        }
+    from pydantic import ValidationError 
+    try:
+        if product_specification == "apparel":
 
-    raise HTTPException(
-        status_code=400,
-        detail="Invalid product specification"
-    )
+            apparel_product = apparel(
+                product_name=get_str(form.get("product_name")),
+                size=cast(Any, [str(x) for x in form.getlist("size")]),
+                fabric=get_str(form.get("fabric")),
+                category=cast(Any, get_str(form.get("category"))),
+                gsm=get_int(form.get("gsm")),
+                mrp=get_float(form.get("mrp")),
+                gender=cast(Any, get_str(form.get("gender"))),
+                moq=get_int(form.get("moq")),
+                seller_phone=seller_phone,
+                is_hidden=False,
+                description=description,
+                images=images_list
+            )
+
+            result = await db["apparel"].insert_one(
+                apparel_product.model_dump()
+            )
+
+            return {
+                "message": "Apparel product added",
+                "id": str(result.inserted_id)
+            }
+
+        elif product_specification == "fmcg":
+            fmcg_product = fmcg(
+                product_name=get_str(form.get("product_name")),
+                brand=get_str(form.get("brand")),
+                category=cast(Any, get_str(form.get("category"))),
+                quantity=get_int(form.get("quantity")),
+                mrp=get_float(form.get("mrp")),
+                manufacturing_date=get_date(form.get("manufacturing_date")),
+                expiry_date=get_date(form.get("expiry_date")),
+                seller_phone=seller_phone,
+                is_hidden=False,
+                description=description,
+                images=images_list
+            )
+
+            data = fmcg_product.model_dump()
+
+            data["manufacturing_date"] = data["manufacturing_date"].isoformat()
+            data["expiry_date"] = data["expiry_date"].isoformat()
+
+            result = await db["fmcg"].insert_one(data)
+
+            return {
+                "message": "FMCG product added",
+                "id": str(result.inserted_id)
+            }
+        
+        elif product_specification == "mobile_accessories":
+            ma_product = mobile_accessories(
+                product_name = get_str(form.get("product_name")),
+                brand = get_str(form.get("brand")),
+                compatible_model = get_str(form.get("compatible_model")),
+                accessory_type = cast(Any, get_str(form.get("accessory_type"))),
+                color = get_str(form.get("color")),
+                warranty = get_int(form.get("warranty")),
+                mrp = get_float(form.get("mrp")),
+                seller_phone=seller_phone,
+                is_hidden=False,
+                description=description,
+                images=images_list
+            )
+            result = await db["mobile_accessories"].insert_one(
+                ma_product.model_dump()
+            )
+
+            return {
+                "message": "Mobile product added",
+                "id": str(result.inserted_id)
+            }
+        
+        elif product_specification == "steel_work":
+            sw_product = steel_work(
+                product_name = get_str(form.get("product_name")),
+                steel_grade = get_str(form.get("steel_grade")),
+                thickness = get_float(form.get("thickness")),
+                weight = get_float(form.get("weight")),
+                finish_type = cast(Any, get_str(form.get("finish_type"))),
+                mrp = get_float(form.get("mrp")),
+                seller_phone=seller_phone,
+                is_hidden=False,
+                description=description,
+                images=images_list
+            )
+            result = await db["steel_work"].insert_one(
+                sw_product.model_dump()
+            )
+
+            return {
+                "message": "Steel product added",
+                "id": str(result.inserted_id)
+            }
+
+        elif product_specification == "home_appliances":
+            ha_product = home_appliances(
+                product_name=get_str(form.get("product_name")),
+                brand=get_str(form.get("brand")),
+                mrp=get_float(form.get("mrp")),
+                warranty=get_int(form.get("warranty")),
+                seller_phone=seller_phone,
+                is_hidden=False,
+                description=description,
+                images=images_list
+            )
+            result = await db["homeappliances"].insert_one(
+                ha_product.model_dump()
+            )
+            return {
+                "message": "Home Appliance product added",
+                "id": str(result.inserted_id)
+            }
+
+        elif product_specification == "pharmacy":
+            ph_product = pharmacy(
+                product_name=get_str(form.get("product_name")),
+                brand=get_str(form.get("brand")),
+                category=cast(Any, get_str(form.get("category"))),
+                mrp=get_float(form.get("mrp")),
+                expiry_date=get_date(form.get("expiry_date")),
+                seller_phone=seller_phone,
+                is_hidden=False,
+                description=description,
+                images=images_list
+            )
+            data = ph_product.model_dump()
+            data["expiry_date"] = data["expiry_date"].isoformat()
+            
+            result = await db["pharma"].insert_one(data)
+            return {
+                "message": "Pharmacy product added",
+                "id": str(result.inserted_id)
+            }
+
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid product specification"
+        )
+    except ValidationError as e:
+        error_messages = []
+        for error in e.errors():
+            loc = " -> ".join(str(x) for x in error["loc"])
+            error_messages.append(f"{loc}: {error['msg']}")
+        raise HTTPException(status_code=400, detail="Validation failed: " + ", ".join(error_messages))
 
 @router.post("/POST/seller/product/toggle-visibility")
 async def toggle_visibility(data: ToggleVisibilityRequest, request: Request):
@@ -443,7 +455,14 @@ async def toggle_visibility(data: ToggleVisibilityRequest, request: Request):
         
     try:
         result = await db[col_name].update_one(
-            {"_id": ObjectId(data.product_id), "seller_phone": seller_phone},
+            {
+                "_id": ObjectId(data.product_id),
+                "$or": [
+                    {"seller_phone": seller_phone},
+                    {"seller_phone": {"$exists": False}},
+                    {"seller_phone": None}
+                ]
+            },
             {"$set": {"is_hidden": data.is_hidden}}
         )
         if result.matched_count == 0:
@@ -477,7 +496,14 @@ async def delete_product(data: DeleteProductRequest, request: Request):
         
     try:
         result = await db[col_name].delete_one(
-            {"_id": ObjectId(data.product_id), "seller_phone": seller_phone}
+            {
+                "_id": ObjectId(data.product_id),
+                "$or": [
+                    {"seller_phone": seller_phone},
+                    {"seller_phone": {"$exists": False}},
+                    {"seller_phone": None}
+                ]
+            }
         )
         if result.deleted_count == 0:
             raise HTTPException(status_code=404, detail="Product not found or not owned by you.")
@@ -485,9 +511,6 @@ async def delete_product(data: DeleteProductRequest, request: Request):
         return {"message": "Product deleted successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-
-
 
 @router.post("/POST/order")
 async def post_order(order: orders, request: Request):
@@ -520,8 +543,8 @@ async def post_order(order: orders, request: Request):
     }
     
 @router.post("/POST/request-otp")
-def request_otp(data: SignupRequest):
-    # Normalize phone number to E.164 format
+def request_otp(data: otp_request): 
+
     phone_num = data.phone.strip().replace(" ", "")
     if not phone_num.startswith("+"):
         if len(phone_num) == 10:
@@ -555,7 +578,7 @@ def request_otp(data: SignupRequest):
                     }
                     response = requests.post(twilio_url,
                     data=payload,
-                    auth=(account_sid,auth_token))
+                    auth=(account_sid, auth_token))
                     if response.status_code == 201:
                         return {"message": "otp sent successfully"}
                     else:

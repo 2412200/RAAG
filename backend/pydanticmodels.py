@@ -51,11 +51,6 @@ class LoginRequest(BaseModel):
     password: str
     role: str
 
-#class product_specification(BaseModel):
-
-
-
-#used in apparel
 class SizeEnum(str,Enum):
     S = "S"
     M = "M"
@@ -79,7 +74,7 @@ class apparel(BaseModel):
     seller_phone: Optional[str] = None
     is_hidden: bool = False
     description: Optional[str] = ""
-    image: Optional[str] = None
+    images: List[str] = []
 
 class fmcg(BaseModel):
     product_name : str
@@ -92,7 +87,8 @@ class fmcg(BaseModel):
     seller_phone: Optional[str] = None
     is_hidden: bool = False
     description: Optional[str] = ""
-    image: Optional[str] = None
+    images: List[str] = []
+
 
     @model_validator(mode="after")
     def validate_dates(self):
@@ -114,7 +110,8 @@ class mobile_accessories(BaseModel):
     seller_phone: Optional[str] = None
     is_hidden: bool = False
     description: Optional[str] = ""
-    image: Optional[str] = None
+    images: List[str] = []
+
 
 class steel_work(BaseModel):
     product_name : str
@@ -126,12 +123,12 @@ class steel_work(BaseModel):
     seller_phone: Optional[str] = None
     is_hidden: bool = False
     description: Optional[str] = ""
-    image: Optional[str] = None
+    images: List[str] = []
+
 
 class otp_request(BaseModel):
     phone : str
-    verification_code : int
-    role : str
+    role: Literal["buyer", "seller"]
 
 class ToggleVisibilityRequest(BaseModel):
     product_id: str
@@ -150,7 +147,7 @@ class home_appliances(BaseModel):
     seller_phone: Optional[str] = None
     is_hidden: bool = False
     description: Optional[str] = ""
-    image: Optional[str] = None
+    images: List[str] = []
 
 class pharmacy(BaseModel):
     product_name : str
@@ -161,21 +158,14 @@ class pharmacy(BaseModel):
     seller_phone: Optional[str] = None
     is_hidden: bool = False
     description: Optional[str] = ""
-    image: Optional[str] = None
-
+    images: List[str] = []
 
 class ForgotPasswordOTPRequest(BaseModel):
     phone: str
     role: Literal["buyer", "seller"]
-
 
 class ResetPasswordRequest(BaseModel):
     phone: str
     role: Literal["buyer", "seller"]
     otp: str
     password: str
-
-
-
-
-            

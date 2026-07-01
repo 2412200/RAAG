@@ -350,7 +350,10 @@
     {% for product in Products %}
     <div class="product-card">
       <div class="product-img-wrap">
-        <img src="{{ url_for('static', path='images/' + product.image) }}" alt="{{ product.name }}" />
+        <img
+          src="{% if product.image.startswith('http') %}{{ product.image }}{% else %}{{ url_for('static', path='images/' + product.image) }}{% endif %}"
+          alt="{{ product.name }}" />
+
         <div class="product-img-overlay"></div>
         <span class="quick-view">View Details</span>
       </div>

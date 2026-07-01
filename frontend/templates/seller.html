@@ -174,19 +174,8 @@
           </div>
 
           <div class="form-group image-input-container">
-            <label>Product Display Image</label>
-            <div class="toggle-group">
-              <div class="toggle-option active" id="image-upload-choice">Upload File</div>
-              <div class="toggle-option" id="image-url-choice">Image URL</div>
-            </div>
-
-            <div id="file-input-group">
-              <input type="file" id="image_file" name="image_file" accept="image/*" />
-            </div>
-
-            <div id="url-input-group" style="display: none;">
-              <input type="text" id="image_url" name="image_url" placeholder="https://example.com/image.jpg" />
-            </div>
+            <label for="image_file">Product Display Image(s)</label>
+            <input type="file" id="image_file" name="image_file" accept="image/*" multiple />
           </div>
 
           <!-- Spec sections -->
@@ -198,24 +187,35 @@
 
             <div class="form-group">
               <label>Sizes (Select all that apply)</label>
-              <div class="sizes-checkbox-group" style="display: flex; gap: 15px; flex-wrap: wrap; margin-top: 5px; background: var(--black); padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
-                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 14px; font-weight: normal; color: var(--muted);">
-                  <input type="checkbox" name="size" value="S" checked style="width: auto; height: auto; cursor: pointer;" /> S
+              <div class="sizes-checkbox-group"
+                style="display: flex; gap: 15px; flex-wrap: wrap; margin-top: 5px; background: var(--black); padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
+                <label
+                  style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 14px; font-weight: normal; color: var(--muted);">
+                  <input type="checkbox" name="size" value="S" checked
+                    style="width: auto; height: auto; cursor: pointer;" /> S
                 </label>
-                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 14px; font-weight: normal; color: var(--muted);">
+                <label
+                  style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 14px; font-weight: normal; color: var(--muted);">
                   <input type="checkbox" name="size" value="M" style="width: auto; height: auto; cursor: pointer;" /> M
                 </label>
-                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 14px; font-weight: normal; color: var(--muted);">
+                <label
+                  style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 14px; font-weight: normal; color: var(--muted);">
                   <input type="checkbox" name="size" value="L" style="width: auto; height: auto; cursor: pointer;" /> L
                 </label>
-                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 14px; font-weight: normal; color: var(--muted);">
-                  <input type="checkbox" name="size" value="XL" style="width: auto; height: auto; cursor: pointer;" /> XL
+                <label
+                  style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 14px; font-weight: normal; color: var(--muted);">
+                  <input type="checkbox" name="size" value="XL" style="width: auto; height: auto; cursor: pointer;" />
+                  XL
                 </label>
-                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 14px; font-weight: normal; color: var(--muted);">
-                  <input type="checkbox" name="size" value="XXL" style="width: auto; height: auto; cursor: pointer;" /> XXL
+                <label
+                  style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 14px; font-weight: normal; color: var(--muted);">
+                  <input type="checkbox" name="size" value="XXL" style="width: auto; height: auto; cursor: pointer;" />
+                  XXL
                 </label>
-                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 14px; font-weight: normal; color: var(--muted);">
-                  <input type="checkbox" name="size" value="XXXL" style="width: auto; height: auto; cursor: pointer;" /> XXXL
+                <label
+                  style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 14px; font-weight: normal; color: var(--muted);">
+                  <input type="checkbox" name="size" value="XXXL" style="width: auto; height: auto; cursor: pointer;" />
+                  XXXL
                 </label>
               </div>
             </div>
@@ -473,7 +473,7 @@
             </div>
           </div>
 
-          <button type="submit" class="btn-submit">Add Product Listing</button>
+          <button type="submit" class="btn-submit">Add Product</button>
         </form>
       </div>
     </section>

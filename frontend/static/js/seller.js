@@ -27,11 +27,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const searchInput = document.getElementById("product-search");
     const categoryFilter = document.getElementById("product-category-filter");
 
-    // Image upload choice toggle elements
-    const imageUploadChoice = document.getElementById("image-upload-choice");
-    const imageUrlChoice = document.getElementById("image-url-choice");
-    const fileInputGroup = document.getElementById("file-input-group");
-    const urlInputGroup = document.getElementById("url-input-group");
+
 
     // Global products store
     let allProducts = [];
@@ -108,24 +104,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // Image Input Option Toggle
-    if (imageUploadChoice && imageUrlChoice) {
-        imageUploadChoice.addEventListener("click", () => {
-            imageUploadChoice.classList.add("active");
-            imageUrlChoice.classList.remove("active");
-            fileInputGroup.style.display = "block";
-            urlInputGroup.style.display = "none";
-            document.getElementById("image_url").value = "";
-        });
 
-        imageUrlChoice.addEventListener("click", () => {
-            imageUrlChoice.classList.add("active");
-            imageUploadChoice.classList.remove("active");
-            urlInputGroup.style.display = "block";
-            fileInputGroup.style.display = "none";
-            document.getElementById("image_file").value = "";
-        });
-    }
 
     // Specification Section Visibility in Form
     function setSectionActive(section, active) {
@@ -311,11 +290,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
             // Image Thumbnail fallback
             let imgSrc = "/static/images/default.webp";
-            if (product.image) {
-                if (product.image.startsWith("http://") || product.image.startsWith("https://")) {
-                    imgSrc = product.image;
+            let targetImage = null;
+            if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+                targetImage = product.images[0];
+            } else if (product.image) {
+                targetImage = product.image;
+            }
+
+            if (targetImage) {
+                if (targetImage.startsWith("http://") || targetImage.startsWith("https://")) {
+                    imgSrc = targetImage;
                 } else {
-                    imgSrc = `/static/images/${product.image}`;
+                    imgSrc = `/static/images/${targetImage}`;
                 }
             } else {
                 // Category defaults
@@ -323,6 +309,14 @@ document.addEventListener("DOMContentLoaded", () => {
                     imgSrc = product.gender === "Male" ? "/static/images/menjeans.webp" : "/static/images/womentshirt.webp";
                 } else if (product.specification === "fmcg") {
                     imgSrc = "/static/images/groceries.webp";
+                } else if (product.specification === "mobile_accessories") {
+                    imgSrc = "/static/images/mobile.webp";
+                } else if (product.specification === "steel_work") {
+                    imgSrc = "/static/images/furniture.webp";
+                } else if (product.specification === "home_appliances") {
+                    imgSrc = "/static/images/computer.webp";
+                } else if (product.specification === "pharmacy") {
+                    imgSrc = "/static/images/pharma.webp";
                 }
             }
 
@@ -536,10 +530,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     showToast(data.message || "Product added successfully!", "success");
                     form.reset();
                     
-                    // Reset upload toggle views
-                    if (imageUploadChoice) {
-                        imageUploadChoice.click();
-                    }
+
 
                     // Hide specifications sections in form
                     sections.forEach(section => setSectionActive(section, false));

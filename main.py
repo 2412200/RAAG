@@ -184,7 +184,8 @@ async def search(request: Request, q: str | None = None):
                 qty = doc.get("quantity") or doc.get("qty") or 1
                 
                 # Check for image or fallback to smart defaults
-                image = doc.get("image")
+                images = doc.get("images")
+                image = images[0] if images and isinstance(images, list) else doc.get("image")
                 if not image:
                     if col_name == "apparel":
                         gender = doc.get("gender", "")
@@ -192,9 +193,9 @@ async def search(request: Request, q: str | None = None):
                     elif col_name == "fmcg":
                         image = "groceries.webp"
                     elif col_name == "mobile_accessories":
-                        image = "bottle.webp"
+                        image = "mobile.webp"
                     elif col_name == "steel_work":
-                        image = "Dining Table.webp"
+                        image = "furniture.webp"
                     else:
                         image = "default.webp"
                 
@@ -212,138 +213,170 @@ async def search(request: Request, q: str | None = None):
         "query": q or ""
     })
 
+def normalize_doc(doc, default_image):
+    images = doc.get("images")
+    image_val = images[0] if images and isinstance(images, list) else doc.get("image") or default_image
+    return {
+        "name": doc.get("name") or doc.get("product_name") or "Unnamed Product",
+        "price": doc.get("price") or doc.get("mrp") or 0.0,
+        "image": image_val,
+        "quantity": doc.get("quantity") or doc.get("moq") or doc.get("qty") or 1
+    }
+
 @app.get("/womens")
 async def womens_wear(request: Request):
-
-    womenswear = await db["womenswear"].find(
-        {"is_hidden": {"$ne": True}}, {"_id": 0}
+    
+    apparel = await db["apparel"].find(
+        {"is_hidden": {"$ne": True}, "gender": "Female"}
     ).to_list(length=100)
+    
+    products = [normalize_doc(p, "womentshirt.webp") for p in apparel]
 
     return templates.TemplateResponse(request, 
         "womens.html",
         {
             "request": request,
-            "Products": womenswear
+            "Products": products
         }
     )
 
 @app.get("/homeappliances")
 async def homeappliances(request: Request):
-
     homeappliances = await db["homeappliances"].find(
         {"is_hidden": {"$ne": True}}, {"_id": 0}
     ).to_list(length=100)
+    
+    products = [normalize_doc(p, "computer.webp") for p in homeappliances]
 
     return templates.TemplateResponse(request, 
         "homeappliances.html",
         {
             "request": request,
-            "Products": homeappliances
+            "Products": products
         }
     )
 
 @app.get("/beauty")
 async def beauty(request: Request):
-
     beauty = await db["beauty"].find(
         {"is_hidden": {"$ne": True}}, {"_id": 0}
     ).to_list(length=100)
+    
+    products = [normalize_doc(p, "lipstick.webp") for p in beauty]
 
     return templates.TemplateResponse(request, 
         "beauty.html",
         {
             "request": request,
-            "Products": beauty
+            "Products": products
         }
     )
 
 @app.get("/books")
 async def books(request: Request):
-
     books = await db["books"].find(
         {"is_hidden": {"$ne": True}}, {"_id": 0}
     ).to_list(length=100)
+    
+    products = [normalize_doc(p, "copy.webp") for p in books]
 
     return templates.TemplateResponse(request, 
         "books.html",
         {
             "request": request,
-            "Products": books
+            "Products": products
         }
     )
 
 @app.get("/groceries")
 async def groceries(request: Request):
-
     groceries = await db["groceries"].find(
         {"is_hidden": {"$ne": True}}, {"_id": 0}
     ).to_list(length=100)
+    
+    fmcg = await db["fmcg"].find(
+        {"is_hidden": {"$ne": True}}
+    ).to_list(length=100)
+    
+    products = [normalize_doc(p, "groceries.webp") for p in groceries + fmcg]
 
     return templates.TemplateResponse(request, 
         "groceries.html",
         {
             "request": request,
-            "Products": groceries
+            "Products": products
         }
     )
 
 @app.get("/pharma")
 async def pharma(request: Request):
-
     pharma = await db["pharma"].find(
         {"is_hidden": {"$ne": True}}, {"_id": 0}
     ).to_list(length=100)
+    
+    products = [normalize_doc(p, "pharma.webp") for p in pharma]
 
     return templates.TemplateResponse(request, 
         "pharma.html",
         {
             "request": request,
-            "Products": pharma
+            "Products": products
         }
     )
 
 @app.get("/kids")
 async def kids(request: Request):
-
     kids = await db["kids"].find(
         {"is_hidden": {"$ne": True}}, {"_id": 0}
     ).to_list(length=100)
+    
+    products = [normalize_doc(p, "toys.webp") for p in kids]
 
     return templates.TemplateResponse(request, 
         "kids.html",
         {
             "request": request,
-            "Products": kids
+            "Products": products
         }
     )
 
 @app.get("/furniture")
 async def furniture(request: Request):
-
     furniture = await db["furniture"].find(
         {"is_hidden": {"$ne": True}}, {"_id": 0}
     ).to_list(length=100)
+    
+    steel = await db["steel_work"].find(
+        {"is_hidden": {"$ne": True}}
+    ).to_list(length=100)
+    
+    products = [normalize_doc(p, "furniture.webp") for p in furniture + steel]
 
     return templates.TemplateResponse(request, 
         "furniture.html",
         {
             "request": request,
-            "Products": furniture
+            "Products": products
         }
     )
 
 @app.get("/mens-wear")
 async def mens_wear(request: Request):
-
-    menswear = await db["menswear"].find(
-        {"is_hidden": {"$ne": True}}, {"_id": 0}
+    # menswear = await db["menswear"].find(
+    #     {"is_hidden": {"$ne": True}}, {"_id": 0}
+    # ).to_list(length=100)
+    
+    apparel = await db["apparel"].find(
+        {"is_hidden": {"$ne": True}, "gender": "Male"}
     ).to_list(length=100)
+    
+    products = [normalize_doc(p, "menjeans.webp") for p in apparel]
 
     return templates.TemplateResponse(request, 
         "mens-wear.html",
         {
             "request": request,
-            "Products": menswear
+            "Products": products
         }
     )
 

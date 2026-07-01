@@ -157,10 +157,11 @@
             orders.forEach((item, index) => {
                 const itemTotal = item.price * item.qty;
                 total += itemTotal;
+                const imageSrc = item.image.startsWith('http') ? item.image : `/static/images/${item.image}`;
 
                 list.innerHTML += `
                     <div class="order-item">
-                        <img src="/static/images/${item.image}" alt="${item.name}">
+                        <img src="${imageSrc}" alt="${item.name}">
                         <div class="order-info">
                             <h3>${item.name}</h3>
                             <p>Qty: ${item.qty} &nbsp;|&nbsp; ₹${item.price} each</p>
