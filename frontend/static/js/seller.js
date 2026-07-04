@@ -100,34 +100,73 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    // Global filter states
+    let visibilityFilter = "all";
+
+    function switchTab(targetTab) {
+        menuItems.forEach(mi => mi.classList.remove("active"));
+        menuItems.forEach(mi => {
+            if (mi.getAttribute("data-tab") === targetTab) {
+                mi.classList.add("active");
+            }
+        });
+
+        tabPanes.forEach(pane => {
+            pane.classList.remove("active");
+            if (pane.id === targetTab) {
+                pane.classList.add("active");
+            }
+        });
+
+        // Close sidebar on mobile after tab select
+        if (sidebarEl && sidebarEl.classList.contains("show")) {
+            sidebarEl.classList.remove("show");
+        }
+
+        if (targetTab === "tab-products" || targetTab === "tab-overview") {
+            fetchProducts();
+        } else if (targetTab === "tab-orders") {
+            fetchOrders();
+        }
+    }
+
     // Navigation (Tab switching)
     menuItems.forEach(item => {
         item.addEventListener("click", (e) => {
             e.preventDefault();
             const targetTab = item.getAttribute("data-tab");
-
-            menuItems.forEach(mi => mi.classList.remove("active"));
-            item.classList.add("active");
-
-            tabPanes.forEach(pane => {
-                pane.classList.remove("active");
-                if (pane.id === targetTab) {
-                    pane.classList.add("active");
-                }
-            });
-
-            // Close sidebar on mobile after tab select
-            if (sidebarEl && sidebarEl.classList.contains("show")) {
-                sidebarEl.classList.remove("show");
+            if (targetTab === "tab-products") {
+                visibilityFilter = "all";
             }
-
-            if (targetTab === "tab-products" || targetTab === "tab-overview") {
-                fetchProducts();
-            } else if (targetTab === "tab-orders") {
-                fetchOrders();
-            }
+            switchTab(targetTab);
         });
     });
+
+    // Overview stats cards click handlers
+    const totalListingsCard = document.querySelector(".stat-card.total-listings");
+    const activeListingsCard = document.querySelector(".stat-card.active-listings");
+    const hiddenListingsCard = document.querySelector(".stat-card.hidden-listings");
+
+    if (totalListingsCard) {
+        totalListingsCard.addEventListener("click", () => {
+            visibilityFilter = "all";
+            switchTab("tab-products");
+        });
+    }
+
+    if (activeListingsCard) {
+        activeListingsCard.addEventListener("click", () => {
+            visibilityFilter = "active";
+            switchTab("tab-products");
+        });
+    }
+
+    if (hiddenListingsCard) {
+        hiddenListingsCard.addEventListener("click", () => {
+            visibilityFilter = "hidden";
+            switchTab("tab-products");
+        });
+    }
 
 
 
@@ -293,7 +332,15 @@ document.addEventListener("DOMContentLoaded", () => {
             const name = (product.product_name || "").toLowerCase();
             const matchesQuery = name.includes(query);
             const matchesCategory = catFilter === "all" || product.specification === catFilter;
-            return matchesQuery && matchesCategory;
+            
+            let matchesVisibility = true;
+            if (visibilityFilter === "active") {
+                matchesVisibility = !product.is_hidden;
+            } else if (visibilityFilter === "hidden") {
+                matchesVisibility = product.is_hidden;
+            }
+            
+            return matchesQuery && matchesCategory && matchesVisibility;
         });
 
         if (filtered.length === 0) {

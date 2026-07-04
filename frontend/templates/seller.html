@@ -53,7 +53,7 @@
   <main class="main-content">
     <header class="dashboard-header">
       <div class="dashboard-title">
-        <h1>Seller Dashboard</h1>
+        <h1>Dashboard</h1>
         <p>Welcome back, {{ seller_details.company_name or 'Seller' }}</p>
       </div>
       <a href="/logout" class="logout-btn">Logout</a>
@@ -68,7 +68,7 @@
           <div class="stat-badge">📦</div>
         </div>
         <div class="stat-card active-listings">
-          <div class="stat-label">Active / Visible</div>
+          <div class="stat-label">Visible</div>
           <div class="stat-value" id="stat-active-count">0</div>
           <div class="stat-badge">✓</div>
         </div>
@@ -86,13 +86,6 @@
         <div class="search-input-wrap">
           <input type="text" id="product-search" placeholder="Search product name..." />
         </div>
-        <select id="product-category-filter" class="filter-select">
-          <option value="all">All Specifications</option>
-          <option value="apparel">Apparel</option>
-          <option value="fmcg">FMCG</option>
-          <option value="mobile_accessories">Mobile Accessories</option>
-          <option value="steel_work">Steel Work</option>
-        </select>
       </div>
 
       <div class="products-grid" id="products-list-container">
