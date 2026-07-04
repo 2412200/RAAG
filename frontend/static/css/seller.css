@@ -24,7 +24,7 @@
 body {
   background: var(--black);
   color: var(--white);
-  font-family: 'DM Sans', Inter, -apple-system, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   min-height: 100vh;
   display: flex;
   overflow-x: hidden;
@@ -831,7 +831,7 @@ input:checked + .slider:before {
 }
 
 .orders-count {
-  font-family: 'DM Sans', sans-serif;
+  font-family: inherit;
   font-size: 12px;
   font-weight: 700;
   padding: 2px 10px;
@@ -1109,11 +1109,25 @@ input:checked + .slider:before {
     padding-bottom: 16px;
   }
 
-  .logout-btn {
-    width: auto;
-    text-align: center;
-    padding: 6px 12px;
+  .dashboard-header .logout-btn {
+    display: none;
+  }
+
+  .mobile-logout-btn {
+    color: var(--red-light);
+    text-decoration: none;
     font-size: 13px;
+    font-weight: 600;
+    border: 1px solid var(--red-dark);
+    padding: 6px 12px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+  }
+
+  .mobile-logout-btn:hover {
+    background: var(--red);
+    color: var(--white);
+    border-color: var(--red);
   }
 
   .info-row {

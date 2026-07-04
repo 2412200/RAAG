@@ -26,6 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Search and filter elements
     const searchInput = document.getElementById("product-search");
     const categoryFilter = document.getElementById("product-category-filter");
+    const visibilityFilterEl = document.getElementById("product-visibility-filter");
 
 
 
@@ -137,6 +138,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const targetTab = item.getAttribute("data-tab");
             if (targetTab === "tab-products") {
                 visibilityFilter = "all";
+                if (visibilityFilterEl) visibilityFilterEl.value = "all";
             }
             switchTab(targetTab);
         });
@@ -150,6 +152,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (totalListingsCard) {
         totalListingsCard.addEventListener("click", () => {
             visibilityFilter = "all";
+            if (visibilityFilterEl) visibilityFilterEl.value = "all";
             switchTab("tab-products");
         });
     }
@@ -157,6 +160,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (activeListingsCard) {
         activeListingsCard.addEventListener("click", () => {
             visibilityFilter = "active";
+            if (visibilityFilterEl) visibilityFilterEl.value = "visible";
             switchTab("tab-products");
         });
     }
@@ -164,7 +168,23 @@ document.addEventListener("DOMContentLoaded", () => {
     if (hiddenListingsCard) {
         hiddenListingsCard.addEventListener("click", () => {
             visibilityFilter = "hidden";
+            if (visibilityFilterEl) visibilityFilterEl.value = "hidden";
             switchTab("tab-products");
+        });
+    }
+
+    // Listen to changes on the My Products visibility filter dropdown
+    if (visibilityFilterEl) {
+        visibilityFilterEl.addEventListener("change", function () {
+            const val = this.value;
+            if (val === "all") {
+                visibilityFilter = "all";
+            } else if (val === "visible") {
+                visibilityFilter = "active";
+            } else if (val === "hidden") {
+                visibilityFilter = "hidden";
+            }
+            renderProductsList();
         });
     }
 
