@@ -243,8 +243,8 @@ body {
 }
 
 .stat-card.hidden-listings .stat-badge {
-  color: var(--amber);
-  background: var(--amber-bg);
+  color: var(--red-light);
+  background: rgba(192, 23, 42, 0.1);
 }
 
 .stat-card.total-listings .stat-badge {
@@ -594,7 +594,7 @@ input:checked + .slider:before {
 }
 
 .status-label.hidden {
-  color: var(--amber);
+  color: var(--red-light);
 }
 
 /* Delete Button */
@@ -1112,6 +1112,8 @@ input:checked + .slider:before {
   .logout-btn {
     width: auto;
     text-align: center;
+    padding: 6px 12px;
+    font-size: 13px;
   }
 
   .info-row {
