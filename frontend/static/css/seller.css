@@ -1033,6 +1033,10 @@ input:checked + .slider:before {
 
 /* ── RESPONSIVE MEDIA QUERIES ── */
 @media (max-width: 992px) {
+  body {
+    flex-direction: column;
+  }
+
   .mobile-navbar {
     display: flex !important;
     align-items: center;
