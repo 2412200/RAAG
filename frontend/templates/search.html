@@ -89,6 +89,17 @@
       color: var(--muted);
       font-size: 15px;
     }
+    @media (max-width: 768px) {
+      .search-header {
+        padding: 24px 16px 12px;
+      }
+      .search-title {
+        font-size: 24px;
+      }
+      .search-bar-inline {
+        max-width: 100%;
+      }
+    }
   </style>
   <link rel="icon" type="image/png" href="{{ url_for('static', path='favicon.png') }}">
 </head>

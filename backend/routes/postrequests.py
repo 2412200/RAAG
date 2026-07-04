@@ -1,13 +1,10 @@
 from fastapi import HTTPException, APIRouter, Response, UploadFile
 from fastapi.responses import JSONResponse
 from backend.pydanticmodels import SignupRequest, LoginRequest, apparel, fmcg, mobile_accessories, steel_work, orders, ToggleVisibilityRequest, DeleteProductRequest, home_appliances, pharmacy, ForgotPasswordOTPRequest, ResetPasswordRequest, otp_request
-from backend.helper.database import get_pg_connection
+from backend.helper.database import get_pg_connection, mongo_client as client, mongo_db as db
 from anyio.to_thread import run_sync
-from dotenv import load_dotenv
 import os
-from motor.motor_asyncio import AsyncIOMotorClient
 from fastapi import Request
-from urllib.parse import quote_plus
 from jose import jwt
 from passlib.context import CryptContext
 import requests
@@ -18,32 +15,21 @@ from psycopg import sql
 import cloudinary
 import cloudinary.uploader
 import cloudinary.api
-
-load_dotenv()
+from backend.config import SETTINGS
 
 cloudinary.config(
-    cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
-    api_key=os.getenv("CLOUDINARY_API_KEY"),
-    api_secret=os.getenv("CLOUDINARY_API_SECRET"),
+    cloud_name=SETTINGS.CLOUDINARY_CLOUD_NAME,
+    api_key=SETTINGS.CLOUDINARY_API_KEY,
+    api_secret=SETTINGS.CLOUDINARY_API_SECRET,
     secure=True
 )
 
-SECRET_KEY = os.getenv("SECRET_KEY", "fallback_secret_key_please_change")
-ALGORITHM = "HS256"
+SECRET_KEY = SETTINGS.SECRET_KEY
+ALGORITHM = SETTINGS.ALGORITHM
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 router = APIRouter()
-
-username = quote_plus(os.getenv("MONGO_USERNAME") or "")
-password = quote_plus(os.getenv("MONGO_PASSWORD") or "")
-cluster = quote_plus(os.getenv("MONGO_CLUSTER") or "")
-
-MONGO_URI = f"mongodb+srv://{username}:{password}@{cluster}/?retryWrites=true&w=majority"
-
-client = AsyncIOMotorClient(MONGO_URI)
-
-db = client["Products"]
 
 @router.post("/POST/signup")
 def signup(data: SignupRequest):
@@ -78,9 +64,9 @@ def signup(data: SignupRequest):
                         detail="OTP is required to sign up"
                     )
 
-                twilio_check_url = f"https://verify.twilio.com/v2/Services/VA8615c88e13880d52c82e08acb4f51171/VerificationCheck"
-                account_ssid = os.getenv("ACCOUNT_SID") or ""
-                auth_token = os.getenv("Twilio_auth_token") or ""
+                twilio_check_url = f"https://verify.twilio.com/v2/Services/{SETTINGS.TWILIO_VERIFY_SERVICE_SID}/VerificationCheck"
+                account_ssid = SETTINGS.ACCOUNT_SID
+                auth_token = SETTINGS.TWILIO_AUTH_TOKEN
                 check_payload = {
                     "To": data.phone,
                     "Code": data.otp
@@ -156,7 +142,8 @@ def signup(data: SignupRequest):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        print("Error during signup:", e)
+        raise HTTPException(status_code=500, detail="Internal server error. Please try again later.")
 
 @router.post("/POST/login")
 def login(data: LoginRequest, response: Response):
@@ -200,7 +187,8 @@ def login(data: LoginRequest, response: Response):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        print("Error during login:", e)
+        raise HTTPException(status_code=500, detail="Internal server error. Please try again later.")
 
 @router.post("/POST/product")
 async def add_product(request : Request):
@@ -222,7 +210,8 @@ async def add_product(request : Request):
     try:
         seller_category = await run_sync(get_seller_category_sync, seller_phone)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Database lookup failed: {str(e)}")
+        print("Database lookup error in add_product:", e)
+        raise HTTPException(status_code=500, detail="Database lookup failed. Please try again.")
         
     if not seller_category:
         raise HTTPException(status_code=400, detail="Seller category not found.")
@@ -267,19 +256,50 @@ async def add_product(request : Request):
         return date.today()
 
     description = get_str(form.get("description", ""))
-
+    
+    product_id = ObjectId()
     image_files = form.getlist("image_file")
     images_list = []
     
     if image_files:
-        folder_name = f"products/{seller_phone.replace('+', '')}"
+        folder_name = f"products/{seller_phone.replace('+', '')}/{str(product_id)}"
+        
+        # 1. Read all files asynchronously & validate size and type
+        file_contents = []
+        MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+        ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "image/jpg"]
         for file in image_files:
-            if isinstance(file, UploadFile) and file.filename:
+            if hasattr(file, "filename") and file.filename and hasattr(file, "read"):
+                # Validate type
+                content_type = getattr(file, "content_type", "")
+                if content_type and content_type not in ALLOWED_MIME_TYPES:
+                    raise HTTPException(
+                        status_code=400, 
+                        detail=f"Invalid file type for '{file.filename}'. Only JPEG, PNG, and WebP images are allowed."
+                    )
+                
                 contents = await file.read()
-                response = cloudinary.uploader.upload(contents, folder=folder_name)
-                secure_url = response.get("secure_url")
-                if secure_url:
-                    images_list.append(secure_url)
+                
+                # Validate size
+                if len(contents) > MAX_FILE_SIZE:
+                    raise HTTPException(
+                        status_code=400, 
+                        detail=f"File '{file.filename}' exceeds the maximum allowed size of 5MB."
+                    )
+                file_contents.append(contents)
+        
+        # 2. Define a helper function to upload a single image synchronously
+        def upload_single_file(contents):
+            response = cloudinary.uploader.upload(contents, folder=folder_name)
+            return response.get("secure_url")
+
+        # 3. Upload all files in parallel using worker threads
+        import asyncio
+        if file_contents:
+            tasks = [run_sync(upload_single_file, contents) for contents in file_contents]
+            urls = await asyncio.gather(*tasks)
+            images_list = [url for url in urls if url]
+
         
     from pydantic import ValidationError 
     try:
@@ -300,8 +320,11 @@ async def add_product(request : Request):
                 images=images_list
             )
 
+            product_data = apparel_product.model_dump()
+            product_data["_id"] = product_id
+
             result = await db["apparel"].insert_one(
-                apparel_product.model_dump()
+                product_data
             )
 
             return {
@@ -324,12 +347,12 @@ async def add_product(request : Request):
                 images=images_list
             )
 
-            data = fmcg_product.model_dump()
+            product_data = fmcg_product.model_dump()
+            product_data["_id"] = product_id
+            product_data["manufacturing_date"] = product_data["manufacturing_date"].isoformat()
+            product_data["expiry_date"] = product_data["expiry_date"].isoformat()
 
-            data["manufacturing_date"] = data["manufacturing_date"].isoformat()
-            data["expiry_date"] = data["expiry_date"].isoformat()
-
-            result = await db["fmcg"].insert_one(data)
+            result = await db["fmcg"].insert_one(product_data)
 
             return {
                 "message": "FMCG product added",
@@ -350,8 +373,10 @@ async def add_product(request : Request):
                 description=description,
                 images=images_list
             )
+            product_data = ma_product.model_dump()
+            product_data["_id"] = product_id
             result = await db["mobile_accessories"].insert_one(
-                ma_product.model_dump()
+                product_data
             )
 
             return {
@@ -372,8 +397,10 @@ async def add_product(request : Request):
                 description=description,
                 images=images_list
             )
+            product_data = sw_product.model_dump()
+            product_data["_id"] = product_id
             result = await db["steel_work"].insert_one(
-                sw_product.model_dump()
+                product_data
             )
 
             return {
@@ -392,8 +419,10 @@ async def add_product(request : Request):
                 description=description,
                 images=images_list
             )
+            product_data = ha_product.model_dump()
+            product_data["_id"] = product_id
             result = await db["homeappliances"].insert_one(
-                ha_product.model_dump()
+                product_data
             )
             return {
                 "message": "Home Appliance product added",
@@ -412,10 +441,11 @@ async def add_product(request : Request):
                 description=description,
                 images=images_list
             )
-            data = ph_product.model_dump()
-            data["expiry_date"] = data["expiry_date"].isoformat()
+            product_data = ph_product.model_dump()
+            product_data["_id"] = product_id
+            product_data["expiry_date"] = product_data["expiry_date"].isoformat()
             
-            result = await db["pharma"].insert_one(data)
+            result = await db["pharma"].insert_one(product_data)
             return {
                 "message": "Pharmacy product added",
                 "id": str(result.inserted_id)
@@ -471,7 +501,8 @@ async def toggle_visibility(data: ToggleVisibilityRequest, request: Request):
         status_str = "hidden" if data.is_hidden else "visible"
         return {"message": f"Product is now {status_str}"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        print("Error toggling product visibility:", e)
+        raise HTTPException(status_code=500, detail="Internal server error while updating product visibility.")
 
 @router.post("/POST/seller/product/delete")
 async def delete_product(data: DeleteProductRequest, request: Request):
@@ -510,7 +541,8 @@ async def delete_product(data: DeleteProductRequest, request: Request):
             
         return {"message": "Product deleted successfully"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        print("Error deleting product:", e)
+        raise HTTPException(status_code=500, detail="Internal server error while deleting product.")
 
 @router.post("/POST/order")
 async def post_order(order: orders, request: Request):
@@ -569,9 +601,9 @@ def request_otp(data: otp_request):
                         detail=f'user with {data.phone} already exists'
                     )
                 else:
-                    twilio_url = f"https://verify.twilio.com/v2/Services/VA8615c88e13880d52c82e08acb4f51171/Verifications"
-                    account_sid = os.getenv("ACCOUNT_SID") or ""
-                    auth_token = os.getenv("Twilio_auth_token") or ""
+                    twilio_url = f"https://verify.twilio.com/v2/Services/{SETTINGS.TWILIO_VERIFY_SERVICE_SID}/Verifications"
+                    account_sid = SETTINGS.ACCOUNT_SID
+                    auth_token = SETTINGS.TWILIO_AUTH_TOKEN
                     payload = {
                         "To" : data.phone,
                         "Channel" : "sms"
@@ -590,7 +622,8 @@ def request_otp(data: otp_request):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        print("Error requesting signup OTP:", e)
+        raise HTTPException(status_code=500, detail="Internal server error. Could not request verification OTP.")
     
 
 @router.post("/POST/order/update-status")
@@ -613,7 +646,8 @@ async def update_order_status(data: dict):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        print("Error updating order status:", e)
+        raise HTTPException(status_code=500, detail="Internal server error while updating order status.")
 
 
 @router.post("/POST/request-forgot-password-otp")
@@ -644,9 +678,9 @@ def request_forgot_password_otp(data: ForgotPasswordOTPRequest):
                         detail=f"User with phone number {data.phone} and role '{data.role}' not found"
                     )
                 else:
-                    twilio_url = f"https://verify.twilio.com/v2/Services/VA8615c88e13880d52c82e08acb4f51171/Verifications"
-                    account_sid = os.getenv("ACCOUNT_SID") or ""
-                    auth_token = os.getenv("Twilio_auth_token") or ""
+                    twilio_url = f"https://verify.twilio.com/v2/Services/{SETTINGS.TWILIO_VERIFY_SERVICE_SID}/Verifications"
+                    account_sid = SETTINGS.ACCOUNT_SID
+                    auth_token = SETTINGS.TWILIO_AUTH_TOKEN
                     payload = {
                         "To" : data.phone,
                         "Channel" : "sms"
@@ -665,7 +699,8 @@ def request_forgot_password_otp(data: ForgotPasswordOTPRequest):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        print("Error requesting password reset OTP:", e)
+        raise HTTPException(status_code=500, detail="Internal server error while requesting verification code.")
 
 
 @router.post("/POST/reset-password")
@@ -696,9 +731,9 @@ def reset_password(data: ResetPasswordRequest):
                     )
 
                 # Verify OTP with Twilio
-                twilio_check_url = f"https://verify.twilio.com/v2/Services/VA8615c88e13880d52c82e08acb4f51171/VerificationCheck"
-                account_ssid = os.getenv("ACCOUNT_SID") or ""
-                auth_token = os.getenv("Twilio_auth_token") or ""
+                twilio_check_url = f"https://verify.twilio.com/v2/Services/{SETTINGS.TWILIO_VERIFY_SERVICE_SID}/VerificationCheck"
+                account_ssid = SETTINGS.ACCOUNT_SID
+                auth_token = SETTINGS.TWILIO_AUTH_TOKEN
                 check_payload = {
                     "To": data.phone,
                     "Code": data.otp
@@ -729,7 +764,8 @@ def reset_password(data: ResetPasswordRequest):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        print("Error resetting password:", e)
+        raise HTTPException(status_code=500, detail="Internal server error while resetting password.")
 
 
 

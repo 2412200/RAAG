@@ -80,6 +80,26 @@ document.addEventListener("DOMContentLoaded", () => {
         };
     }
 
+    // Sidebar toggle for mobile
+    const sidebarToggleBtn = document.getElementById("sidebar-toggle");
+    const sidebarEl = document.querySelector(".sidebar");
+
+    if (sidebarToggleBtn && sidebarEl) {
+        sidebarToggleBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            sidebarEl.classList.toggle("show");
+        });
+
+        // Close sidebar if clicking outside of it on mobile
+        document.addEventListener("click", (e) => {
+            if (window.innerWidth <= 992 && sidebarEl.classList.contains("show")) {
+                if (!sidebarEl.contains(e.target) && e.target !== sidebarToggleBtn) {
+                    sidebarEl.classList.remove("show");
+                }
+            }
+        });
+    }
+
     // Navigation (Tab switching)
     menuItems.forEach(item => {
         item.addEventListener("click", (e) => {
@@ -95,6 +115,11 @@ document.addEventListener("DOMContentLoaded", () => {
                     pane.classList.add("active");
                 }
             });
+
+            // Close sidebar on mobile after tab select
+            if (sidebarEl && sidebarEl.classList.contains("show")) {
+                sidebarEl.classList.remove("show");
+            }
 
             if (targetTab === "tab-products" || targetTab === "tab-overview") {
                 fetchProducts();

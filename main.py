@@ -5,13 +5,8 @@ from backend.routes import getrequests, postrequests
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse
 from jose import jwt, JWTError
-from motor.motor_asyncio import AsyncIOMotorClient
-from dotenv import load_dotenv
-import os
-from urllib.parse import quote_plus
-
-load_dotenv()
-
+from backend.config import SETTINGS
+from backend.helper.database import mongo_db as db
 
 app = FastAPI()
 
@@ -25,25 +20,16 @@ app.mount(
 
 templates = Jinja2Templates(directory="frontend/templates")
 
-username = quote_plus(os.getenv("MONGO_USERNAME") or "")
-password = quote_plus(os.getenv("MONGO_PASSWORD") or "")
-cluster = quote_plus(os.getenv("MONGO_CLUSTER") or "")
-
-MONGO_URI = f"mongodb+srv://{username}:{password}@{cluster}/?retryWrites=true&w=majority"
-
-client = AsyncIOMotorClient(MONGO_URI)
-
-db = client["Products"]
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=SETTINGS.ALLOWED_ORIGINS,
     allow_methods=["*"],
     allow_headers=["*"]
 )
 
-SECRET_KEY = os.getenv("SECRET_KEY", "fallback_secret_key_please_change")
-ALGORITHM = "HS256"
+SECRET_KEY = SETTINGS.SECRET_KEY
+ALGORITHM = SETTINGS.ALGORITHM
+
 
 @app.middleware("http")
 async def auth_middleware(request: Request, call_next):

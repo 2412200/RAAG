@@ -1,21 +1,8 @@
 from fastapi import APIRouter, Request, HTTPException
 from fastapi.responses import RedirectResponse
-from motor.motor_asyncio import AsyncIOMotorClient
-import os
-from urllib.parse import quote_plus
-from dotenv import load_dotenv
-
-load_dotenv()
+from backend.helper.database import mongo_client as client, mongo_db as db
 
 router = APIRouter()
-
-username = quote_plus(os.getenv("MONGO_USERNAME") or "")
-password = quote_plus(os.getenv("MONGO_PASSWORD") or "")
-cluster = quote_plus(os.getenv("MONGO_CLUSTER") or "")
-
-MONGO_URI = f"mongodb+srv://{username}:{password}@{cluster}/?retryWrites=true&w=majority"
-client = AsyncIOMotorClient(MONGO_URI)
-db = client["Products"]
 
 @router.get("/logout")
 async def logout():
