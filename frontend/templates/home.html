@@ -12,7 +12,7 @@
     * {
       box-sizing: border-box;
       margin: 0;
-      padding: 0
+      padding: 0;
     }
 
     :root {
@@ -27,102 +27,133 @@
       --muted: #A89B92;
     }
 
-    body,
-    html {
+    body {
       background: var(--black);
       color: var(--white);
-      font-family: 'DM Sans', sans-serif
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
     }
 
     .site {
       min-height: 100vh;
-      background: var(--black)
-    }
-
-    nav {
-      background: var(--black2);
-      border-bottom: 1px solid var(--red-dark);
-      padding: 0 2rem;
+      background: var(--black);
       display: flex;
-      align-items: center;
-      justify-content: space-between;
-      height: 64px;
-      position: sticky;
-      top: 0;
-      z-index: 10;
+      flex-direction: row;
+      width: 100%;
     }
 
-    .nav-logo {
+    /* Sidebar Styling */
+    .sidebar {
+      width: 280px;
+      background: var(--black2);
+      border-right: 1px solid var(--red-dark);
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      display: flex;
+      flex-direction: column;
+      padding: 30px 24px;
+      z-index: 100;
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .sidebar-brand {
       font-family: 'Playfair Display', serif;
-      font-size: 22px;
+      font-size: 24px;
       font-weight: 900;
       color: var(--red-light);
-      letter-spacing: 2px;
-      text-transform: uppercase
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-bottom: 40px;
     }
 
-    .nav-left {
+    .sidebar-menu {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .menu-item {
       display: flex;
       align-items: center;
-      gap: 2rem
-    }
-
-    .nav-links {
-      display: flex;
-      gap: 1.5rem
-    }
-
-    .nav-links a {
+      padding: 14px 16px;
       color: var(--muted);
-      font-size: 14px;
       text-decoration: none;
-      font-weight: 400;
-      letter-spacing: 0.5px;
-      transition: color .2s
-    }
-
-    .nav-links a:hover {
-      color: var(--white)
-    }
-
-    .nav-right {
-      display: flex;
-      gap: 1.5rem;
-      align-items: center
-    }
-
-    .nav-right a {
-      color: var(--muted);
       font-size: 14px;
-      text-decoration: none;
-      transition: color .2s
-    }
-
-    .nav-right a:hover {
-      color: var(--white)
-    }
-
-    .btn-account {
-      background: var(--red);
-      color: var(--white) !important;
-      padding: 8px 18px;
-      border-radius: 4px;
-      font-size: 13px;
       font-weight: 500;
-      transition: background .2s !important;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
     }
 
-    .btn-account:hover {
-      background: var(--red-light) !important
+    .menu-item:hover {
+      background: var(--black3);
+      color: var(--white);
+    }
+
+    .menu-item.active {
+      background: var(--red-dark);
+      color: var(--white);
+    }
+
+    /* Main Content */
+    .main-content {
+      margin-left: 280px;
+      flex-grow: 1;
+      padding: 40px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .dashboard-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      border-bottom: 1px solid #222;
+      padding-bottom: 20px;
+    }
+
+    .dashboard-title h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .dashboard-title p {
+      color: var(--muted);
+      font-size: 14px;
+      margin-top: 4px;
+    }
+
+    .logout-btn {
+      color: var(--red-light);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+      border: 1px solid var(--red-dark);
+      padding: 10px 20px;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .logout-btn:hover {
+      background: var(--red);
+      color: var(--white);
+      border-color: var(--red);
     }
 
     .search-bar {
       background: var(--black2);
-      border-bottom: 1px solid #2a2a2a;
-      padding: 1rem 2rem;
+      border: 1px solid #2a2a2a;
+      border-radius: 8px;
+      padding: 1rem;
       display: flex;
       align-items: center;
       gap: 12px;
+      margin-bottom: 20px;
     }
 
     .search-wrap {
@@ -132,7 +163,7 @@
       background: #111;
       border: 1px solid #333;
       border-radius: 4px;
-      overflow: hidden
+      overflow: hidden;
     }
 
     .search-wrap input {
@@ -143,11 +174,11 @@
       color: var(--white);
       font-size: 14px;
       font-family: 'DM Sans', sans-serif;
-      outline: none
+      outline: none;
     }
 
     .search-wrap input::placeholder {
-      color: var(--muted)
+      color: var(--muted);
     }
 
     .search-wrap button {
@@ -164,16 +195,17 @@
     }
 
     .search-wrap button:hover {
-      background: var(--red-light)
+      background: var(--red-light);
     }
 
+    /* Grid Padding and Separation */
     .grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 1.5px;
-      padding: 1.5px;
-      margin: 1.5rem auto;
-      width: 90%;
+      gap: 30px; /* Separated from each other */
+      padding: 20px 0 40px 0; /* Separated from edges */
+      margin: 1rem 0;
+      width: 100%;
     }
 
     .cat-card {
@@ -182,20 +214,15 @@
       cursor: pointer;
       position: relative;
       aspect-ratio: 3/4;
-      transition: transform .25s;
+      border-radius: 12px;
+      border: 1px solid #222;
+      transition: transform .25s, box-shadow .25s;
     }
 
     .cat-card:hover {
       z-index: 2;
-      transform: scale(1.02)
-    }
-
-    .cat-card:hover .cat-overlay {
-      opacity: 1
-    }
-
-    .cat-card:hover .cat-img {
-      transform: scale(1.06)
+      transform: scale(1.02);
+      box-shadow: 0 12px 40px rgba(192, 23, 42, 0.25);
     }
 
     .cat-img {
@@ -209,7 +236,8 @@
     }
 
     .cat-card:hover .cat-img {
-      filter: brightness(.45) saturate(.6)
+      filter: brightness(.45) saturate(.6);
+      transform: scale(1.06);
     }
 
     .cat-overlay {
@@ -265,7 +293,7 @@
 
     .cat-card:hover .cat-arrow {
       background: var(--red);
-      border-color: var(--red)
+      border-color: var(--red);
     }
 
     .placeholder-img {
@@ -290,6 +318,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
+      margin-top: auto;
     }
 
     .footer-brand {
@@ -297,50 +326,114 @@
       color: var(--red);
       font-size: 16px;
       font-weight: 700;
-      letter-spacing: 2px
+      letter-spacing: 2px;
     }
 
     .footer-note {
       font-size: 12px;
-      color: var(--muted)
+      color: var(--muted);
+    }
+
+    /* Mobile Nav styles */
+    .mobile-navbar {
+      display: none;
+      background: var(--black2);
+      border-bottom: 1px solid var(--red-dark);
+      padding: 10px 20px;
+      align-items: center;
+      justify-content: space-between;
+      height: 60px;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      width: 100%;
+    }
+
+    .mobile-navbar-brand {
+      font-family: 'Playfair Display', serif;
+      font-size: 20px;
+      font-weight: 900;
+      color: var(--red-light);
+      letter-spacing: 2px;
+    }
+
+    .sidebar-toggle-btn {
+      background: transparent;
+      border: 1px solid var(--red-dark);
+      color: var(--white);
+      border-radius: 8px;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .sidebar-toggle-btn:hover {
+      background: var(--black3);
+    }
+
+    .mobile-logout-btn {
+      color: var(--red-light);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      border: 1px solid var(--red-dark);
+      padding: 6px 12px;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .mobile-logout-btn:hover {
+      background: var(--red);
+      color: var(--white);
+      border-color: var(--red);
     }
 
     /* ── RESPONSIVE MEDIA QUERIES ── */
     @media (max-width: 768px) {
-      nav {
-        height: auto;
-        padding: 1rem;
+      .site {
         flex-direction: column;
-        gap: 12px;
       }
-      .nav-left {
-        flex-direction: column;
-        gap: 8px;
-        width: 100%;
-        align-items: center;
+
+      .sidebar {
+        transform: translateX(-100%);
+        position: fixed;
+        top: 60px;
+        bottom: 0;
+        left: 0;
+        width: 280px;
+        z-index: 1001;
+        box-shadow: 10px 0 30px rgba(0, 0, 0, 0.6);
       }
-      .nav-links {
-        gap: 16px;
-        justify-content: center;
+
+      .sidebar.show {
+        transform: translateX(0);
       }
-      .nav-right {
-        gap: 12px;
-        flex-wrap: wrap;
-        justify-content: center;
-        width: 100%;
+
+      .main-content {
+        margin-left: 0;
+        padding: 20px;
+        min-height: calc(100vh - 60px);
       }
-      .search-bar {
-        padding: 1rem;
+
+      .mobile-navbar {
+        display: flex;
       }
-      .search-wrap {
-        width: 100%;
-        max-width: 100%;
-      }
+
       .grid {
         grid-template-columns: repeat(2, 1fr);
-        width: 95%;
-        margin: 1rem auto;
+        gap: 20px;
+        padding: 10px 0;
       }
+
+      .dashboard-header {
+        display: none;
+      }
+
       footer {
         padding: 1.25rem 1rem;
         flex-direction: column;
@@ -359,146 +452,171 @@
 </head>
 
 <body>
-  <div class="site">
-    <nav>
-      <div class="nav-left">
-        <span class="nav-logo">RAAG</span>
-        <div class="nav-links">
-          <a href="/home">Home</a>
-          <a href="/orders">My Orders</a>
-        </div>
-      </div>
-      <div class="nav-right">
-        <a href="/">Seller Login</a>
-        <a href="/logout" class="btn-logout">Logout</a>
-
-        <a class="btn-account" href="#">Account</a>
-      </div>
-    </nav>
-
-    <form class="search-bar" action="/search" method="get">
-      <div class="search-wrap">
-        <input type="text" name="q" placeholder="Search products..." required />
-        <button type="submit">Search</button>
-      </div>
-    </form>
-
-    <div style="padding:2rem 1.5px 0;">
-      <div style="display:flex;align-items:center;gap:8px;padding:0 .5rem 1rem;">
-        <div style="width:3px;height:22px;background:var(--red);border-radius:2px"></div>
-        <span
-          style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);font-weight:500">Browse
-          Categories</span>
-      </div>
-    </div>
-
-    <div class="grid">
-      <!-- Women Wear -->
-      <a href="/womens" class="cat-card">
-        <!-- Replace the div below with: <img class="cat-img" src="your-image.jpg" alt="Women Wear" /> -->
-        <div class="placeholder-img" style="background:linear-gradient(135deg,#1a0a0d,#2d0e14)">👗</div>
-        <div class="cat-overlay"></div>
-        <div class="cat-label">
-          <span class="cat-tag">Fashion</span>
-          <span class="cat-name">Women Wear</span>
-        </div>
-        <div class="cat-arrow">→</div>
-      </a>
-
-      <!-- Mens Wear -->
-      <a href="/mens-wear" class="cat-card">
-        <div class="placeholder-img" style="background:linear-gradient(135deg,#0a0d1a,#0e142d)">🧥</div>
-        <div class="cat-overlay"></div>
-        <div class="cat-label">
-          <span class="cat-tag">Fashion</span>
-          <span class="cat-name">Mens Wear</span>
-        </div>
-        <div class="cat-arrow">→</div>
-      </a>
-
-      <!-- Home Appliances -->
-      <a href="/homeappliances" class="cat-card">
-        <div class="placeholder-img" style="background:linear-gradient(135deg,#0d1a0a,#142d0e)">🏠</div>
-        <div class="cat-overlay"></div>
-        <div class="cat-label">
-          <span class="cat-tag">Lifestyle</span>
-          <span class="cat-name">Home Appliances</span>
-        </div>
-        <div class="cat-arrow">→</div>
-      </a>
-
-      <!-- Cosmetics -->
-      <a href="/beauty" class="cat-card">
-        <div class="placeholder-img" style="background:linear-gradient(135deg,#1a160a,#2d230e)">💄</div>
-        <div class="cat-overlay"></div>
-        <div class="cat-label">
-          <span class="cat-tag">Beauty</span>
-          <span class="cat-name">Cosmetics</span>
-        </div>
-        <div class="cat-arrow">→</div>
-      </a>
-
-      <!-- Books -->
-      <a href="/books" class="cat-card">
-        <div class="placeholder-img" style="background:linear-gradient(135deg,#0a1a16,#0e2d23)">📚</div>
-        <div class="cat-overlay"></div>
-        <div class="cat-label">
-          <span class="cat-tag">Education</span>
-          <span class="cat-name">Books</span>
-        </div>
-        <div class="cat-arrow">→</div>
-      </a>
-
-      <!-- Groceries -->
-      <a href="/groceries" class="cat-card">
-        <div class="placeholder-img" style="background:linear-gradient(135deg,#1a0a0a,#2d0e0e)">🥦</div>
-        <div class="cat-overlay"></div>
-        <div class="cat-label">
-          <span class="cat-tag">Fresh</span>
-          <span class="cat-name">Groceries</span>
-        </div>
-        <div class="cat-arrow">→</div>
-      </a>
-
-      <!-- Furniture -->
-      <a href="/furniture" class="cat-card">
-        <div class="placeholder-img" style="background:linear-gradient(135deg,#0a0f1a,#0e1a2d)">📱</div>
-        <div class="cat-overlay"></div>
-        <div class="cat-label">
-          <span class="cat-tag">furniture</span>
-          <span class="cat-name">Furniture</span>
-        </div>
-        <div class="cat-arrow">→</div>
-      </a>
-
-      <!-- Sports -->
-      <a href="/kids" class="cat-card">
-        <div class="placeholder-img" style="background:linear-gradient(135deg,#0a1a0f,#0e2d18)">⚽</div>
-        <div class="cat-overlay"></div>
-        <div class="cat-label">
-          <span class="cat-tag">Study</span>
-          <span class="cat-name">Kids</span>
-        </div>
-        <div class="cat-arrow">→</div>
-      </a>
-
-      <!-- Pharma -->
-      <a href="/pharma" class="cat-card">
-        <div class="placeholder-img" style="background:linear-gradient(135deg,#1a0a14,#2d0e22)">🧸</div>
-        <div class="cat-overlay"></div>
-        <div class="cat-label">
-          <span class="cat-tag">medicine</span>
-          <span class="cat-name">Pharma</span>
-        </div>
-        <div class="cat-arrow">→</div>
-      </a>
-    </div>
-
-    <footer>
-      <span class="footer-brand">RAAG.COM</span>
-      <span class="footer-note">© 2026 Raag. All rights reserved.</span>
-    </footer>
+  <!-- Mobile Navbar -->
+  <div class="mobile-navbar">
+    <button id="sidebar-toggle" class="sidebar-toggle-btn" aria-label="Toggle Sidebar">☰</button>
+    <div class="mobile-navbar-brand">RAAG</div>
+    <a href="/logout" class="mobile-logout-btn" onclick="return confirm('Are you sure?');">Logout</a>
   </div>
-</body>
 
+  <div class="site">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div>
+        <div class="sidebar-brand">RAAG</div>
+        <nav class="sidebar-menu">
+          <a href="/home" class="menu-item active">
+            Home
+          </a>
+          <a href="/orders" class="menu-item">
+            My Orders
+          </a>
+        </nav>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <header class="dashboard-header">
+        <div class="dashboard-title">
+          <h1>Home</h1>
+          <p>Welcome to RAAG.com</p>
+        </div>
+        <a href="/logout" class="logout-btn" onclick="return confirm('Are you sure?');">Logout</a>
+      </header>
+
+      <form class="search-bar" action="/search" method="get">
+        <div class="search-wrap">
+          <input type="text" name="q" placeholder="Search products..." required />
+          <button type="submit">Search</button>
+        </div>
+      </form>
+
+      <div style="padding:2rem 1.5px 0;">
+        <div style="display:flex;align-items:center;gap:8px;padding:0 .5rem 1rem;">
+          <div style="width:3px;height:22px;background:var(--red);border-radius:2px"></div>
+          <span
+            style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);font-weight:500">Browse
+            Categories</span>
+        </div>
+      </div>
+
+      <div class="grid">
+        <!-- Women Wear -->
+        <a href="/womens" class="cat-card">
+          <div class="placeholder-img" style="background:linear-gradient(135deg,#1a0a0d,#2d0e14)">👗</div>
+          <div class="cat-overlay"></div>
+          <div class="cat-label">
+            <span class="cat-tag">Fashion</span>
+            <span class="cat-name">Women Wear</span>
+          </div>
+          <div class="cat-arrow">→</div>
+        </a>
+
+        <!-- Mens Wear -->
+        <a href="/mens-wear" class="cat-card">
+          <div class="placeholder-img" style="background:linear-gradient(135deg,#0a0d1a,#0e142d)">🧥</div>
+          <div class="cat-overlay"></div>
+          <div class="cat-label">
+            <span class="cat-tag">Fashion</span>
+            <span class="cat-name">Mens Wear</span>
+          </div>
+          <div class="cat-arrow">→</div>
+        </a>
+
+        <!-- Home Appliances -->
+        <a href="/homeappliances" class="cat-card">
+          <div class="placeholder-img" style="background:linear-gradient(135deg,#0d1a0a,#142d0e)">🏠</div>
+          <div class="cat-overlay"></div>
+          <div class="cat-label">
+            <span class="cat-tag">Lifestyle</span>
+            <span class="cat-name">Home Appliances</span>
+          </div>
+          <div class="cat-arrow">→</div>
+        </a>
+
+        <!-- Cosmetics -->
+        <a href="/beauty" class="cat-card">
+          <div class="placeholder-img" style="background:linear-gradient(135deg,#1a160a,#2d230e)">💄</div>
+          <div class="cat-overlay"></div>
+          <div class="cat-label">
+            <span class="cat-tag">Beauty</span>
+            <span class="cat-name">Cosmetics</span>
+          </div>
+          <div class="cat-arrow">→</div>
+        </a>
+
+        <!-- Books -->
+        <a href="/books" class="cat-card">
+          <div class="placeholder-img" style="background:linear-gradient(135deg,#0a1a16,#0e2d23)">📚</div>
+          <div class="cat-overlay"></div>
+          <div class="cat-label">
+            <span class="cat-tag">Education</span>
+            <span class="cat-name">Books</span>
+          </div>
+          <div class="cat-arrow">→</div>
+        </a>
+
+        <!-- Groceries -->
+        <a href="/groceries" class="cat-card">
+          <div class="placeholder-img" style="background:linear-gradient(135deg,#1a0a0a,#2d0e0e)">🥦</div>
+          <div class="cat-overlay"></div>
+          <div class="cat-label">
+            <span class="cat-tag">Fresh</span>
+            <span class="cat-name">Groceries</span>
+          </div>
+          <div class="cat-arrow">→</div>
+        </a>
+
+        <!-- Furniture -->
+        <a href="/furniture" class="cat-card">
+          <div class="placeholder-img" style="background:linear-gradient(135deg,#0a0f1a,#0e1a2d)">📱</div>
+          <div class="cat-overlay"></div>
+          <div class="cat-label">
+            <span class="cat-tag">furniture</span>
+            <span class="cat-name">Furniture</span>
+          </div>
+          <div class="cat-arrow">→</div>
+        </a>
+
+        <!-- Sports -->
+        <a href="/kids" class="cat-card">
+          <div class="placeholder-img" style="background:linear-gradient(135deg,#0a1a0f,#0e2d18)">⚽</div>
+          <div class="cat-overlay"></div>
+          <div class="cat-label">
+            <span class="cat-tag">Study</span>
+            <span class="cat-name">Kids</span>
+          </div>
+          <div class="cat-arrow">→</div>
+        </a>
+
+        <!-- Pharma -->
+        <a href="/pharma" class="cat-card">
+          <div class="placeholder-img" style="background:linear-gradient(135deg,#1a0a14,#2d0e22)">🧸</div>
+          <div class="cat-overlay"></div>
+          <div class="cat-label">
+            <span class="cat-tag">medicine</span>
+            <span class="cat-name">Pharma</span>
+          </div>
+          <div class="cat-arrow">→</div>
+        </a>
+      </div>
+
+      <footer>
+        <span class="footer-brand">RAAG.COM</span>
+        <span class="footer-note">© 2026 Raag. All rights reserved.</span>
+      </footer>
+    </main>
+  </div>
+
+  <script>
+    const sidebarToggleBtn = document.getElementById("sidebar-toggle");
+    if (sidebarToggleBtn) {
+      sidebarToggleBtn.addEventListener("click", () => {
+        const sidebar = document.querySelector(".sidebar");
+        sidebar.classList.toggle("show");
+      });
+    }
+  </script>
+</body>
 </html>

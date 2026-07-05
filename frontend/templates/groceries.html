@@ -16,7 +16,7 @@
 
   <nav>
     <div class="nav-left">
-      <a class="nav-logo" href="/">RAAG</a>
+      <a href="/" class="nav-logo">RAAG</a>
       <div class="nav-links">
         <a href="/home">Home</a>
         <a href="/orders">My Orders</a>
@@ -24,7 +24,7 @@
     </div>
     <div class="nav-right">
       <a href="/">Seller Login</a>
-      <a href="/logout" class="btn-logout">Logout</a>
+      <a href="/logout" class="btn-logout" onclick="return confirm('Are you sure?');">Logout</a>
       <a class="btn-account" href="#">My Account</a>
     </div>
   </nav>
