@@ -17,7 +17,7 @@
   <div class="mobile-navbar" style="display: none;">
     <button id="sidebar-toggle" class="sidebar-toggle-btn" aria-label="Toggle Sidebar">☰</button>
     <div class="mobile-navbar-brand">RAAG</div>
-    <a href="/logout" class="mobile-logout-btn" onclick="return confirm('Are you sure?');">Logout</a>
+    <a href="/logout" class="mobile-logout-btn">Logout</a>
   </div>
 
   <!-- Sidebar -->
@@ -26,16 +26,16 @@
       <div class="sidebar-brand">RAAG</div>
       <nav class="sidebar-menu">
         <a href="#" class="menu-item active" data-tab="tab-overview">
-          <span style="font-size: 16px;">📊</span> Overview
+          <span style="font-size: 16px;"></span> Overview
         </a>
         <a href="#" class="menu-item" data-tab="tab-products">
-          <span style="font-size: 16px;">📦</span> My Products
+          <span style="font-size: 16px;"></span> My Products
         </a>
         <a href="#" class="menu-item" data-tab="tab-orders">
-          <span style="font-size: 16px;">📋</span> My Orders
+          <span style="font-size: 16px;"></span> My Orders
         </a>
         <a href="#" class="menu-item" data-tab="tab-add-product">
-          <span style="font-size: 16px;">➕</span> Add Product
+          <span style="font-size: 16px;"></span> Add Product
         </a>
       </nav>
     </div>
@@ -56,7 +56,7 @@
         <h1>Dashboard</h1>
         <p>Welcome back, {{ seller_details.company_name or 'Seller' }}</p>
       </div>
-      <a href="/logout" class="logout-btn" onclick="return confirm('Are you sure?');">Logout</a>
+      <a href="/logout" class="logout-btn">Logout</a>
     </header>
 
     <!-- TAB: Overview -->
@@ -485,6 +485,7 @@
   </main>
 
   <script src="{{ url_for('static', path='js/seller.js') }}?v=1.0.4"></script>
+  <script src="{{ url_for('static', path='js/logout.js') }}"></script>
 </body>
 
 </html>

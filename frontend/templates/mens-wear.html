@@ -25,7 +25,7 @@
     </div>
     <div class="nav-right">
       <a href="/">Seller Login</a>
-      <a href="/logout" class="btn-logout" onclick="return confirm('Are you sure?');">Logout</a>
+      <a href="/logout" class="btn-logout">Logout</a>
       <a class="btn-account" href="#">My Account</a>
     </div>
   </nav>
@@ -94,6 +94,7 @@
     integrity="sha512-57MDmcccJXYtNnH+ZiBwzC4jb2rvgVCEokYN+L/nLlmO8rfYT/gIpW2A569iJ/3b+0UEasghjuZH/ma3wIs/EQ=="
     data-cf-beacon='{"version":"2024.11.0","token":"7f7b0fd8732c4326aae4b9d58d5c514a","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}'
     crossorigin="anonymous"></script>
+  <script src="{{ url_for('static', path='js/logout.js') }}"></script>
 </body>
 
 </html>

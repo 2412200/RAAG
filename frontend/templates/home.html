@@ -456,7 +456,7 @@
   <div class="mobile-navbar">
     <button id="sidebar-toggle" class="sidebar-toggle-btn" aria-label="Toggle Sidebar">☰</button>
     <div class="mobile-navbar-brand">RAAG</div>
-    <a href="/logout" class="mobile-logout-btn" onclick="return confirm('Are you sure?');">Logout</a>
+    <a href="/logout" class="mobile-logout-btn">Logout</a>
   </div>
 
   <div class="site">
@@ -482,7 +482,7 @@
           <h1>Home</h1>
           <p>Welcome to RAAG.com</p>
         </div>
-        <a href="/logout" class="logout-btn" onclick="return confirm('Are you sure?');">Logout</a>
+        <a href="/logout" class="logout-btn">Logout</a>
       </header>
 
       <form class="search-bar" action="/search" method="get">
@@ -611,12 +611,23 @@
 
   <script>
     const sidebarToggleBtn = document.getElementById("sidebar-toggle");
-    if (sidebarToggleBtn) {
-      sidebarToggleBtn.addEventListener("click", () => {
-        const sidebar = document.querySelector(".sidebar");
-        sidebar.classList.toggle("show");
+    const sidebarEl = document.querySelector(".sidebar");
+    
+    if (sidebarToggleBtn && sidebarEl) {
+      sidebarToggleBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        sidebarEl.classList.toggle("show");
+      });
+
+      document.addEventListener("click", (e) => {
+        if (window.innerWidth <= 768 && sidebarEl.classList.contains("show")) {
+          if (!sidebarEl.contains(e.target) && e.target !== sidebarToggleBtn) {
+            sidebarEl.classList.remove("show");
+          }
+        }
       });
     }
   </script>
+  <script src="{{ url_for('static', path='js/logout.js') }}"></script>
 </body>
 </html>

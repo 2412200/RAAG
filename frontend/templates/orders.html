@@ -168,7 +168,7 @@
         </div>
         <div class="nav-right">
             <a href="/">Seller Login</a>
-            <a href="/logout" class="btn-logout" onclick="return confirm('Are you sure?');">Logout</a>
+            <a href="/logout" class="btn-logout">Logout</a>
             <a href="#">My Account</a>
         </div>
     </div>
@@ -273,6 +273,7 @@
         // Load on page ready
         loadOrders();
     </script>
+  <script src="{{ url_for('static', path='js/logout.js') }}"></script>
 </body>
 
 </html>
