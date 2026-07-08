@@ -81,6 +81,61 @@ document.addEventListener("DOMContentLoaded", () => {
         };
     }
 
+    // Helper: Client-Side Image Compression using Canvas
+    async function compressImage(file, maxDimension = 1200, quality = 0.8) {
+        if (!file || !file.type || !file.type.startsWith("image/")) {
+            return file;
+        }
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = function (event) {
+                const img = new Image();
+                img.onload = function () {
+                    const canvas = document.createElement("canvas");
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > maxDimension) {
+                            height = Math.round((height * maxDimension) / width);
+                            width = maxDimension;
+                        }
+                    } else {
+                        if (height > maxDimension) {
+                            width = Math.round((width * maxDimension) / height);
+                            height = maxDimension;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+
+                    const ctx = canvas.getContext("2d");
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    canvas.toBlob(
+                        (blob) => {
+                            if (!blob) {
+                                resolve(file);
+                                return;
+                            }
+                            resolve(new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", {
+                                type: "image/jpeg",
+                                lastModified: Date.now()
+                            }));
+                        },
+                        "image/jpeg",
+                        quality
+                    );
+                };
+                img.onerror = () => resolve(file);
+                img.src = event.target.result;
+            };
+            reader.onerror = () => resolve(file);
+            reader.readAsDataURL(file);
+        });
+    }
+
     // Sidebar toggle for mobile
     const sidebarToggleBtn = document.getElementById("sidebar-toggle");
     const sidebarEl = document.querySelector(".sidebar");
@@ -221,6 +276,58 @@ document.addEventListener("DOMContentLoaded", () => {
         if (specSelect.value) {
             showSection(specSelect.value);
         }
+    }
+
+    const apparelCategorySelect = document.getElementById("category_app");
+    const standardSizesGroup = document.getElementById("standard-sizes-group");
+    const numericSizesGroup = document.getElementById("numeric-sizes-group");
+    const gsmGroup = document.getElementById("gsm-group");
+    const gsmInput = document.getElementById("gsm");
+
+    function updateApparelFields() {
+        if (!apparelCategorySelect) return;
+        const val = apparelCategorySelect.value.toLowerCase();
+        // Check if value is one of jeans, trouser, lower
+        const isJeansTrouserLower = val.includes("jeans") || val.includes("trouser") || val.includes("lower");
+
+        if (isJeansTrouserLower) {
+            // Remove/hide GSM and size fields
+            if (gsmGroup) gsmGroup.style.display = "none";
+            if (gsmInput) {
+                gsmInput.required = false;
+                gsmInput.disabled = true;
+            }
+            if (standardSizesGroup) {
+                standardSizesGroup.style.display = "none";
+                standardSizesGroup.querySelectorAll("input").forEach(cb => cb.disabled = true);
+            }
+            // Show numeric size field
+            if (numericSizesGroup) {
+                numericSizesGroup.style.display = "block";
+                numericSizesGroup.querySelectorAll("input").forEach(cb => cb.disabled = false);
+            }
+        } else {
+            // Show GSM and default size fields
+            if (gsmGroup) gsmGroup.style.display = "block";
+            if (gsmInput) {
+                gsmInput.required = true;
+                gsmInput.disabled = false;
+            }
+            if (standardSizesGroup) {
+                standardSizesGroup.style.display = "block";
+                standardSizesGroup.querySelectorAll("input").forEach(cb => cb.disabled = false);
+            }
+            // Hide numeric size field
+            if (numericSizesGroup) {
+                numericSizesGroup.style.display = "none";
+                numericSizesGroup.querySelectorAll("input").forEach(cb => cb.disabled = true);
+            }
+        }
+    }
+
+    if (apparelCategorySelect) {
+        apparelCategorySelect.addEventListener("change", updateApparelFields);
+        updateApparelFields();
     }
 
     // Fetch orders from backend
@@ -433,6 +540,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 </div>
                 <div class="product-info-col">
                     <div class="product-name-txt">${product.product_name}</div>
+                    <div class="product-id-txt">ID: ${product._id}</div>
                     <div class="product-desc-txt">${product.description || 'No description provided.'}</div>
                 </div>
                 <div class="product-meta-item">
@@ -610,7 +718,42 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const formData = new FormData(form);
 
+            // Disable submit button during upload
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalBtnText = submitBtn ? submitBtn.textContent : "Add Product";
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.textContent = "Compressing & Uploading...";
+            }
+
             try {
+                // Intercept image files and compress them
+                const files = formData.getAll("image_file");
+                if (files && files.length > 0) {
+                    let hasImages = false;
+                    for (let j = 0; j < files.length; j++) {
+                        if (files[j] instanceof File && files[j].size > 0 && files[j].type.startsWith("image/")) {
+                            hasImages = true;
+                            break;
+                        }
+                    }
+                    if (hasImages) {
+                        showToast("Compressing images to speed up upload...", "info");
+                        formData.delete("image_file");
+                        for (let j = 0; j < files.length; j++) {
+                            const file = files[j];
+                            if (file instanceof File && file.size > 0) {
+                                if (file.type.startsWith("image/")) {
+                                    const compressed = await compressImage(file);
+                                    formData.append("image_file", compressed);
+                                } else {
+                                    formData.append("image_file", file);
+                                }
+                            }
+                        }
+                    }
+                }
+
                 const response = await fetch(form.action, {
                     method: "POST",
                     body: formData
@@ -621,12 +764,15 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (response.ok) {
                     showToast(data.message || "Product added successfully!", "success");
                     form.reset();
-                    
-
 
                     // Hide specifications sections in form
-                    sections.forEach(section => setSectionActive(section, false));
-                    if (specSelect) specSelect.value = "";
+                    if (specSelect && specSelect.closest(".form-group").style.display === "none") {
+                        showSection(specSelect.value);
+                        updateApparelFields();
+                    } else {
+                        sections.forEach(section => setSectionActive(section, false));
+                        if (specSelect) specSelect.value = "";
+                    }
 
                     // Switch back to Products List tab and refresh
                     const productsMenuItem = document.querySelector('[data-tab="tab-products"]');
@@ -639,6 +785,11 @@ document.addEventListener("DOMContentLoaded", () => {
             } catch (error) {
                 console.error(error);
                 showToast("Network error. Please try again.", "error");
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalBtnText;
+                }
             }
         });
     }

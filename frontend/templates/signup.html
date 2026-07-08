@@ -558,6 +558,7 @@
     }
   </style>
   <link rel="icon" type="image/png" href="{{ url_for('static', path='favicon.png') }}">
+  <script src="/static/js/theme-toggle.js"></script>
 </head>
 
 <body>
@@ -1216,9 +1217,18 @@
               return;
             }
 
-            showStatus('Account created successfully!', 'success');
+            showStatus('Account created successfully! Logging you in...', 'success');
+            
+            if (data.token) {
+              localStorage.setItem("token", data.token);
+            }
+
             setTimeout(() => {
-              window.location.href = '/';
+              if (data.role === 'seller') {
+                window.location.href = '/seller';
+              } else {
+                window.location.href = '/home';
+              }
             }, 1500);
 
           } catch (error) {

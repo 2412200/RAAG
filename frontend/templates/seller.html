@@ -10,6 +10,7 @@
     rel="stylesheet" />
   <link rel="stylesheet" href="{{ url_for('static', path='css/seller.css') }}?v=1.0.4">
   <link rel="icon" type="image/png" href="{{ url_for('static', path='favicon.png') }}">
+  <script src="/static/js/theme-toggle.js"></script>
 </head>
 
 <body>
@@ -146,7 +147,7 @@
 
         <form id="productform" action="{{ url_for('add_product') }}" method="post" enctype="multipart/form-data">
           <!-- Specification Dropdown -->
-          <div class="form-group">
+          <div class="form-group" style="display: none;">
             <label for="specification">Product Specification Collection</label>
             <select id="specification" name="specification" required>
               {% if seller_details.category == 'apparels' %}
@@ -186,11 +187,33 @@
           <!-- Spec sections -->
           <div class="spec-section" data-spec="apparel" hidden>
             <div class="form-group">
+              <label for="category_app">Category</label>
+              <select id="category_app" name="category" required>
+                <option value="" disabled selected>Select product type</option>
+                <option value="Mens Shirt">Mens Shirt</option>
+                <option value="Mens TShirt">Mens TShirt</option>
+                <option value="Mens Lower">Mens Lower</option>
+                <option value="Mens Jeans">Mens Jeans</option>
+                <option value="Mens Trouser">Mens Trouser</option>
+                <option value="Mens Shorts">Mens Shorts</option>
+                <option value="Pyjama">Pyjama</option>
+                <option value="Mens Inner Wear">Mens Inner Wear</option>
+                <option value="Womens Shirt">Womens Shirt</option>
+                <option value="Womens TShirt">Womens TShirt</option>
+                <option value="Womens Lower">Womens Lower</option>
+                <option value="Womens Jeans">Womens Jeans</option>
+                <option value="Womens Trouser">Womens Trouser</option>
+                <option value="Womens Pyjama">Womens Pyjama</option>
+              </select>
+            </div>
+
+            <div class="form-group">
               <label for="product_name_app">Product Name</label>
               <input type="text" id="product_name_app" name="product_name" placeholder="Enter product name" required />
             </div>
 
-            <div class="form-group">
+            <!-- Standard Sizes Group -->
+            <div class="form-group" id="standard-sizes-group">
               <label>Sizes (Select all that apply)</label>
               <div class="sizes-checkbox-group"
                 style="display: flex; gap: 15px; flex-wrap: wrap; margin-top: 5px; background: var(--black); padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
@@ -225,32 +248,27 @@
               </div>
             </div>
 
+            <!-- Numeric Sizes Group (24, 26 to 36) -->
+            <div class="form-group" id="numeric-sizes-group" style="display: none;">
+              <label>Sizes (Select all that apply)</label>
+              <div class="sizes-checkbox-group"
+                style="display: flex; gap: 15px; flex-wrap: wrap; margin-top: 5px; background: var(--black); padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
+                {% for sz in ['24', '26', '28', '30', '32', '34', '36'] %}
+                <label
+                  style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 14px; font-weight: normal; color: var(--muted);">
+                  <input type="checkbox" name="size" value="{{ sz }}" style="width: auto; height: auto; cursor: pointer;" /> {{ sz }}
+                </label>
+                {% endfor %}
+              </div>
+            </div>
+
             <div class="form-group">
               <label for="fabric">Fabric Name</label>
               <input type="text" id="fabric" name="fabric" placeholder="Enter Fabric name" required />
             </div>
 
-            <div class="form-group">
-              <label for="category_app">Category</label>
-              <select id="category_app" name="category" required>
-                <option value="" disabled selected>Select product type</option>
-                <option value="Mens Shirt">Mens Shirt</option>
-                <option value="Mens TShirt">Mens TShirt</option>
-                <option value="Mens Lower">Mens Lower</option>
-                <option value="Mens Jeans">Mens Jeans</option>
-                <option value="Mens Shorts">Mens Shorts</option>
-                <option value="Pyjama">Pyjama</option>
-                <option value="Mens Inner Wear">Mens Inner Wear</option>
-                <option value="Womens Shirt">Womens Shirt</option>
-                <option value="Womens TShirt">Womens TShirt</option>
-                <option value="Womens Lower">Womens Lower</option>
-                <option value="Womens Jeans">Womens Jeans</option>
-                <option value="Womens Pyjama">Womens Pyjama</option>
-              </select>
-            </div>
-
             <div class="dim-row">
-              <div class="form-group">
+              <div class="form-group" id="gsm-group">
                 <label for="gsm">GSM</label>
                 <input type="number" id="gsm" name="gsm" placeholder="Enter GSM" min="0" required />
               </div>
@@ -268,6 +286,7 @@
                   <option value="" disabled selected>Select Gender</option>
                   <option value="Male">Male</option>
                   <option value="Female">Female</option>
+                  <option value="Unisex">Unisex</option>
                 </select>
               </div>
 

@@ -32,7 +32,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 router = APIRouter()
 
 @router.post("/POST/signup")
-def signup(data: SignupRequest):
+def signup(data: SignupRequest, response: Response):
     # Normalize phone number to E.164 format
     phone_num = data.phone.strip().replace(" ", "")
     if not phone_num.startswith("+"):
@@ -136,8 +136,22 @@ def signup(data: SignupRequest):
 
                 conn.commit()
 
+                token_data = {"phone": data.phone, "role": data.role}
+                token = jwt.encode(token_data, SECRET_KEY, algorithm=ALGORITHM)
+
+                response.set_cookie(
+                    key="access_token",
+                    value=token,
+                    httponly=True,
+                    secure=False,  # Set to True if using HTTPS in production
+                    samesite="lax",
+                    max_age=86400
+                )
+
                 return {
-                    "message": "Account created"
+                    "message": "Account created",
+                    "role": data.role,
+                    "token": token
                 }
     except HTTPException:
         raise
@@ -310,7 +324,7 @@ async def add_product(request : Request):
                 size=cast(Any, [str(x) for x in form.getlist("size")]),
                 fabric=get_str(form.get("fabric")),
                 category=cast(Any, get_str(form.get("category"))),
-                gsm=get_int(form.get("gsm")),
+                gsm=get_int(form.get("gsm")) or 180,
                 mrp=get_float(form.get("mrp")),
                 gender=cast(Any, get_str(form.get("gender"))),
                 moq=get_int(form.get("moq")),

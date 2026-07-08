@@ -213,7 +213,7 @@ def normalize_doc(doc, default_image):
 async def womens_wear(request: Request):
     
     apparel = await db["apparel"].find(
-        {"is_hidden": {"$ne": True}, "gender": "Female"}
+        {"is_hidden": {"$ne": True}, "gender": {"$in": ["Female", "Unisex"]}}
     ).to_list(length=100)
     
     products = [normalize_doc(p, "womentshirt.webp") for p in apparel]
@@ -353,7 +353,7 @@ async def mens_wear(request: Request):
     # ).to_list(length=100)
     
     apparel = await db["apparel"].find(
-        {"is_hidden": {"$ne": True}, "gender": "Male"}
+        {"is_hidden": {"$ne": True}, "gender": {"$in": ["Male", "Unisex"]}}
     ).to_list(length=100)
     
     products = [normalize_doc(p, "menjeans.webp") for p in apparel]

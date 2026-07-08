@@ -58,6 +58,13 @@ class SizeEnum(str,Enum):
     XL = "XL"
     XXL = "XXL"
     XXXL = "XXXL"
+    S24 = "24"
+    S26 = "26"
+    S28 = "28"
+    S30 = "30"
+    S32 = "32"
+    S34 = "34"
+    S36 = "36"
 
 
 class apparel(BaseModel):
@@ -66,10 +73,10 @@ class apparel(BaseModel):
     fabric : str
     category : Literal["Mens Shirt", "Mens TShirt", "Mens Lower", "Mens Jeans", "Mens Shorts", 
                        "Pyjama", "Mens Inner Wear", "Womens Shirt", "Womens Jeans", "Womens TShirt",
-                       "Womens Lower", "Womens Pyjama"]
+                       "Womens Lower", "Womens Pyjama", "Mens Trouser", "Womens Trouser"]
     gsm : int = Field(gt=1)
     mrp : float = Field(gt=1)
-    gender : Literal["Male", "Female"]
+    gender : Literal["Male", "Female", "Unisex"]
     moq: int = Field(default=1, gt=0)
     seller_phone: Optional[str] = None
     is_hidden: bool = False
