@@ -181,6 +181,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (targetTab === "tab-products" || targetTab === "tab-overview") {
             fetchProducts();
+            if (targetTab === "tab-overview") {
+                fetchAnalytics();
+            }
         } else if (targetTab === "tab-orders") {
             fetchOrders();
         }
@@ -559,9 +562,14 @@ document.addEventListener("DOMContentLoaded", () => {
                     </label>
                     <span class="status-label ${isChecked ? 'visible' : 'hidden'}">${isChecked ? 'Visible' : 'Hidden'}</span>
                 </div>
-                <button class="delete-btn" data-id="${product._id}" data-spec="${product.specification}" title="Delete Product">
-                    ✕
-                </button>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <button class="edit-btn" data-id="${product._id}" data-spec="${product.specification}" title="Edit Product" style="background:#222; border:1px solid #333; color:#D4A847; font-size:12px; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:600; transition:all 0.2s;">
+                        Edit
+                    </button>
+                    <button class="delete-btn" data-id="${product._id}" data-spec="${product.specification}" title="Delete Product">
+                        ✕
+                    </button>
+                </div>
             `;
 
             productsListEl.appendChild(row);
@@ -660,6 +668,25 @@ document.addEventListener("DOMContentLoaded", () => {
                         }
                     }
                 );
+            });
+        });
+
+        // Add event listeners to edit buttons
+        document.querySelectorAll(".edit-btn").forEach(btn => {
+            btn.addEventListener("click", (e) => {
+                const productId = btn.getAttribute("data-id");
+                const specName = btn.getAttribute("data-spec");
+                const product = allProducts.find(p => p._id === productId);
+                if (product) {
+                    document.getElementById("edit-product-id").value = product._id;
+                    document.getElementById("edit-product-spec").value = product.specification;
+                    document.getElementById("edit-product-name").value = product.product_name || product.name || "";
+                    document.getElementById("edit-product-mrp").value = product.price || product.mrp || 0.0;
+                    document.getElementById("edit-product-stock").value = product.stock !== undefined ? product.stock : 100;
+                    document.getElementById("edit-product-description").value = product.description || "";
+                    
+                    document.getElementById("edit-product-modal").style.display = "flex";
+                }
             });
         });
     }
@@ -794,6 +821,131 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    // Fetch and populate overview analytics
+    async function fetchAnalytics() {
+        try {
+            const res = await fetch("/GET/seller/analytics");
+            if (!res.ok) throw new Error("Failed to fetch analytics");
+            const data = await res.json();
+            
+            document.getElementById("stat-total-revenue").textContent = "₹" + parseFloat(data.total_revenue).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById("stat-total-orders").textContent = data.total_orders;
+            document.getElementById("stat-completed-orders").textContent = data.completed_orders;
+            
+            const categoryList = document.getElementById("analytics-category-list");
+            if (categoryList) {
+                categoryList.innerHTML = "";
+                if (!data.category_sales || data.category_sales.length === 0) {
+                    categoryList.innerHTML = `<div style="color:#A89B92; text-align:center; padding:10px; font-size:13px;">No sales recorded yet.</div>`;
+                } else {
+                    data.category_sales.forEach(c => {
+                        categoryList.innerHTML += `
+                            <div style="display:flex; justify-content:space-between; align-items:center; background:#111; padding:10px 14px; border-radius:6px; font-size:13px;">
+                                <span style="color:#F5F0ED; font-weight:500;">${c.category}</span>
+                                <span style="color:#D4A847; font-weight:600;">₹${parseFloat(c.revenue).toLocaleString()}</span>
+                            </div>
+                        `;
+                    });
+                }
+            }
+            
+            const topProductsList = document.getElementById("analytics-top-products");
+            if (topProductsList) {
+                topProductsList.innerHTML = "";
+                if (!data.top_products || data.top_products.length === 0) {
+                    topProductsList.innerHTML = `<div style="color:#A89B92; text-align:center; padding:10px; font-size:13px;">No sales recorded yet.</div>`;
+                } else {
+                    data.top_products.forEach(p => {
+                        topProductsList.innerHTML += `
+                            <div style="display:flex; justify-content:space-between; align-items:center; background:#111; padding:10px 14px; border-radius:6px; font-size:13px;">
+                                <div style="display:flex; flex-direction:column;">
+                                    <span style="color:#F5F0ED; font-weight:500;">${p.name}</span>
+                                    <span style="color:#A89B92; font-size:11px;">Qty: ${p.quantity} (${p.category})</span>
+                                </div>
+                                <span style="color:#D4A847; font-weight:600;">₹${parseFloat(p.revenue).toLocaleString()}</span>
+                            </div>
+                        `;
+                    });
+                }
+            }
+        } catch (err) {
+            console.error("Error loading analytics:", err);
+        }
+    }
+
+    // Modal Close Helper
+    window.closeEditModal = function() {
+        document.getElementById("edit-product-modal").style.display = "none";
+        document.getElementById("edit-product-form").reset();
+    };
+
+    // Edit Product Submit
+    const editProductForm = document.getElementById("edit-product-form");
+    if (editProductForm) {
+        editProductForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const formData = new FormData(editProductForm);
+            
+            try {
+                const response = await fetch("/POST/seller/product/edit", {
+                    method: "POST",
+                    body: formData
+                });
+                
+                const data = await response.json();
+                if (response.ok) {
+                    showToast("Product updated successfully!", "success");
+                    closeEditModal();
+                    fetchProducts();
+                    fetchAnalytics();
+                } else {
+                    showToast("Failed to edit product: " + (data.detail || "Error"), "error");
+                }
+            } catch (error) {
+                console.error(error);
+                showToast("Network error. Please try again.", "error");
+            }
+        });
+    }
+
+    // Profile Settings Form Submit
+    const settingsProfileForm = document.getElementById("settings-profile-form");
+    if (settingsProfileForm) {
+        settingsProfileForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            
+            const payload = {
+                business_name: document.getElementById("settings-business-name").value,
+                owner_name: document.getElementById("settings-owner-name").value,
+                city: document.getElementById("settings-city").value,
+                state: document.getElementById("settings-state").value
+            };
+            
+            try {
+                const response = await fetch("/POST/user/update-profile", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+                
+                const data = await response.json();
+                if (response.ok) {
+                    showToast("Profile updated successfully!", "success");
+                    const sidebarName = document.querySelector(".sidebar-profile .profile-name");
+                    const sidebarBusiness = document.querySelector(".sidebar-profile .profile-business");
+                    if (sidebarName) sidebarName.textContent = payload.owner_name;
+                    if (sidebarBusiness) sidebarBusiness.textContent = payload.business_name;
+                } else {
+                    showToast("Failed to update profile: " + (data.detail || "Error"), "error");
+                }
+            } catch (error) {
+                console.error(error);
+                showToast("Network error. Please try again.", "error");
+            }
+        });
+    }
+
     // Initial Fetch on load
     fetchProducts();
+    fetchAnalytics();
 });

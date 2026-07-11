@@ -449,7 +449,9 @@
     }
   </style>
   <link rel="icon" type="image/png" href="{{ url_for('static', path='favicon.png') }}">
+  <link rel="stylesheet" href="/static/css/cart.css?v=1.0.0">
   <script src="/static/js/theme-toggle.js"></script>
+  <script src="/static/js/cart.js?v=1.0.0"></script>
 </head>
 
 <body>
@@ -457,7 +459,12 @@
   <div class="mobile-navbar">
     <button id="sidebar-toggle" class="sidebar-toggle-btn" aria-label="Toggle Sidebar">☰</button>
     <div class="mobile-navbar-brand">RAAG</div>
-    <a href="/logout" class="mobile-logout-btn">Logout</a>
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <button id="mobile-cart-toggle" class="sidebar-toggle-btn" style="position: relative; border: none; font-size: 18px;" aria-label="Toggle Cart">
+        🛒<span id="mobile-cart-count" style="position: absolute; top: -5px; right: -5px; background: var(--red); color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; display: flex; align-items: center; justify-content: center; font-weight: bold; display: none;">0</span>
+      </button>
+      <a href="/logout" class="mobile-logout-btn">Logout</a>
+    </div>
   </div>
 
   <div class="site">
@@ -466,14 +473,15 @@
       <div>
         <div class="sidebar-brand">RAAG</div>
         <nav class="sidebar-menu">
-          <a href="/home" class="menu-item active">
+          <a href="/home" id="nav-home" class="menu-item active">
             Home
           </a>
-          <a href="/orders" class="menu-item">
+          <a href="/orders" id="nav-orders" class="menu-item">
             My Orders
           </a>
         </nav>
       </div>
+      <div id="sidebar-cart" class="sidebar-cart"></div>
     </aside>
 
     <!-- Main Content -->
@@ -610,25 +618,7 @@
     </main>
   </div>
 
-  <script>
-    const sidebarToggleBtn = document.getElementById("sidebar-toggle");
-    const sidebarEl = document.querySelector(".sidebar");
-    
-    if (sidebarToggleBtn && sidebarEl) {
-      sidebarToggleBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        sidebarEl.classList.toggle("show");
-      });
-
-      document.addEventListener("click", (e) => {
-        if (window.innerWidth <= 768 && sidebarEl.classList.contains("show")) {
-          if (!sidebarEl.contains(e.target) && e.target !== sidebarToggleBtn) {
-            sidebarEl.classList.remove("show");
-          }
-        }
-      });
-    }
-  </script>
+  <!-- Sidebar toggle and cart synchronization is handled in cart.js -->
   <script src="{{ url_for('static', path='js/logout.js') }}"></script>
 </body>
 </html>

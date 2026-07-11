@@ -9,36 +9,61 @@
     href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500&display=swap"
     rel="stylesheet" />
   <link rel="stylesheet" href="{{ url_for('static', path='css/category.css') }}?v=1.0.0">
+  <link rel="stylesheet" href="/static/css/cart.css?v=1.0.0">
   <link rel="icon" type="image/png" href="{{ url_for('static', path='favicon.png') }}">
   <script src="/static/js/theme-toggle.js"></script>
+  <script src="/static/js/cart.js?v=1.0.0"></script>
 </head>
 
 <body>
 
-  <nav>
-    <div class="nav-left">
-      <a href="/" class="nav-logo">RAAG</a>
-      <div class="nav-links">
-        <a href="/home">Home</a>
-        <a href="/orders">My Orders</a>
-      </div>
-    </div>
-    <div class="nav-right">
-      <a href="/">Seller Login</a>
-      <a href="/logout" class="btn-logout">Logout</a>
-      <a class="btn-account" href="#">My Account</a>
-    </div>
-  </nav>
-
-  <div class="page-header">
-    <div class="page-header-accent"></div>
-    <div>
-      <div class="breadcrumb"><a href="/home">Home</a> &nbsp;/&nbsp; Home Appliances</div>
-      <h1 class="page-title">Home Appliances</h1>
+  <!-- Mobile Navbar -->
+  <div class="mobile-navbar">
+    <button id="sidebar-toggle" class="sidebar-toggle-btn" aria-label="Toggle Sidebar">☰</button>
+    <div class="mobile-navbar-brand">RAAG</div>
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <button id="mobile-cart-toggle" class="sidebar-toggle-btn" style="position: relative; border: none; font-size: 18px;" aria-label="Toggle Cart">
+        🛒<span id="mobile-cart-count" style="position: absolute; top: -5px; right: -5px; background: var(--red); color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; display: flex; align-items: center; justify-content: center; font-weight: bold; display: none;">0</span>
+      </button>
+      <a href="/logout" class="mobile-logout-btn">Logout</a>
     </div>
   </div>
 
-  <div class="products-container">
+  <div class="site">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div>
+        <div class="sidebar-brand">RAAG</div>
+        <nav class="sidebar-menu">
+          <a href="/home" id="nav-home" class="menu-item">
+            Home
+          </a>
+          <a href="/orders" id="nav-orders" class="menu-item">
+            My Orders
+          </a>
+        </nav>
+      </div>
+      <div id="sidebar-cart" class="sidebar-cart"></div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <header class="dashboard-header">
+        <div class="dashboard-title">
+          <h1>Home Appliances</h1>
+          <p>Browse premium home appliances</p>
+        </div>
+        <a href="/logout" class="logout-btn">Logout</a>
+      </header>
+
+      <div class="page-header" style="padding: 1rem 0; border-bottom: none; display: flex; align-items: center; gap: 12px;">
+        <div class="page-header-accent"></div>
+        <div>
+          <div class="breadcrumb"><a href="/home">Home</a> &nbsp;/&nbsp; Home Appliances</div>
+        </div>
+      </div>
+
+      <div class="products-container" style="width: 100%; margin: 1rem 0 3rem;">
     {% for product in Products %}
     <div class="product-card">
       <div class="product-img-wrap">
@@ -53,17 +78,20 @@
         <p class="product-name">{{ product.name }}</p>
         <p class="product-price">₹{{ product.price }}</p>
         <p class="product-moq">Min. order: {{ product.quantity }} units</p>
-        <button class="add-btn" onclick="addToOrder({
-            name: '{{ product.name }}',
-            image: '{{ product.image }}',
-            quantity: {{ product.quantity }},
-            price: {{ product.price }}
-          })">
-          Add to Order
+        <button class="add-btn" 
+                data-name="{{ product.name }}"
+                data-image="{{ product.image }}"
+                data-quantity="{{ product.quantity }}"
+                data-price="{{ product.price }}"
+                onclick="addToCartFromEl(this)">
+          Add to Cart
         </button>
       </div>
     </div>
     {% endfor %}
+  </div>
+
+  </main>
   </div>
 
   <footer>
@@ -74,20 +102,7 @@
   <div id="toast">✅ Item added to order!</div>
 
   <script>
-    function addToOrder(product) {
-      let orders = JSON.parse(localStorage.getItem('orderItems') || '[]');
-      const existing = orders.find(item => item.name === product.name);
-      if (existing) {
-        existing.qty = (existing.qty || 1) + 1;
-      } else {
-        orders.push({ ...product, qty: 1 });
-      }
-      localStorage.setItem('orderItems', JSON.stringify(orders));
-
-      const toast = document.getElementById('toast');
-      toast.style.display = 'block';
-      setTimeout(() => toast.style.display = 'none', 2000);
-    }
+    // addToOrder is handled globally by cart.js
   </script>
   <script defer src="https://static.cloudflareinsights.com/beacon.min.js/v833ccba57c9e4d2798f2e76cebdd09a11778172276447"
     integrity="sha512-57MDmcccJXYtNnH+ZiBwzC4jb2rvgVCEokYN+L/nLlmO8rfYT/gIpW2A569iJ/3b+0UEasghjuZH/ma3wIs/EQ=="

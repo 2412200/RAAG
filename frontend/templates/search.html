@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Search Results - RAAG.com</title>
   <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="stylesheet" href="/static/css/cart.css?v=1.0.0">
+  <script src="/static/js/cart.js?v=1.0.0"></script>
   <style>
     .search-header {
       padding: 40px 40px 20px;
@@ -106,19 +108,46 @@
 </head>
 <body>
 
-  <!-- NAVBAR -->
-  <div class="navbar">
-    <div class="nav-left">
-      <a href="/home">Home</a>
-      <a href="/orders">My Orders</a>
-    </div>
-    <div class="nav-right">
-      <a href="/">Seller Login</a>
-      <a class="btn-account" href="#">My Account</a>
+  <!-- Mobile Navbar -->
+  <div class="mobile-navbar">
+    <button id="sidebar-toggle" class="sidebar-toggle-btn" aria-label="Toggle Sidebar">☰</button>
+    <div class="mobile-navbar-brand">RAAG</div>
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <button id="mobile-cart-toggle" class="sidebar-toggle-btn" style="position: relative; border: none; font-size: 18px;" aria-label="Toggle Cart">
+        🛒<span id="mobile-cart-count" style="position: absolute; top: -5px; right: -5px; background: var(--red); color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; display: flex; align-items: center; justify-content: center; font-weight: bold; display: none;">0</span>
+      </button>
+      <a href="/logout" class="mobile-logout-btn">Logout</a>
     </div>
   </div>
 
-  <div class="search-header">
+  <div class="site">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div>
+        <div class="sidebar-brand">RAAG</div>
+        <nav class="sidebar-menu">
+          <a href="/home" id="nav-home" class="menu-item">
+            Home
+          </a>
+          <a href="/orders" id="nav-orders" class="menu-item">
+            My Orders
+          </a>
+        </nav>
+      </div>
+      <div id="sidebar-cart" class="sidebar-cart"></div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <header class="dashboard-header">
+        <div class="dashboard-title">
+          <h1>Search Results</h1>
+          <p>Find what you're looking for</p>
+        </div>
+        <a href="/logout" class="logout-btn">Logout</a>
+      </header>
+
+  <div class="search-header" style="padding: 1rem 0 0 0; max-width: 100%;">
     <h1 class="search-title">Search Results{% if query %} for "<span>{{ query }}</span>"{% endif %}</h1>
     <p class="search-subtitle">
       {% if Products %}
@@ -137,21 +166,81 @@
     </form>
   </div>
 
+    <!-- Filters and Sorting Row -->
+    <form class="filters-row" action="/search" method="get" style="display:flex; flex-wrap:wrap; gap:16px; margin: 24px auto; max-width: 1400px; padding: 0 40px; align-items:center; text-align:left;">
+      <input type="hidden" name="q" value="{{ query }}" />
+      
+      <!-- Category Filter -->
+      <div style="display:flex; flex-direction:column; gap:4px;">
+        <label style="font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px;">Category</label>
+        <select name="category" style="padding:8px 12px; background:var(--surface); border:1px solid var(--border); border-radius:6px; color:var(--text); outline:none; font-size:13px;">
+          <option value="">All Categories</option>
+          <option value="apparel" {% if selected_category == 'apparel' %}selected{% endif %}>Apparel</option>
+          <option value="fmcg" {% if selected_category == 'fmcg' %}selected{% endif %}>FMCG</option>
+          <option value="mobile_accessories" {% if selected_category == 'mobile_accessories' %}selected{% endif %}>Mobile Accessories</option>
+          <option value="steel_work" {% if selected_category == 'steel_work' %}selected{% endif %}>Steel Work</option>
+          <option value="homeappliances" {% if selected_category == 'homeappliances' %}selected{% endif %}>Home Appliances</option>
+          <option value="pharma" {% if selected_category == 'pharma' %}selected{% endif %}>Pharmacy</option>
+          <option value="beauty" {% if selected_category == 'beauty' %}selected{% endif %}>Cosmetics</option>
+          <option value="books" {% if selected_category == 'books' %}selected{% endif %}>Books</option>
+          <option value="groceries" {% if selected_category == 'groceries' %}selected{% endif %}>Groceries</option>
+          <option value="furniture" {% if selected_category == 'furniture' %}selected{% endif %}>Furniture</option>
+          <option value="kids" {% if selected_category == 'kids' %}selected{% endif %}>Kids</option>
+        </select>
+      </div>
+
+      <!-- Min Price -->
+      <div style="display:flex; flex-direction:column; gap:4px;">
+        <label style="font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px;">Min Price (₹)</label>
+        <input type="number" name="min_price" value="{{ min_price }}" placeholder="0" style="padding:8px 12px; background:var(--surface); border:1px solid var(--border); border-radius:6px; color:var(--text); outline:none; font-size:13px; width:100px;" />
+      </div>
+
+      <!-- Max Price -->
+      <div style="display:flex; flex-direction:column; gap:4px;">
+        <label style="font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px;">Max Price (₹)</label>
+        <input type="number" name="max_price" value="{{ max_price }}" placeholder="99999" style="padding:8px 12px; background:var(--surface); border:1px solid var(--border); border-radius:6px; color:var(--text); outline:none; font-size:13px; width:100px;" />
+      </div>
+
+      <!-- Sort -->
+      <div style="display:flex; flex-direction:column; gap:4px;">
+        <label style="font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px;">Sort By</label>
+        <select name="sort" style="padding:8px 12px; background:var(--surface); border:1px solid var(--border); border-radius:6px; color:var(--text); outline:none; font-size:13px;">
+          <option value="">Default</option>
+          <option value="price_asc" {% if sort == 'price_asc' %}selected{% endif %}>Price: Low to High</option>
+          <option value="price_desc" {% if sort == 'price_desc' %}selected{% endif %}>Price: High to Low</option>
+        </select>
+      </div>
+
+      <div style="display:flex; align-items:flex-end; height:100%; margin-top:16px;">
+        <button type="submit" style="padding:9px 18px; background:var(--accent); border:none; border-radius:6px; color:#fff; font-size:13px; font-weight:600; cursor:pointer; transition: opacity .2s;">Apply Filters</button>
+        <a href="/search?q={{ query }}" style="padding:9px 18px; color:var(--muted); text-decoration:none; font-size:13px; margin-left:8px; font-weight:500;">Reset</a>
+      </div>
+    </form>
+
   {% if Products %}
     <div class="products-container">
       {% for product in Products %}
-      <div class="product-card">
+      <div class="product-card" style="position:relative;">
         <span class="product-category-tag">{{ product.category }}</span>
-        <img src="{% if product.image.startswith('http') %}{{ product.image }}{% else %}/static/images/{{ product.image }}{% endif %}" alt="{{ product.name }}" onerror="this.onerror=null;this.src='/static/images/default.webp'">
-        <p>{{ product.name }}</p>
-        <p>₹{{ product.price }}</p>
-        <p>Min. order: {{ product.quantity }} units</p>
-        <button class="add-to-order-btn" onclick="addToOrder({
-          name: '{{ product.name }}',
-          image: '{{ product.image }}',
-          quantity: {{ product.quantity }},
-          price: {{ product.price }}
-        })">Add to Order</button>
+        
+        <!-- Image with Hover Overlay for Quick View -->
+        <div style="position:relative; cursor:pointer; overflow:hidden; border-radius:8px;" onclick="viewDetails('{{ product.id }}', '{{ product.col_name }}')">
+          <img src="{% if product.image.startswith('http') %}{{ product.image }}{% else %}/static/images/{{ product.image }}{% endif %}" alt="{{ product.name }}" onerror="this.onerror=null;this.src='/static/images/default.webp'" style="width:100%; display:block; height:180px; object-fit:cover; transition:transform 0.3s;">
+          <div style="position:absolute; inset:0; background:rgba(0,0,0,0.5); opacity:0; transition:opacity 0.2s; display:flex; align-items:center; justify-content:center;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0">
+            <span style="color:#fff; font-size:12px; font-weight:600; text-transform:uppercase; background:#C0172A; padding:6px 12px; border-radius:4px; box-shadow:0 4px 10px rgba(0,0,0,0.3);">Quick View</span>
+          </div>
+        </div>
+
+        <p style="margin-top:10px; font-weight:500;">{{ product.name }}</p>
+        <p style="color:#D4A847; font-weight:600;">₹{{ product.price }}</p>
+        <p style="font-size:12px; color:var(--muted);">Min. order: {{ product.quantity }} units</p>
+        <button class="add-to-order-btn" 
+                data-name="{{ product.name }}"
+                data-image="{{ product.image }}"
+                data-quantity="{{ product.quantity }}"
+                data-price="{{ product.price }}"
+                onclick="addToCartFromEl(this)"
+                style="width:100%; margin-top:8px;">Add to Cart</button>
       </div>
       {% endfor %}
     </div>
@@ -161,22 +250,122 @@
     </div>
   {% endif %}
 
-  <div id="toast">✅ Item added to order!</div>
+  <!-- Detail Quick View Modal -->
+  <div id="detail-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:center; padding: 20px;">
+    <div style="background:#181818; border:1px solid #8B0D1C; border-radius:16px; padding:30px; max-width:550px; width:100%; box-shadow:0 10px 40px rgba(0,0,0,0.5); position:relative; overflow-y:auto; max-height:90vh; color:#F5F0ED;">
+      <button onclick="closeDetailModal()" style="position:absolute; top:15px; right:15px; background:transparent; border:none; color:#A89B92; font-size:24px; cursor:pointer; outline:none;">✕</button>
+      
+      <div id="modal-content" style="text-align:left;">
+        <!-- Loaded dynamically -->
+      </div>
+    </div>
+  </div>
+
+  </main>
+  </div>
+
+  <div id="toast">✅ Item added to cart!</div>
 
   <script>
-    function addToOrder(product) {
-      let orders = JSON.parse(localStorage.getItem('orderItems') || '[]');
-      const existing = orders.find(item => item.name === product.name);
-      if (existing) {
-        existing.qty = (existing.qty || 1) + 1;
-      } else {
-        orders.push({ ...product, qty: 1 });
-      }
-      localStorage.setItem('orderItems', JSON.stringify(orders));
+    // addToOrder is handled globally by cart.js
 
-      const toast = document.getElementById('toast');
-      toast.style.display = 'block';
-      setTimeout(() => toast.style.display = 'none', 2000);
+    async function viewDetails(productId, specification) {
+      const modal = document.getElementById('detail-modal');
+      const content = document.getElementById('modal-content');
+      
+      content.innerHTML = '<div style="color:#A89B92; text-align:center; padding:30px;">Loading product details...</div>';
+      modal.style.display = 'flex';
+      
+      try {
+        const res = await fetch(`/GET/product?product_id=${productId}&specification=${specification}`);
+        if (!res.ok) throw new Error('Failed to load');
+        const product = await res.json();
+        
+        let specHtml = '';
+        if (specification === 'apparel') {
+          specHtml = `
+            <p style="margin-bottom:8px; font-size:13px; color:#A89B92;">Sizes: <strong style="color:#fff;">${product.size.join(', ')}</strong></p>
+            <p style="margin-bottom:8px; font-size:13px; color:#A89B92;">Fabric: <strong style="color:#fff;">${product.fabric}</strong></p>
+            <p style="margin-bottom:8px; font-size:13px; color:#A89B92;">GSM: <strong style="color:#fff;">${product.gsm}</strong></p>
+          `;
+        } else if (specification === 'fmcg') {
+          specHtml = `
+            <p style="margin-bottom:8px; font-size:13px; color:#A89B92;">Brand: <strong style="color:#fff;">${product.brand}</strong></p>
+            <p style="margin-bottom:8px; font-size:13px; color:#A89B92;">Manufactured: <strong style="color:#fff;">${product.manufacturing_date}</strong></p>
+            <p style="margin-bottom:8px; font-size:13px; color:#A89B92;">Expiry: <strong style="color:#fff;">${product.expiry_date}</strong></p>
+          `;
+        } else if (specification === 'mobile_accessories') {
+          specHtml = `
+            <p style="margin-bottom:8px; font-size:13px; color:#A89B92;">Brand: <strong style="color:#fff;">${product.brand}</strong></p>
+            <p style="margin-bottom:8px; font-size:13px; color:#A89B92;">Model: <strong style="color:#fff;">${product.compatible_model}</strong></p>
+            <p style="margin-bottom:8px; font-size:13px; color:#A89B92;">Color: <strong style="color:#fff;">${product.color}</strong></p>
+          `;
+        } else if (specification === 'steel_work') {
+          specHtml = `
+            <p style="margin-bottom:8px; font-size:13px; color:#A89B92;">Grade: <strong style="color:#fff;">${product.steel_grade}</strong></p>
+            <p style="margin-bottom:8px; font-size:13px; color:#A89B92;">Thickness: <strong style="color:#fff;">${product.thickness}mm</strong></p>
+            <p style="margin-bottom:8px; font-size:13px; color:#A89B92;">Weight: <strong style="color:#fff;">${product.weight}kg</strong></p>
+          `;
+        } else if (specification === 'home_appliances') {
+          specHtml = `
+            <p style="margin-bottom:8px; font-size:13px; color:#A89B92;">Brand: <strong style="color:#fff;">${product.brand}</strong></p>
+            <p style="margin-bottom:8px; font-size:13px; color:#A89B92;">Warranty: <strong style="color:#fff;">${product.warranty} months</strong></p>
+          `;
+        } else if (specification === 'pharmacy') {
+          specHtml = `
+            <p style="margin-bottom:8px; font-size:13px; color:#A89B92;">Brand: <strong style="color:#fff;">${product.brand}</strong></p>
+            <p style="margin-bottom:8px; font-size:13px; color:#A89B92;">Expiry: <strong style="color:#fff;">${product.expiry_date}</strong></p>
+          `;
+        }
+        
+        const imageSrc = product.images && product.images.length > 0 ? product.images[0] : (product.image || 'default.webp');
+        const imgSrc = imageSrc.startsWith('http') ? imageSrc : `/static/images/${imageSrc}`;
+        
+        content.innerHTML = `
+          <div style="display:flex; gap:20px; flex-direction:row; flex-wrap:wrap; text-align:left;">
+            <div style="flex:1; min-width:200px;">
+              <img src="${imgSrc}" style="width:100%; border-radius:12px; border:1px solid #333; max-height:220px; object-fit:cover;" onerror="this.onerror=null;this.src='/static/images/default.webp'">
+            </div>
+            <div style="flex:1.2; min-width:220px; display:flex; flex-direction:column; justify-content:space-between;">
+              <div>
+                <h4 style="font-family:'Playfair Display',serif; font-size:22px; font-weight:700; color:#F5F0ED; margin-bottom:8px;">${product.product_name || product.name}</h4>
+                <div style="font-size:16px; font-weight:700; color:#D4A847; margin-bottom:12px;">₹${(product.price || product.mrp)}</div>
+                <div style="margin-bottom:12px;">${specHtml}</div>
+                <p style="font-size:13px; color:#A89B92; margin-bottom:8px;">Stock Available: <strong style="color:#06d6a0;">${product.stock !== undefined ? product.stock : 100}</strong> units</p>
+                <p style="font-size:13px; color:#A89B92;">Description: ${product.description || 'No description provided.'}</p>
+              </div>
+              
+              <button id="modal-add-btn" 
+                      data-name="${product.product_name || product.name}" 
+                      data-image="${imageSrc}" 
+                      data-qty="${product.moq || product.quantity || 1}" 
+                      data-price="${product.price || product.mrp}"
+                      style="margin-top:20px; width:100%; padding:12px; background:#C0172A; border:none; color:#fff; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; transition:background .2s;">
+                Add to Cart
+              </button>
+            </div>
+          </div>
+        `;
+        
+        const addBtn = document.getElementById('modal-add-btn');
+        if (addBtn) {
+          addBtn.onclick = function() {
+            closeDetailModal();
+            const name = this.getAttribute('data-name');
+            const image = this.getAttribute('data-image');
+            const qty = parseInt(this.getAttribute('data-qty') || 1);
+            const price = parseFloat(this.getAttribute('data-price') || 0);
+            addToOrder({ name, image, quantity: qty, price });
+          };
+        }
+      } catch (err) {
+        console.error(err);
+        content.innerHTML = '<div style="color:#E8293F; text-align:center; padding:30px;">Failed to fetch product details.</div>';
+      }
+    }
+    
+    function closeDetailModal() {
+      document.getElementById('detail-modal').style.display = 'none';
     }
   </script>
 </body>

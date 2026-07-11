@@ -146,63 +146,139 @@ def seller(request: Request):
     )
 
 @app.get("/search")
-async def search(request: Request, q: str | None = None):
+async def search(
+    request: Request, 
+    q: str | None = None, 
+    category: str | None = None, 
+    min_price: float | None = None, 
+    max_price: float | None = None,
+    sort: str | None = None
+):
     results = []
-    if q:
-        query_regex = {"$regex": q, "$options": "i"}
-        collections_to_search = [
-            "menswear", "womenswear", "kids", "books", "beauty", 
-            "homeappliances", "pharma", "groceries", "furniture",
-            "apparel", "fmcg", "mobile_accessories", "steel_work"
-        ]
-        for col_name in collections_to_search:
-            col = db[col_name]
-            cursor = col.find({
-                "is_hidden": {"$ne": True},
-                "$or": [
-                    {"name": query_regex},
-                    {"product_name": query_regex}
-                ]
-            })
-            async for doc in cursor:
-                name = doc.get("name") or doc.get("product_name") or "Unnamed Product"
-                price = doc.get("price") or doc.get("mrp") or 0.0
-                qty = doc.get("quantity") or doc.get("qty") or 1
-                
-                # Check for image or fallback to smart defaults
-                images = doc.get("images")
-                image = images[0] if images and isinstance(images, list) else doc.get("image")
-                if not image:
-                    if col_name == "apparel":
-                        gender = doc.get("gender", "")
-                        image = "menjeans.webp" if gender == "Male" else "womentshirt.webp"
-                    elif col_name == "fmcg":
-                        image = "groceries.webp"
-                    elif col_name == "mobile_accessories":
-                        image = "mobile.webp"
-                    elif col_name == "steel_work":
-                        image = "furniture.webp"
-                    else:
-                        image = "default.webp"
-                
-                results.append({
-                    "name": name,
-                    "price": price,
-                    "quantity": qty,
-                    "image": image,
-                    "category": col_name.replace("_", " ").title()
-                })
+    collections_to_search = [
+        "apparel", "fmcg", "mobile_accessories", "steel_work", 
+        "homeappliances", "pharma", "books", "beauty", "groceries", "kids", "furniture"
+    ]
     
+    if category and category.lower() in [c.lower() for c in collections_to_search]:
+        collections_to_search = [c for c in collections_to_search if c.lower() == category.lower()]
+        
+    query_regex = {"$regex": q or "", "$options": "i"}
+    filter_query = {"is_hidden": {"$ne": True}}
+    
+    if q:
+        filter_query["$or"] = [
+            {"name": query_regex},
+            {"product_name": query_regex}
+        ]
+        
+    price_filter = {}
+    if min_price is not None:
+        price_filter["$gte"] = min_price
+    if max_price is not None:
+        price_filter["$lte"] = max_price
+        
+    if price_filter:
+        if q:
+            filter_query = {
+                "is_hidden": {"$ne": True},
+                "$and": [
+                    {"$or": [{"name": query_regex}, {"product_name": query_regex}]},
+                    {"$or": [{"mrp": price_filter}, {"price": price_filter}]}
+                ]
+            }
+        else:
+            filter_query["$or"] = [
+                {"mrp": price_filter},
+                {"price": price_filter}
+            ]
+            
+    for col_name in collections_to_search:
+        col = db[col_name]
+        cursor = col.find(filter_query)
+        async for doc in cursor:
+            name = doc.get("name") or doc.get("product_name") or "Unnamed Product"
+            price = doc.get("price") or doc.get("mrp") or 0.0
+            qty = doc.get("quantity") or doc.get("qty") or 1
+            
+            images = doc.get("images")
+            image = images[0] if images and isinstance(images, list) else doc.get("image")
+            if not image:
+                if col_name == "apparel":
+                    gender = doc.get("gender", "")
+                    image = "menjeans.webp" if gender == "Male" else "womentshirt.webp"
+                elif col_name == "fmcg":
+                    image = "groceries.webp"
+                elif col_name == "mobile_accessories":
+                    image = "mobile.webp"
+                elif col_name == "steel_work":
+                    image = "furniture.webp"
+                else:
+                    image = "default.webp"
+            
+            results.append({
+                "id": str(doc["_id"]),
+                "name": name,
+                "price": price,
+                "quantity": qty,
+                "image": image,
+                "category": col_name.replace("_", " ").title(),
+                "col_name": col_name,
+                "description": doc.get("description", "No description available."),
+                "stock": doc.get("stock", 100)
+            })
+            
+    if sort == "price_asc":
+        results.sort(key=lambda x: x["price"])
+    elif sort == "price_desc":
+        results.sort(key=lambda x: x["price"], reverse=True)
+        
     return templates.TemplateResponse(request, "search.html", {
         "request": request,
         "Products": results,
-        "query": q or ""
+        "query": q or "",
+        "selected_category": category or "",
+        "min_price": min_price if min_price is not None else "",
+        "max_price": max_price if max_price is not None else "",
+        "sort": sort or ""
     })
 
 def normalize_doc(doc, default_image):
     images = doc.get("images")
     image_val = images[0] if images and isinstance(images, list) else doc.get("image") or default_image
+    
+    spec = "apparel"
+    if "steel_grade" in doc:
+        spec = "steel_work"
+    elif "compatible_model" in doc:
+        spec = "mobile_accessories"
+    elif "manufacturing_date" in doc:
+        spec = "fmcg"
+    elif "expiry_date" in doc:
+        spec = "pharmacy"
+    elif "warranty" in doc:
+        spec = "home_appliances"
+        
+    if default_image == "lipstick.webp":
+        spec = "beauty"
+    elif default_image == "copy.webp":
+        spec = "books"
+    elif default_image == "toys.webp":
+        spec = "kids"
+    elif default_image == "groceries.webp":
+        spec = "groceries"
+    elif default_image == "furniture.webp":
+        spec = "furniture"
+    elif default_image == "pharma.webp":
+        spec = "pharmacy"
+    elif default_image == "computer.webp":
+        spec = "home_appliances"
+    elif default_image in ["womentshirt.webp", "menjeans.webp"]:
+        spec = "apparel"
+        
     return {
+        "id": str(doc.get("_id")) if doc.get("_id") else "",
+        "col_name": spec,
         "name": doc.get("name") or doc.get("product_name") or "Unnamed Product",
         "price": doc.get("price") or doc.get("mrp") or 0.0,
         "image": image_val,
@@ -229,7 +305,7 @@ async def womens_wear(request: Request):
 @app.get("/homeappliances")
 async def homeappliances(request: Request):
     homeappliances = await db["homeappliances"].find(
-        {"is_hidden": {"$ne": True}}, {"_id": 0}
+        {"is_hidden": {"$ne": True}}
     ).to_list(length=100)
     
     products = [normalize_doc(p, "computer.webp") for p in homeappliances]
@@ -245,7 +321,7 @@ async def homeappliances(request: Request):
 @app.get("/beauty")
 async def beauty(request: Request):
     beauty = await db["beauty"].find(
-        {"is_hidden": {"$ne": True}}, {"_id": 0}
+        {"is_hidden": {"$ne": True}}
     ).to_list(length=100)
     
     products = [normalize_doc(p, "lipstick.webp") for p in beauty]
@@ -261,7 +337,7 @@ async def beauty(request: Request):
 @app.get("/books")
 async def books(request: Request):
     books = await db["books"].find(
-        {"is_hidden": {"$ne": True}}, {"_id": 0}
+        {"is_hidden": {"$ne": True}}
     ).to_list(length=100)
     
     products = [normalize_doc(p, "copy.webp") for p in books]
@@ -277,7 +353,7 @@ async def books(request: Request):
 @app.get("/groceries")
 async def groceries(request: Request):
     groceries = await db["groceries"].find(
-        {"is_hidden": {"$ne": True}}, {"_id": 0}
+        {"is_hidden": {"$ne": True}}
     ).to_list(length=100)
     
     fmcg = await db["fmcg"].find(
@@ -297,7 +373,7 @@ async def groceries(request: Request):
 @app.get("/pharma")
 async def pharma(request: Request):
     pharma = await db["pharma"].find(
-        {"is_hidden": {"$ne": True}}, {"_id": 0}
+        {"is_hidden": {"$ne": True}}
     ).to_list(length=100)
     
     products = [normalize_doc(p, "pharma.webp") for p in pharma]
@@ -313,7 +389,7 @@ async def pharma(request: Request):
 @app.get("/kids")
 async def kids(request: Request):
     kids = await db["kids"].find(
-        {"is_hidden": {"$ne": True}}, {"_id": 0}
+        {"is_hidden": {"$ne": True}}
     ).to_list(length=100)
     
     products = [normalize_doc(p, "toys.webp") for p in kids]
@@ -329,7 +405,7 @@ async def kids(request: Request):
 @app.get("/furniture")
 async def furniture(request: Request):
     furniture = await db["furniture"].find(
-        {"is_hidden": {"$ne": True}}, {"_id": 0}
+        {"is_hidden": {"$ne": True}}
     ).to_list(length=100)
     
     steel = await db["steel_work"].find(

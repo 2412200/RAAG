@@ -549,3 +549,17 @@ a {
   background: var(--error) !important;
   width: 100% !important;
 }
+
+/* ── RESPONSIVE DEVICE HELPERS ── */
+.mobile-only {
+  display: none !important;
+}
+
+@media (max-width: 768px) {
+  .desktop-only {
+    display: none !important;
+  }
+  .mobile-only {
+    display: block !important;
+  }
+}

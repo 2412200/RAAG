@@ -9,6 +9,8 @@
       href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500&display=swap"
       rel="stylesheet" />
     <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/cart.css?v=1.0.0">
+    <script src="/static/js/cart.js?v=1.0.0"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -388,7 +390,12 @@
   <div class="mobile-navbar">
     <button id="sidebar-toggle" class="sidebar-toggle-btn" aria-label="Toggle Sidebar">☰</button>
     <div class="mobile-navbar-brand">RAAG</div>
-    <a href="/logout" class="mobile-logout-btn">Logout</a>
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <button id="mobile-cart-toggle" class="sidebar-toggle-btn" style="position: relative; border: none; font-size: 18px;" aria-label="Toggle Cart">
+        🛒<span id="mobile-cart-count" style="position: absolute; top: -5px; right: -5px; background: var(--red); color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; display: flex; align-items: center; justify-content: center; font-weight: bold; display: none;">0</span>
+      </button>
+      <a href="/logout" class="mobile-logout-btn">Logout</a>
+    </div>
   </div>
 
   <div class="site">
@@ -397,14 +404,15 @@
       <div>
         <div class="sidebar-brand">RAAG</div>
         <nav class="sidebar-menu">
-          <a href="/home" class="menu-item">
+          <a href="/home" id="nav-home" class="menu-item">
             Home
           </a>
-          <a href="/orders" class="menu-item active">
+          <a href="/orders" id="nav-orders" class="menu-item active">
             My Orders
           </a>
         </nav>
       </div>
+      <div id="sidebar-cart" class="sidebar-cart"></div>
     </aside>
 
     <!-- Main Content -->
@@ -418,12 +426,61 @@
       </header>
 
       <div class="orders-container">
-        <div id="order-list"></div>
-        <div id="order-summary" style="display:none;" class="order-summary">
-            <h2>Total: ₹<span id="total-price">0</span></h2>
-            <button class="confirm-btn" onclick="confirmOrder()">Confirm Order</button>
+        <!-- Tabs Header -->
+        <div class="tabs-header" style="display:flex; gap:16px; margin-bottom:24px; border-bottom: 2px solid #222; padding-bottom: 10px;">
+            <button id="tab-cart-btn" class="tab-btn active" onclick="switchTab('cart')" style="background:transparent; border:none; color:#F5F0ED; font-size:15px; font-weight:600; cursor:pointer; padding:8px 16px; border-radius:6px; transition: all .2s;">🛒 My Cart</button>
+            <button id="tab-history-btn" class="tab-btn" onclick="switchTab('history')" style="background:transparent; border:none; color:#A89B92; font-size:15px; font-weight:600; cursor:pointer; padding:8px 16px; border-radius:6px; transition: all .2s;">📋 Placed Orders</button>
         </div>
-        <div id="empty-msg" class="empty-msg">No items in your order yet.</div>
+
+        <!-- Cart Section -->
+        <div id="cart-view">
+            <div id="order-list"></div>
+            <div id="order-summary" style="display:none;" class="order-summary">
+                <h2>Total: ₹<span id="total-price">0</span></h2>
+                <button class="confirm-btn" onclick="openPaymentModal()">Proceed to Mock Checkout</button>
+            </div>
+            <div id="empty-msg" class="empty-msg">No items in your cart yet.</div>
+        </div>
+
+        <!-- History Section -->
+        <div id="history-view" style="display:none;">
+            <div id="history-list"></div>
+            <div id="history-empty-msg" class="empty-msg" style="display:block;">You have not placed any orders yet.</div>
+        </div>
+      </div>
+
+      <!-- Payment Modal -->
+      <div id="payment-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:center; padding: 20px;">
+        <div style="background:#181818; border:1px solid #8B0D1C; border-radius:16px; padding:30px; max-width:450px; width:100%; box-shadow:0 10px 40px rgba(0,0,0,0.5);">
+          <h3 style="font-family:'Playfair Display', serif; font-size:22px; font-weight:700; color:#F5F0ED; margin-bottom:12px; text-align:center;">Secure Checkout</h3>
+          <p style="color:#A89B92; font-size:13px; text-align:center; margin-bottom:24px;">Please complete the mock payment details below to authorize this transaction.</p>
+          
+          <div style="display:flex; flex-direction:column; gap:16px; margin-bottom:24px; text-align:left;">
+            <div>
+              <label style="display:block; font-size:11px; color:#A89B92; margin-bottom:6px; text-transform:uppercase; letter-spacing:1px;">Cardholder Name</label>
+              <input type="text" placeholder="John Doe" value="Buyer Customer" style="width:100%; padding:10px; background:#111; border:1px solid #333; border-radius:8px; color:#fff; font-size:14px; outline:none;">
+            </div>
+            <div>
+              <label style="display:block; font-size:11px; color:#A89B92; margin-bottom:6px; text-transform:uppercase; letter-spacing:1px;">Card Number</label>
+              <input type="text" placeholder="4111 2222 3333 4444" value="4111 5555 6666 7777" style="width:100%; padding:10px; background:#111; border:1px solid #333; border-radius:8px; color:#fff; font-size:14px; outline:none;">
+            </div>
+            <div style="display:flex; gap:12px;">
+              <div style="flex:1;">
+                <label style="display:block; font-size:11px; color:#A89B92; margin-bottom:6px; text-transform:uppercase; letter-spacing:1px;">Expiry Date</label>
+                <input type="text" placeholder="MM/YY" value="12/28" style="width:100%; padding:10px; background:#111; border:1px solid #333; border-radius:8px; color:#fff; font-size:14px; outline:none;">
+              </div>
+              <div style="flex:1;">
+                <label style="display:block; font-size:11px; color:#A89B92; margin-bottom:6px; text-transform:uppercase; letter-spacing:1px;">CVV</label>
+                <input type="password" placeholder="123" value="999" style="width:100%; padding:10px; background:#111; border:1px solid #333; border-radius:8px; color:#fff; font-size:14px; outline:none;">
+              </div>
+            </div>
+          </div>
+          
+          <div style="display:flex; gap:12px; justify-content:flex-end;">
+            <button onclick="closePaymentModal()" style="padding:10px 16px; background:transparent; border:1px solid #333; color:#A89B92; border-radius:8px; font-size:13px; cursor:pointer; font-weight:500;">Cancel</button>
+            <button onclick="confirmOrder()" style="padding:10px 20px; background:#C0172A; border:none; color:#fff; border-radius:8px; font-size:13px; cursor:pointer; font-weight:600; transition: background .2s;">Pay & Place Order</button>
+          </div>
+        </div>
       </div>
 
       <footer>
@@ -434,6 +491,39 @@
   </div>
 
     <script>
+        function switchTab(tab) {
+            const cartBtn = document.getElementById('tab-cart-btn');
+            const historyBtn = document.getElementById('tab-history-btn');
+            const cartView = document.getElementById('cart-view');
+            const historyView = document.getElementById('history-view');
+
+            if (tab === 'cart') {
+                cartBtn.classList.add('active');
+                cartBtn.style.color = '#F5F0ED';
+                cartBtn.style.background = '#8B0D1C';
+                
+                historyBtn.classList.remove('active');
+                historyBtn.style.color = '#A89B92';
+                historyBtn.style.background = 'transparent';
+                
+                cartView.style.display = 'block';
+                historyView.style.display = 'none';
+                loadOrders();
+            } else {
+                cartBtn.classList.remove('active');
+                cartBtn.style.color = '#A89B92';
+                cartBtn.style.background = 'transparent';
+                
+                historyBtn.classList.add('active');
+                historyBtn.style.color = '#F5F0ED';
+                historyBtn.style.background = '#8B0D1C';
+                
+                cartView.style.display = 'none';
+                historyView.style.display = 'block';
+                loadOrderHistory();
+            }
+        }
+
         function loadOrders() {
             const orders = JSON.parse(localStorage.getItem('orderItems') || '[]');
             const list = document.getElementById('order-list');
@@ -482,7 +572,77 @@
             loadOrders();
         }
 
+        async function loadOrderHistory() {
+            const list = document.getElementById('history-list');
+            const emptyMsg = document.getElementById('history-empty-msg');
+            
+            list.innerHTML = '<div style="color:#A89B92; text-align:center; padding: 20px;">Loading order history...</div>';
+            emptyMsg.style.display = 'none';
+            
+            try {
+                const res = await fetch('/GET/buyer/orders');
+                if (!res.ok) throw new Error('Failed to load');
+                const data = await res.json();
+                const orders = data.orders || [];
+                
+                list.innerHTML = '';
+                
+                if (orders.length === 0) {
+                    emptyMsg.style.display = 'block';
+                    return;
+                }
+                
+                orders.forEach(order => {
+                    let itemsHtml = '';
+                    order.products.forEach(item => {
+                        itemsHtml += `
+                            <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:14px;">
+                                <span style="color:#F5F0ED;">${item.product_name} <span style="color:#A89B92;">x ${item.quantity}</span></span>
+                                <span style="color:#D4A847;">₹${(item.price * item.quantity).toLocaleString()}</span>
+                            </div>
+                        `;
+                    });
+                    
+                    let statusColor = '#D4A847'; // pending
+                    if (order.order_status === 'Shipped' || order.order_status === 'Processing') statusColor = '#3a86ff';
+                    if (order.order_status === 'Completed' || order.order_status === 'Delivered') statusColor = '#06d6a0';
+                    if (order.order_status === 'Cancelled') statusColor = '#e63946';
+                    
+                    list.innerHTML += `
+                        <div class="order-item" style="flex-direction:column; align-items:stretch; border:1px solid #222; border-radius:12px; padding:20px; background:#181818; margin-bottom:16px; box-shadow:0 4px 20px rgba(0,0,0,0.25);">
+                            <div style="display:flex; justify-content:space-between; border-bottom:1px solid #333; padding-bottom:10px; margin-bottom:12px; font-size:12px; color:#A89B92;">
+                                <span>Order ID: <strong>${order._id}</strong></span>
+                                <span>Date: ${order.created_at || ''}</span>
+                            </div>
+                            <div style="margin-bottom:12px;">
+                                ${itemsHtml}
+                            </div>
+                            <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #333; padding-top:12px; margin-top:8px;">
+                                <div>
+                                    <span style="font-size:12px; color:#A89B92;">Status:</span>
+                                    <span style="font-size:12px; font-weight:600; color:${statusColor}; background:rgba(0,0,0,0.3); padding:4px 8px; border-radius:4px; margin-left:6px; text-transform:uppercase;">${order.order_status}</span>
+                                </div>
+                                <div style="font-size:16px; font-weight:700; color:#F5F0ED;">Total: ₹${order.total_amount.toLocaleString()}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+            } catch (err) {
+                console.error(err);
+                list.innerHTML = '<div style="color:#E8293F; text-align:center; padding: 20px;">Failed to load order history.</div>';
+            }
+        }
+
+        function openPaymentModal() {
+            document.getElementById('payment-modal').style.display = 'flex';
+        }
+
+        function closePaymentModal() {
+            document.getElementById('payment-modal').style.display = 'none';
+        }
+
         async function confirmOrder() {
+            closePaymentModal();
             const orders = JSON.parse(localStorage.getItem('orderItems') || '[]');
             if (orders.length === 0) return;
 
@@ -509,10 +669,12 @@
 
                 if (res.ok) {
                     localStorage.removeItem('orderItems');
-                    alert('Order confirmed successfully!');
+                    alert('Order confirmed and mock payment processed successfully!');
                     loadOrders();
+                    switchTab('history');
                 } else {
-                    alert('Failed to save order. Please try again.');
+                    const data = await res.json();
+                    alert('Failed to place order: ' + (data.detail || 'Please try again.'));
                 }
             } catch (err) {
                 console.error(err);
@@ -520,27 +682,19 @@
             }
         }
 
-        // Mobile sidebar toggle script
-        const sidebarToggleBtn = document.getElementById("sidebar-toggle");
-        const sidebarEl = document.querySelector(".sidebar");
-        
-        if (sidebarToggleBtn && sidebarEl) {
-            sidebarToggleBtn.addEventListener("click", (e) => {
-                e.stopPropagation();
-                sidebarEl.classList.toggle("show");
-            });
+        // Initialize active tab styling
+        document.getElementById('tab-cart-btn').style.color = '#F5F0ED';
+        document.getElementById('tab-cart-btn').style.background = '#8B0D1C';
 
-            document.addEventListener("click", (e) => {
-                if (window.innerWidth <= 768 && sidebarEl.classList.contains("show")) {
-                    if (!sidebarEl.contains(e.target) && e.target !== sidebarToggleBtn) {
-                        sidebarEl.classList.remove("show");
-                    }
-                }
-            });
-        }
+        // Sidebar toggling is handled globally by cart.js
 
         // Load on page ready
-        loadOrders();
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('tab') === 'history') {
+            switchTab('history');
+        } else {
+            loadOrders();
+        }
     </script>
   <script src="{{ url_for('static', path='js/logout.js') }}"></script>
 </body>

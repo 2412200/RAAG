@@ -82,6 +82,7 @@ class apparel(BaseModel):
     is_hidden: bool = False
     description: Optional[str] = ""
     images: List[str] = []
+    stock: Optional[int] = Field(default=100, ge=0)
 
 class fmcg(BaseModel):
     product_name : str
@@ -95,6 +96,7 @@ class fmcg(BaseModel):
     is_hidden: bool = False
     description: Optional[str] = ""
     images: List[str] = []
+    stock: Optional[int] = Field(default=100, ge=0)
 
 
     @model_validator(mode="after")
@@ -118,6 +120,7 @@ class mobile_accessories(BaseModel):
     is_hidden: bool = False
     description: Optional[str] = ""
     images: List[str] = []
+    stock: Optional[int] = Field(default=100, ge=0)
 
 
 class steel_work(BaseModel):
@@ -131,6 +134,7 @@ class steel_work(BaseModel):
     is_hidden: bool = False
     description: Optional[str] = ""
     images: List[str] = []
+    stock: Optional[int] = Field(default=100, ge=0)
 
 
 class otp_request(BaseModel):
@@ -155,6 +159,7 @@ class home_appliances(BaseModel):
     is_hidden: bool = False
     description: Optional[str] = ""
     images: List[str] = []
+    stock: Optional[int] = Field(default=100, ge=0)
 
 class pharmacy(BaseModel):
     product_name : str
@@ -166,6 +171,7 @@ class pharmacy(BaseModel):
     is_hidden: bool = False
     description: Optional[str] = ""
     images: List[str] = []
+    stock: Optional[int] = Field(default=100, ge=0)
 
 class ForgotPasswordOTPRequest(BaseModel):
     phone: str

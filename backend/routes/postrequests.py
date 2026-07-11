@@ -161,7 +161,6 @@ def signup(data: SignupRequest, response: Response):
 
 @router.post("/POST/login")
 def login(data: LoginRequest, response: Response):
-    # Normalize phone number to E.164 format
     phone_num = data.phone.strip().replace(" ", "")
     if not phone_num.startswith("+"):
         if len(phone_num) == 10:
@@ -180,9 +179,11 @@ def login(data: LoginRequest, response: Response):
                     (data.phone,)
                 )
                 user = cursor.fetchone()
+                if not user :
+                    raise HTTPException(status_code = 401,detail="User does not exists")
 
-                if not user or not pwd_context.verify(data.password, user[1]):
-                    raise HTTPException(status_code=401, detail="Invalid credentials.")
+                if not pwd_context.verify(data.password, user[1]):
+                    raise HTTPException(status_code=401, detail="Incorrect Password")
 
                 token_data = {"phone": data.phone, "role": data.role}
                 token = jwt.encode(token_data, SECRET_KEY, algorithm=ALGORITHM)
@@ -581,8 +582,49 @@ async def post_order(order: orders, request: Request):
         except Exception as e:
             print("Postgres lookup error during order placement:", e)
             
-    db = client["Orders"]
-    result = await db["orders"].insert_one(order.model_dump())
+    # Check and decrement stock levels for all products in the order
+    collections = ["apparel", "fmcg", "mobile_accessories", "steel_work", "homeappliances", "pharma"]
+    
+    # 1. Validate stock first
+    for item in order.products:
+        p_name = item.product_name
+        qty_to_order = item.quantity
+        
+        found = False
+        for col_name in collections:
+            col = db[col_name]
+            doc = await col.find_one({"$or": [{"product_name": p_name}, {"name": p_name}]})
+            if doc:
+                found = True
+                current_stock = doc.get("stock", 100)
+                if current_stock < qty_to_order:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Insufficient stock for '{p_name}'. Available: {current_stock}, Requested: {qty_to_order}"
+                    )
+                break
+        if not found:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Product '{p_name}' not found in the database catalog."
+            )
+            
+    # 2. Decrement stock
+    for item in order.products:
+        p_name = item.product_name
+        qty_to_order = item.quantity
+        
+        for col_name in collections:
+            col = db[col_name]
+            result = await col.update_one(
+                {"$or": [{"product_name": p_name}, {"name": p_name}]},
+                {"$inc": {"stock": -qty_to_order}}
+            )
+            if result.modified_count > 0:
+                break
+
+    orders_db = client["Orders"]
+    result = await orders_db["orders"].insert_one(order.model_dump())
     return {
         "message" : "Order placed successfully",
         "id" : str(result.inserted_id)
@@ -780,6 +822,153 @@ def reset_password(data: ResetPasswordRequest):
     except Exception as e:
         print("Error resetting password:", e)
         raise HTTPException(status_code=500, detail="Internal server error while resetting password.")
+
+
+from pydantic import BaseModel as PydanticBaseModel
+
+class ProfileUpdateRequest(PydanticBaseModel):
+    business_name: str
+    owner_name: str
+    city: str
+    state: str
+
+@router.post("/POST/user/update-profile")
+async def update_profile(data: ProfileUpdateRequest, request: Request):
+    user = getattr(request.state, "user", None)
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+        
+    phone = user.get("phone")
+    role = user.get("role")
+    table = "seller" if role == "seller" else "buyer"
+    
+    try:
+        def update_pg_profile(phone_num, role_str):
+            with get_pg_connection() as conn:
+                with conn.cursor() as cursor:
+                    if role_str == "seller":
+                        cursor.execute("""
+                            UPDATE seller
+                            SET company_name = %s, owner_name = %s, city = %s, state = %s
+                            WHERE phone = %s
+                        """, (data.business_name, data.owner_name, data.city, data.state, phone_num))
+                    else:
+                        cursor.execute("""
+                            UPDATE buyer
+                            SET shop_name = %s, owner_name = %s, city = %s, state = %s
+                            WHERE phone = %s
+                        """, (data.business_name, data.owner_name, data.city, data.state, phone_num))
+                    conn.commit()
+                    
+        await run_sync(update_pg_profile, phone, role)
+        return {"message": "Profile updated successfully"}
+    except Exception as e:
+        print("Error updating profile in PG:", e)
+        raise HTTPException(status_code=500, detail="Database error while updating profile.")
+
+
+@router.post("/POST/seller/product/edit")
+async def edit_product(request: Request):
+    form = await request.form()
+    product_id = form.get("product_id")
+    specification = form.get("specification")
+    
+    if not product_id or not specification:
+        raise HTTPException(status_code=400, detail="Missing product_id or specification")
+        
+    user = getattr(request.state, "user", None)
+    if not user or user.get("role") != "seller":
+        raise HTTPException(status_code=403, detail="Access denied. Sellers only.")
+        
+    seller_phone = user.get("phone")
+    
+    specification_to_collection = {
+        "apparel": "apparel",
+        "fmcg": "fmcg",
+        "mobile_accessories": "mobile_accessories",
+        "steel_work": "steel_work",
+        "home_appliances": "homeappliances",
+        "pharmacy": "pharma"
+    }
+    col_name = specification_to_collection.get(specification)
+    if not col_name:
+        raise HTTPException(status_code=400, detail="Invalid specification")
+        
+    from bson import ObjectId
+    existing = await db[col_name].find_one({"_id": ObjectId(product_id), "seller_phone": seller_phone})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Product not found or not owned by you")
+        
+    update_fields = {}
+    
+    if "product_name" in form:
+        update_fields["product_name"] = str(form.get("product_name"))
+        update_fields["name"] = str(form.get("product_name"))
+    if "mrp" in form:
+        try:
+            update_fields["mrp"] = float(form.get("mrp"))
+            update_fields["price"] = float(form.get("mrp"))
+        except ValueError:
+            pass
+    if "price" in form:
+        try:
+            update_fields["price"] = float(form.get("price"))
+            update_fields["mrp"] = float(form.get("price"))
+        except ValueError:
+            pass
+    if "description" in form:
+        update_fields["description"] = str(form.get("description"))
+    if "stock" in form:
+        try:
+            update_fields["stock"] = int(form.get("stock"))
+        except ValueError:
+            pass
+    if "quantity" in form or "qty" in form:
+        try:
+            val = int(form.get("quantity") or form.get("qty"))
+            update_fields["quantity"] = val
+            update_fields["qty"] = val
+        except ValueError:
+            pass
+            
+    image_files = form.getlist("image_file")
+    if image_files and hasattr(image_files[0], "filename") and image_files[0].filename:
+        folder_name = f"products/{seller_phone.replace('+', '')}/{str(product_id)}"
+        file_contents = []
+        MAX_FILE_SIZE = 5 * 1024 * 1024
+        ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "image/jpg"]
+        
+        for file in image_files:
+            if hasattr(file, "filename") and file.filename and hasattr(file, "read"):
+                content_type = getattr(file, "content_type", "")
+                if content_type and content_type not in ALLOWED_MIME_TYPES:
+                    raise HTTPException(status_code=400, detail="Invalid image type")
+                contents = await file.read()
+                if len(contents) > MAX_FILE_SIZE:
+                    raise HTTPException(status_code=400, detail="File too large")
+                file_contents.append(contents)
+                
+        def upload_single_file(contents):
+            res = cloudinary.uploader.upload(contents, folder=folder_name)
+            return res.get("secure_url")
+            
+        import asyncio
+        if file_contents:
+            tasks = [run_sync(upload_single_file, contents) for contents in file_contents]
+            urls = await asyncio.gather(*tasks)
+            images_list = [url for url in urls if url]
+            if images_list:
+                update_fields["images"] = images_list
+                update_fields["image"] = images_list[0]
+                
+    if not update_fields:
+        return {"message": "No updates applied"}
+        
+    await db[col_name].update_one(
+        {"_id": ObjectId(product_id)},
+        {"$set": update_fields}
+    )
+    return {"message": "Product updated successfully"}
 
 
 
