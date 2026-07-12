@@ -11,10 +11,13 @@
   --cart-gold: var(--gold, #D4A847);
 
   flex: 1;
-  display: flex;
-  flex-direction: column;
+  display: flex !important;
+  flex-direction: column !important;
   min-height: 0;
-  overflow: hidden;
+  overflow: hidden !important;
+  margin-top: 8px;
+  max-height: calc(100vh - 280px) !important;
+  box-sizing: border-box !important;
 }
 
 .cart-title-container {
@@ -22,17 +25,33 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 15px;
+  padding: 0;
 }
 
 .cart-title {
-  font-size: 13px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  color: var(--cart-text);
-  display: flex;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--cart-muted) !important;
+  display: flex !important;
   align-items: center;
   gap: 8px;
+  padding: 14px 16px;
+  border-radius: 8px;
+  text-decoration: none !important;
+  transition: all 0.2s ease;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.cart-title:hover {
+  background: #222 !important;
+  color: #F5F0ED !important;
+}
+
+.cart-title.active {
+  background: #8B0D1C !important;
+  color: #F5F0ED !important;
+  font-weight: 700 !important;
 }
 
 .cart-count-badge {
@@ -46,34 +65,36 @@
 
 .cart-items-list {
   flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
 
   display: flex;
   flex-direction: column;
   gap: 12px;
 
   min-height: 0;
+  max-height: calc(100vh - 440px) !important;
 
   padding-right: 6px;
 }
 
 /* Custom Scrollbar for Cart Items */
 .cart-items-list::-webkit-scrollbar {
-  width: 4px;
+  width: 6px;
 }
 
 .cart-items-list::-webkit-scrollbar-track {
-  background: transparent;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 3px;
 }
 
 .cart-items-list::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 2px;
+  background: var(--cart-accent, #C0172A);
+  border-radius: 3px;
 }
 
 .cart-items-list::-webkit-scrollbar-thumb:hover {
-  background: var(--cart-accent);
+  background: var(--cart-accent-light, #E8293F);
 }
 
 .cart-item-card-wrapper {
@@ -608,4 +629,18 @@
   .mobile-navbar {
     display: flex;
   }
+}
+
+/* Reset styles for the sidebar menu navigation when tag is nav */
+.sidebar-menu {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  height: auto !important;
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  position: static !important;
+  justify-content: flex-start !important;
+  align-items: stretch !important;
 }

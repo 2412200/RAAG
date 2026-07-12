@@ -35,12 +35,15 @@ function updateSidebarCart() {
 
   const isFolded = localStorage.getItem('cartFolded') === 'true';
   const chevron = isFolded ? '🔽' : '🔼';
+  
+  const path = window.location.pathname;
+  const activeClass = path === '/cart' ? 'active' : '';
 
   if (orders.length === 0) {
     cartEl.innerHTML = `
-      <div class="cart-title-container" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-        <span class="cart-title">🛒 My Cart</span>
-        <button class="cart-fold-toggle-btn" onclick="toggleCartFold()" style="background: transparent; border: none; color: var(--cart-text); cursor: pointer; font-size: 11px; padding: 2px;" title="Fold / Unfold Cart">
+      <div class="cart-title-container" style="display: flex; align-items: center; width: 100%; position: relative; margin-bottom: 15px;">
+        <a href="/cart" class="cart-title ${activeClass}" style="width: 100%;">My Cart</a>
+        <button class="cart-fold-toggle-btn" onclick="event.preventDefault(); event.stopPropagation(); toggleCartFold();" style="position: absolute; right: 16px; background: transparent; border: none; color: var(--cart-text); cursor: pointer; font-size: 11px; padding: 2px; z-index: 2;" title="Fold / Unfold Cart">
           ${chevron}
         </button>
       </div>
@@ -59,37 +62,49 @@ function updateSidebarCart() {
     subtotal += itemTotal;
 
     const moqVal = parseInt(item.moq || 1);
-    const maxVal = moqVal + 100;
-    const imageSrc = item.image.startsWith('http') % 1 === 0 ? item.image : (item.image.startsWith('/') ? item.image : `/static/images/${item.image}`);
+    const imageSrc = item.image.startsWith('http') ? item.image : (item.image.startsWith('/') ? item.image : `/static/images/${item.image}`);
 
     itemsHtml += `
       <div class="cart-item-card-wrapper">
-        <div class="cart-item-card">
-          <img src="${imageSrc}" class="cart-item-img" alt="${item.name}" onerror="this.onerror=null;this.src='/static/images/default.webp'">
-          <div class="cart-item-details">
-            <span class="cart-item-name" title="${item.name}">${item.name}</span>
-            <span class="cart-item-price">₹${price.toLocaleString()}</span>
-            <div class="cart-item-controls">
-              <button class="cart-qty-btn" onclick="changeSidebarQty(${index}, -1)">-</button>
-              <span id="cart-card-qty-${index}" class="cart-item-qty">${qty}</span>
-              <button class="cart-qty-btn" onclick="changeSidebarQty(${index}, 1)">+</button>
+        <div class="cart-item-card" style="display: flex; flex-direction: column; gap: 8px;">
+          <!-- Top Row: Image, Details, Remove -->
+          <div style="display: flex; gap: 10px; align-items: flex-start; position: relative; width: 100%;">
+            <img src="${imageSrc}" class="cart-item-img" alt="${item.name}" onerror="this.onerror=null;this.src='/static/images/default.webp'">
+            <div class="cart-item-details" style="flex: 1; min-width: 0;">
+              <span class="cart-item-name" title="${item.name}">${item.name}</span>
+              <span class="cart-item-price">₹${price.toLocaleString()}</span>
             </div>
+            <button class="cart-remove-btn" onclick="changeSidebarQty(${index}, -9999)" title="Remove item">✕</button>
           </div>
-          <button class="cart-remove-btn" onclick="changeSidebarQty(${index}, -9999)" title="Remove item">✕</button>
+          
+          <!-- Middle Row: Quantity Adjustment (Slider + Input Field) -->
+          <div style="display: flex; flex-direction: column; gap: 6px; background: rgba(255,255,255,0.02); padding: 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.04); margin-top: 4px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--cart-muted);">
+              <span>Qty (Min: ${moqVal}):</span>
+              <input type="number" id="qty-input-${index}" class="cart-qty-input" min="${moqVal}" value="${qty}" onchange="updateCartQtyFromInput(${index}, this.value)" style="width: 55px; background: #111; border: 1px solid #333; color: #fff; text-align: center; border-radius: 4px; padding: 2px; font-size: 11px;">
+            </div>
+            <input type="range" id="qty-slider-${index}" min="${moqVal}" max="${moqVal + 100}" value="${qty}" oninput="updateCartQtyFromSlider(${index}, this.value)" onchange="updateCartQtyFromInput(${index}, this.value)" style="width: 100%; height: 4px; background: rgba(255,255,255,0.15); border-radius: 2px; cursor: pointer; outline: none; margin: 6px 0;">
+          </div>
+ 
+          <!-- Bottom Row: Item Total Price -->
+          <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--cart-muted); padding-top: 2px; border-top: 1px dashed rgba(255,255,255,0.04);">
+            <span>Item Total:</span>
+            <span id="item-total-val-${index}" style="font-weight: 700; color: var(--cart-gold);">₹${itemTotal.toLocaleString()}</span>
+          </div>
         </div>
       </div>
     `;
   });
 
   cartEl.innerHTML = `
-    <div class="cart-title-container" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-      <span class="cart-title">🛒 My Cart</span>
-      <div style="display: flex; align-items: center; gap: 8px;">
-        <span class="cart-count-badge">${orders.length}</span>
-        <button class="cart-fold-toggle-btn" onclick="toggleCartFold()" style="background: transparent; border: none; color: var(--cart-text); cursor: pointer; font-size: 11px; padding: 2px; display: flex; align-items: center;" title="Fold / Unfold Cart">
-          ${chevron}
-        </button>
-      </div>
+    <div class="cart-title-container" style="display: flex; align-items: center; width: 100%; position: relative; margin-bottom: 15px;">
+      <a href="/cart" class="cart-title ${activeClass}" style="width: 100%;">
+        My Cart
+        <span class="cart-count-badge" style="margin-left: 8px;">${orders.length}</span>
+      </a>
+      <button class="cart-fold-toggle-btn" onclick="event.preventDefault(); event.stopPropagation(); toggleCartFold();" style="position: absolute; right: 16px; background: transparent; border: none; color: var(--cart-text); cursor: pointer; font-size: 11px; padding: 2px; z-index: 2;" title="Fold / Unfold Cart">
+        ${chevron}
+      </button>
     </div>
     <div class="cart-items-list" style="${isFolded ? 'display: none !important;' : ''}">
       ${itemsHtml}
@@ -127,13 +142,16 @@ function changeSidebarQty(index, delta) {
   localStorage.setItem('orderItems', JSON.stringify(orders));
   updateSidebarCart();
 
-  // Sync main checkout page if we are on orders.html
+  // Sync main checkout page if we are on orders.html or cart.html
   if (typeof loadOrders === 'function') {
     loadOrders();
   }
+  if (typeof loadCartPage === 'function') {
+    loadCartPage();
+  }
 }
 
-function changeSidebarSliderQty(index, val) {
+function updateCartQtyFromInput(index, val) {
   let orders = JSON.parse(localStorage.getItem('orderItems') || '[]');
   if (!orders[index]) return;
 
@@ -141,60 +159,89 @@ function changeSidebarSliderQty(index, val) {
   const moqVal = parseInt(item.moq || 1);
   let newQty = parseInt(val);
 
-  if (newQty < moqVal) {
+  if (isNaN(newQty) || newQty < moqVal) {
+    alert(`Minimum order quantity for this item is ${moqVal} units.`);
     newQty = moqVal;
   }
-  item.qty = newQty;
 
-  // Update in-memory values for drag smoothness
-  const qtyLabel = document.getElementById(`cart-qty-val-${index}`);
-  const cardQtyLabel = document.getElementById(`cart-card-qty-${index}`);
-  const totalAmountEl = document.getElementById('cart-total-amount');
-
-  if (qtyLabel) qtyLabel.textContent = newQty;
-  if (cardQtyLabel) cardQtyLabel.textContent = newQty;
-
-  // Temporarily update total sum label
   orders[index].qty = newQty;
-  const subtotal = orders.reduce((sum, it) => sum + (it.price * (it.qty || 1)), 0);
+  localStorage.setItem('orderItems', JSON.stringify(orders));
+  
+  // Sync the slider input in the UI
+  const slider = document.getElementById(`qty-slider-${index}`);
+  if (slider) slider.value = newQty;
+
+  const input = document.getElementById(`qty-input-${index}`);
+  if (input) input.value = newQty;
+
+  updateSidebarCart();
+
+  // If on the dedicated cart page, reload it
+  if (typeof loadCartPage === 'function') {
+    loadCartPage();
+  }
+}
+
+function updateCartQtyFromSlider(index, val) {
+  let orders = JSON.parse(localStorage.getItem('orderItems') || '[]');
+  if (!orders[index]) return;
+
+  const item = orders[index];
+  const moqVal = parseInt(item.moq || 1);
+  let newQty = parseInt(val);
+
+  if (isNaN(newQty) || newQty < moqVal) {
+    newQty = moqVal;
+  }
+
+  orders[index].qty = newQty;
+  localStorage.setItem('orderItems', JSON.stringify(orders));
+
+  // Sync the number input in the UI
+  const input = document.getElementById(`qty-input-${index}`);
+  if (input) input.value = newQty;
+
+  // Update total prices without full rerender for visual smoothness during slide
+  updateSidebarCartTotalsOnly();
+
+  // If on the dedicated cart page, sync it
+  if (typeof syncCartPageQty === 'function') {
+    syncCartPageQty(index, newQty);
+  }
+}
+
+function updateSidebarCartTotalsOnly() {
+  const orders = JSON.parse(localStorage.getItem('orderItems') || '[]');
+  let subtotal = 0;
+  
+  orders.forEach((item, index) => {
+    const qty = item.qty || 1;
+    const price = item.price;
+    const itemTotal = price * qty;
+    subtotal += itemTotal;
+    
+    // Update individual item total label if it exists
+    const itemTotalEl = document.getElementById(`item-total-val-${index}`);
+    if (itemTotalEl) {
+      itemTotalEl.textContent = `₹${itemTotal.toLocaleString()}`;
+    }
+  });
+
+  const totalAmountEl = document.getElementById('cart-total-amount');
   if (totalAmountEl) {
     totalAmountEl.textContent = `₹${subtotal.toLocaleString()}`;
   }
-}
-
-function saveSidebarSliderQty(index, val) {
-  let orders = JSON.parse(localStorage.getItem('orderItems') || '[]');
-  if (!orders[index]) return;
-
-  const item = orders[index];
-  const moqVal = parseInt(item.moq || 1);
-  let newQty = parseInt(val);
-
-  if (newQty < moqVal) {
-    newQty = moqVal;
-  }
-  item.qty = newQty;
-
-  localStorage.setItem('orderItems', JSON.stringify(orders));
-  updateSidebarCart();
-
-  // Sync main checkout page if we are on orders.html
-  if (typeof loadOrders === 'function') {
-    loadOrders();
-  }
-}
-
-function toggleCartSlider(index) {
-  const drawer = document.getElementById(`cart-slider-drawer-${index}`);
-  const chevron = document.getElementById(`cart-chevron-${index}`);
-  if (!drawer) return;
-
-  if (drawer.style.display === 'none') {
-    drawer.style.display = 'block';
-    if (chevron) chevron.textContent = '🔼';
-  } else {
-    drawer.style.display = 'none';
-    if (chevron) chevron.textContent = '🔽';
+  
+  // Sync sidebar badge
+  const mobileBadge = document.getElementById('mobile-cart-count');
+  if (mobileBadge) {
+    const totalCount = orders.reduce((sum, item) => sum + (item.qty || 1), 0);
+    if (totalCount > 0) {
+      mobileBadge.textContent = totalCount;
+      mobileBadge.style.display = 'flex';
+    } else {
+      mobileBadge.style.display = 'none';
+    }
   }
 }
 

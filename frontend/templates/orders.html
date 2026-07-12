@@ -9,8 +9,8 @@
       href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500&display=swap"
       rel="stylesheet" />
     <link rel="stylesheet" href="/static/css/style.css">
-    <link rel="stylesheet" href="/static/css/cart.css?v=1.0.0">
-    <script src="/static/js/cart.js?v=1.0.0"></script>
+    <link rel="stylesheet" href="/static/css/cart.css?v=1.0.9">
+    <script src="/static/js/cart.js?v=1.0.9"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -407,7 +407,7 @@
           <a href="/home" id="nav-home" class="menu-item">
             Home
           </a>
-          <a href="/orders" id="nav-orders" class="menu-item active">
+          <a href="/orders" id="nav-orders" class="menu-item">
             My Orders
           </a>
         </nav>
@@ -426,60 +426,9 @@
       </header>
 
       <div class="orders-container">
-        <!-- Tabs Header -->
-        <div class="tabs-header" style="display:flex; gap:16px; margin-bottom:24px; border-bottom: 2px solid #222; padding-bottom: 10px;">
-            <button id="tab-cart-btn" class="tab-btn active" onclick="switchTab('cart')" style="background:transparent; border:none; color:#F5F0ED; font-size:15px; font-weight:600; cursor:pointer; padding:8px 16px; border-radius:6px; transition: all .2s;">🛒 My Cart</button>
-            <button id="tab-history-btn" class="tab-btn" onclick="switchTab('history')" style="background:transparent; border:none; color:#A89B92; font-size:15px; font-weight:600; cursor:pointer; padding:8px 16px; border-radius:6px; transition: all .2s;">📋 Placed Orders</button>
-        </div>
-
-        <!-- Cart Section -->
-        <div id="cart-view">
-            <div id="order-list"></div>
-            <div id="order-summary" style="display:none;" class="order-summary">
-                <h2>Total: ₹<span id="total-price">0</span></h2>
-                <button class="confirm-btn" onclick="openPaymentModal()">Proceed to Mock Checkout</button>
-            </div>
-            <div id="empty-msg" class="empty-msg">No items in your cart yet.</div>
-        </div>
-
-        <!-- History Section -->
-        <div id="history-view" style="display:none;">
+        <div id="history-view">
             <div id="history-list"></div>
             <div id="history-empty-msg" class="empty-msg" style="display:block;">You have not placed any orders yet.</div>
-        </div>
-      </div>
-
-      <!-- Payment Modal -->
-      <div id="payment-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:center; padding: 20px;">
-        <div style="background:#181818; border:1px solid #8B0D1C; border-radius:16px; padding:30px; max-width:450px; width:100%; box-shadow:0 10px 40px rgba(0,0,0,0.5);">
-          <h3 style="font-family:'Playfair Display', serif; font-size:22px; font-weight:700; color:#F5F0ED; margin-bottom:12px; text-align:center;">Secure Checkout</h3>
-          <p style="color:#A89B92; font-size:13px; text-align:center; margin-bottom:24px;">Please complete the mock payment details below to authorize this transaction.</p>
-          
-          <div style="display:flex; flex-direction:column; gap:16px; margin-bottom:24px; text-align:left;">
-            <div>
-              <label style="display:block; font-size:11px; color:#A89B92; margin-bottom:6px; text-transform:uppercase; letter-spacing:1px;">Cardholder Name</label>
-              <input type="text" placeholder="John Doe" value="Buyer Customer" style="width:100%; padding:10px; background:#111; border:1px solid #333; border-radius:8px; color:#fff; font-size:14px; outline:none;">
-            </div>
-            <div>
-              <label style="display:block; font-size:11px; color:#A89B92; margin-bottom:6px; text-transform:uppercase; letter-spacing:1px;">Card Number</label>
-              <input type="text" placeholder="4111 2222 3333 4444" value="4111 5555 6666 7777" style="width:100%; padding:10px; background:#111; border:1px solid #333; border-radius:8px; color:#fff; font-size:14px; outline:none;">
-            </div>
-            <div style="display:flex; gap:12px;">
-              <div style="flex:1;">
-                <label style="display:block; font-size:11px; color:#A89B92; margin-bottom:6px; text-transform:uppercase; letter-spacing:1px;">Expiry Date</label>
-                <input type="text" placeholder="MM/YY" value="12/28" style="width:100%; padding:10px; background:#111; border:1px solid #333; border-radius:8px; color:#fff; font-size:14px; outline:none;">
-              </div>
-              <div style="flex:1;">
-                <label style="display:block; font-size:11px; color:#A89B92; margin-bottom:6px; text-transform:uppercase; letter-spacing:1px;">CVV</label>
-                <input type="password" placeholder="123" value="999" style="width:100%; padding:10px; background:#111; border:1px solid #333; border-radius:8px; color:#fff; font-size:14px; outline:none;">
-              </div>
-            </div>
-          </div>
-          
-          <div style="display:flex; gap:12px; justify-content:flex-end;">
-            <button onclick="closePaymentModal()" style="padding:10px 16px; background:transparent; border:1px solid #333; color:#A89B92; border-radius:8px; font-size:13px; cursor:pointer; font-weight:500;">Cancel</button>
-            <button onclick="confirmOrder()" style="padding:10px 20px; background:#C0172A; border:none; color:#fff; border-radius:8px; font-size:13px; cursor:pointer; font-weight:600; transition: background .2s;">Pay & Place Order</button>
-          </div>
         </div>
       </div>
 
@@ -491,87 +440,6 @@
   </div>
 
     <script>
-        function switchTab(tab) {
-            const cartBtn = document.getElementById('tab-cart-btn');
-            const historyBtn = document.getElementById('tab-history-btn');
-            const cartView = document.getElementById('cart-view');
-            const historyView = document.getElementById('history-view');
-
-            if (tab === 'cart') {
-                cartBtn.classList.add('active');
-                cartBtn.style.color = '#F5F0ED';
-                cartBtn.style.background = '#8B0D1C';
-                
-                historyBtn.classList.remove('active');
-                historyBtn.style.color = '#A89B92';
-                historyBtn.style.background = 'transparent';
-                
-                cartView.style.display = 'block';
-                historyView.style.display = 'none';
-                loadOrders();
-            } else {
-                cartBtn.classList.remove('active');
-                cartBtn.style.color = '#A89B92';
-                cartBtn.style.background = 'transparent';
-                
-                historyBtn.classList.add('active');
-                historyBtn.style.color = '#F5F0ED';
-                historyBtn.style.background = '#8B0D1C';
-                
-                cartView.style.display = 'none';
-                historyView.style.display = 'block';
-                loadOrderHistory();
-            }
-        }
-
-        function loadOrders() {
-            const orders = JSON.parse(localStorage.getItem('orderItems') || '[]');
-            const list = document.getElementById('order-list');
-            const summary = document.getElementById('order-summary');
-            const emptyMsg = document.getElementById('empty-msg');
-            const totalEl = document.getElementById('total-price');
-
-            list.innerHTML = '';
-
-            if (orders.length === 0) {
-                emptyMsg.style.display = 'block';
-                summary.style.display = 'none';
-                return;
-            }
-
-            emptyMsg.style.display = 'none';
-            summary.style.display = 'block';
-
-            let total = 0;
-
-            orders.forEach((item, index) => {
-                const itemTotal = item.price * item.qty;
-                total += itemTotal;
-                const imageSrc = item.image.startsWith('http') ? item.image : `/static/images/${item.image}`;
-
-                list.innerHTML += `
-                    <div class="order-item">
-                        <img src="${imageSrc}" alt="${item.name}">
-                        <div class="order-info">
-                            <h3>${item.name}</h3>
-                            <p>Qty: ${item.qty} &nbsp;|&nbsp; ₹${item.price} each</p>
-                        </div>
-                        <div class="order-price">₹${itemTotal.toLocaleString()}</div>
-                        <button class="remove-btn" onclick="removeItem(${index})">Remove</button>
-                    </div>
-                `;
-            });
-
-            totalEl.textContent = total.toLocaleString();
-        }
-
-        function removeItem(index) {
-            let orders = JSON.parse(localStorage.getItem('orderItems') || '[]');
-            orders.splice(index, 1);
-            localStorage.setItem('orderItems', JSON.stringify(orders));
-            loadOrders();
-        }
-
         async function loadOrderHistory() {
             const list = document.getElementById('history-list');
             const emptyMsg = document.getElementById('history-empty-msg');
@@ -633,68 +501,10 @@
             }
         }
 
-        function openPaymentModal() {
-            document.getElementById('payment-modal').style.display = 'flex';
-        }
-
-        function closePaymentModal() {
-            document.getElementById('payment-modal').style.display = 'none';
-        }
-
-        async function confirmOrder() {
-            closePaymentModal();
-            const orders = JSON.parse(localStorage.getItem('orderItems') || '[]');
-            if (orders.length === 0) return;
-
-            const products = orders.map(item => ({
-                product_name: item.name,
-                quantity: parseInt(item.qty),
-                price: parseFloat(item.price)
-            }));
-            const total_amount = orders.reduce((sum, item) => sum + (item.price * item.qty), 0);
-
-            const payload = {
-                customer_name: "Buyer Customer",
-                customer_number: 9999999999,
-                products: products,
-                total_amount: total_amount
-            };
-
-            try {
-                const res = await fetch('/POST/order', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                if (res.ok) {
-                    localStorage.removeItem('orderItems');
-                    alert('Order confirmed and mock payment processed successfully!');
-                    loadOrders();
-                    switchTab('history');
-                } else {
-                    const data = await res.json();
-                    alert('Failed to place order: ' + (data.detail || 'Please try again.'));
-                }
-            } catch (err) {
-                console.error(err);
-                alert('Network error. Please try again.');
-            }
-        }
-
-        // Initialize active tab styling
-        document.getElementById('tab-cart-btn').style.color = '#F5F0ED';
-        document.getElementById('tab-cart-btn').style.background = '#8B0D1C';
-
-        // Sidebar toggling is handled globally by cart.js
-
-        // Load on page ready
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('tab') === 'history') {
-            switchTab('history');
-        } else {
-            loadOrders();
-        }
+        // Load order history on ready
+        document.addEventListener('DOMContentLoaded', () => {
+            loadOrderHistory();
+        });
     </script>
   <script src="{{ url_for('static', path='js/logout.js') }}"></script>
 </body>

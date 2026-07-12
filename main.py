@@ -71,7 +71,7 @@ async def auth_middleware(request: Request, call_next):
         seller_paths = ["/seller", "/POST/product"]
         # Buyer paths
         buyer_paths = [
-            "/home", "/orders", "/search", "/womens", "/mens-wear", 
+            "/home", "/orders", "/cart", "/search", "/womens", "/mens-wear", 
             "/homeappliances", "/beauty", "/books", "/groceries", "/pharma", "/kids", "/furniture",
             "/POST/order"
         ]
@@ -113,6 +113,10 @@ async def home(request: Request):
 @app.get("/orders")
 async def orders(request : Request):
     return templates.TemplateResponse(request, "orders.html",{"request":request})
+
+@app.get("/cart")
+async def cart_page(request: Request):
+    return templates.TemplateResponse(request, "cart.html", {"request": request})
 
 @app.get("/seller")
 def seller(request: Request):
