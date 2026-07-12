@@ -20,7 +20,7 @@ function updateSidebarCart() {
   if (!cartEl) return;
 
   const orders = JSON.parse(localStorage.getItem('orderItems') || '[]');
-  
+
   // Update mobile badge if it exists
   const mobileBadge = document.getElementById('mobile-cart-count');
   if (mobileBadge) {
@@ -35,7 +35,7 @@ function updateSidebarCart() {
 
   const isFolded = localStorage.getItem('cartFolded') === 'true';
   const chevron = isFolded ? '🔽' : '🔼';
-  
+
   const path = window.location.pathname;
   const activeClass = path === '/cart' ? 'active' : '';
 
@@ -65,31 +65,20 @@ function updateSidebarCart() {
     const imageSrc = item.image.startsWith('http') ? item.image : (item.image.startsWith('/') ? item.image : `/static/images/${item.image}`);
 
     itemsHtml += `
-      <div class="cart-item-card-wrapper">
-        <div class="cart-item-card" style="display: flex; flex-direction: column; gap: 8px;">
-          <!-- Top Row: Image, Details, Remove -->
-          <div style="display: flex; gap: 10px; align-items: flex-start; position: relative; width: 100%;">
-            <img src="${imageSrc}" class="cart-item-img" alt="${item.name}" onerror="this.onerror=null;this.src='/static/images/default.webp'">
-            <div class="cart-item-details" style="flex: 1; min-width: 0;">
-              <span class="cart-item-name" title="${item.name}">${item.name}</span>
-              <span class="cart-item-price">₹${price.toLocaleString()}</span>
-            </div>
+      <div class="cart-row">
+        <img src="${imageSrc}" class="cart-row-img" alt="${item.name}" onerror="this.onerror=null;this.src='/static/images/default.webp'">
+        <div class="cart-row-main">
+          <div class="cart-row-top">
+            <span class="cart-row-name" title="${item.name}">${item.name}</span>
             <button class="cart-remove-btn" onclick="changeSidebarQty(${index}, -9999)" title="Remove item">✕</button>
           </div>
-          
-          <!-- Middle Row: Quantity Adjustment (Slider + Input Field) -->
-          <div style="display: flex; flex-direction: column; gap: 6px; background: rgba(255,255,255,0.02); padding: 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.04); margin-top: 4px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--cart-muted);">
-              <span>Qty (Min: ${moqVal}):</span>
-              <input type="number" id="qty-input-${index}" class="cart-qty-input" min="${moqVal}" value="${qty}" onchange="updateCartQtyFromInput(${index}, this.value)" style="width: 55px; background: #111; border: 1px solid #333; color: #fff; text-align: center; border-radius: 4px; padding: 2px; font-size: 11px;">
+          <div class="cart-row-bottom">
+            <div class="cart-row-stepper" title="Min: ${moqVal}">
+              <button class="cart-qty-btn" onclick="changeSidebarQty(${index}, -1)" title="Decrease">−</button>
+              <input type="number" id="qty-input-${index}" class="cart-row-qty-input" min="${moqVal}" value="${qty}" onchange="updateCartQtyFromInput(${index}, this.value)">
+              <button class="cart-qty-btn" onclick="changeSidebarQty(${index}, 1)" title="Increase">+</button>
             </div>
-            <input type="range" id="qty-slider-${index}" min="${moqVal}" max="${moqVal + 100}" value="${qty}" oninput="updateCartQtyFromSlider(${index}, this.value)" onchange="updateCartQtyFromInput(${index}, this.value)" style="width: 100%; height: 4px; background: rgba(255,255,255,0.15); border-radius: 2px; cursor: pointer; outline: none; margin: 6px 0;">
-          </div>
- 
-          <!-- Bottom Row: Item Total Price -->
-          <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--cart-muted); padding-top: 2px; border-top: 1px dashed rgba(255,255,255,0.04);">
-            <span>Item Total:</span>
-            <span id="item-total-val-${index}" style="font-weight: 700; color: var(--cart-gold);">₹${itemTotal.toLocaleString()}</span>
+            <span class="cart-row-calc">₹${price.toLocaleString()} × ${qty} = <strong id="item-total-val-${index}" class="cart-row-total">₹${itemTotal.toLocaleString()}</strong></span>
           </div>
         </div>
       </div>
@@ -166,7 +155,7 @@ function updateCartQtyFromInput(index, val) {
 
   orders[index].qty = newQty;
   localStorage.setItem('orderItems', JSON.stringify(orders));
-  
+
   // Sync the slider input in the UI
   const slider = document.getElementById(`qty-slider-${index}`);
   if (slider) slider.value = newQty;
@@ -213,13 +202,13 @@ function updateCartQtyFromSlider(index, val) {
 function updateSidebarCartTotalsOnly() {
   const orders = JSON.parse(localStorage.getItem('orderItems') || '[]');
   let subtotal = 0;
-  
+
   orders.forEach((item, index) => {
     const qty = item.qty || 1;
     const price = item.price;
     const itemTotal = price * qty;
     subtotal += itemTotal;
-    
+
     // Update individual item total label if it exists
     const itemTotalEl = document.getElementById(`item-total-val-${index}`);
     if (itemTotalEl) {
@@ -231,7 +220,7 @@ function updateSidebarCartTotalsOnly() {
   if (totalAmountEl) {
     totalAmountEl.textContent = `₹${subtotal.toLocaleString()}`;
   }
-  
+
   // Sync sidebar badge
   const mobileBadge = document.getElementById('mobile-cart-count');
   if (mobileBadge) {
@@ -247,7 +236,7 @@ function updateSidebarCartTotalsOnly() {
 
 function addToOrder(product) {
   let orders = JSON.parse(localStorage.getItem('orderItems') || '[]');
-  
+
   const moqVal = parseInt(product.quantity || product.moq || 1);
   const existing = orders.find(item => item.name === product.name);
   if (existing) {
@@ -299,11 +288,11 @@ function showCartToast(message) {
     `;
     document.body.appendChild(toast);
   }
-  
+
   toast.textContent = "✅ " + message;
   toast.style.opacity = '1';
   toast.style.transform = 'translateY(0)';
-  
+
   clearTimeout(toast.timeoutId);
   toast.timeoutId = setTimeout(() => {
     toast.style.opacity = '0';
@@ -408,9 +397,9 @@ async function processCartOrder() {
       localStorage.removeItem('orderItems');
       closeCartPaymentModal();
       alert('Order confirmed and mock payment processed successfully!');
-      
+
       updateSidebarCart();
-      
+
       // If we are on orders page, sync the main lists
       if (typeof loadOrders === 'function') {
         loadOrders();
@@ -438,7 +427,7 @@ async function processCartOrder() {
 document.addEventListener('DOMContentLoaded', () => {
   // Inject payment modal onto page
   injectPaymentModal();
-  
+
   // Render current cart in sidebar
   updateSidebarCart();
 
@@ -446,7 +435,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const sidebarToggleBtn = document.getElementById("sidebar-toggle");
   const mobileCartToggle = document.getElementById("mobile-cart-toggle");
   const sidebarEl = document.querySelector(".sidebar");
-  
+
   if (sidebarToggleBtn && sidebarEl) {
     sidebarToggleBtn.addEventListener("click", (e) => {
       e.stopPropagation();
