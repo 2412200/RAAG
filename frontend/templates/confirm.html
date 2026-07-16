@@ -645,7 +645,8 @@
               delivery_pincode: deliveryPincode,
               recipient_name: recipientName,
               recipient_phone: recipientPhone,
-              payment_method: 'ONLINE'
+              payment_method: 'ONLINE',
+              order_status: 'Pending Payment'
           };
 
           try {
@@ -711,14 +712,14 @@
                           }
 
                           // Update status in the database
-                          const updateRes = await fetch('/POST/order/update-status', {
-                              method: 'POST',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({
-                                  order_id: orderId,
-                                  status: 'Processing'
-                              })
-                          });
+                           const updateRes = await fetch('/POST/order/update-status', {
+                               method: 'POST',
+                               headers: { 'Content-Type': 'application/json' },
+                               body: JSON.stringify({
+                                   order_id: orderId,
+                                   status: 'Pending'
+                               })
+                           });
                           if (updateRes.ok) {
                               localStorage.removeItem('orderItems');
                               alert('Payment successful! Your order has been placed.');

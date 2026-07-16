@@ -405,11 +405,111 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
+    window.printShippingLabel = function(orderId) {
+        const order = allOrders.find(o => o.order_id === orderId);
+        if (!order) return;
+        
+        const printWindow = window.open('', '_blank', 'width=600,height=800');
+        
+        let itemsListHtml = '';
+        order.products.forEach(p => {
+            itemsListHtml += `<li>${p.product_name} (Qty: ${p.quantity})</li>`;
+        });
+        
+        const html = `
+            <html>
+            <head>
+                <title>Shipping Label - ${order.order_id}</title>
+                <style>
+                    body {
+                        font-family: 'Courier New', Courier, monospace;
+                        padding: 20px;
+                        color: #000;
+                        background: #fff;
+                    }
+                    .label-card {
+                        border: 3px double #000;
+                        padding: 20px;
+                        max-width: 500px;
+                        margin: 0 auto;
+                    }
+                    .header {
+                        text-align: center;
+                        border-bottom: 2px solid #000;
+                        padding-bottom: 10px;
+                        margin-bottom: 15px;
+                    }
+                    .section {
+                        border-bottom: 1px dashed #000;
+                        padding-bottom: 12px;
+                        margin-bottom: 12px;
+                    }
+                    .barcode {
+                        font-family: 'Courier New', monospace;
+                        font-size: 16px;
+                        text-align: center;
+                        margin: 15px 0;
+                        border: 1px solid #000;
+                        padding: 8px;
+                        letter-spacing: 4px;
+                    }
+                    .meta {
+                        display: flex;
+                        justify-content: space-between;
+                        font-size: 12px;
+                    }
+                    .title {
+                        font-size: 18px;
+                        font-weight: bold;
+                        text-transform: uppercase;
+                    }
+                </style>
+            </head>
+            <body onload="window.print(); window.close();">
+                <div class="label-card">
+                    <div class="header">
+                        <div class="title">RAAG Logistics</div>
+                        <div style="font-size: 11px; margin-top:4px;">PRIORITY SHIPPING LABEL</div>
+                    </div>
+                    
+                    <div class="section">
+                        <strong>SHIP TO:</strong><br>
+                        <span style="font-size: 16px; font-weight: bold;">${order.customer_name || 'Recipient'}</span><br>
+                        Phone: +${order.customer_number}<br>
+                        Address: ${order.delivery_address || 'N/A'}<br>
+                        ${order.delivery_city || ''}, ${order.delivery_state || ''}
+                    </div>
+                    
+                    <div class="section">
+                        <strong>ITEMS:</strong>
+                        <ul style="margin: 5px 0; padding-left: 20px;">
+                            ${itemsListHtml}
+                        </ul>
+                    </div>
+                    
+                    <div class="barcode">
+                        *${order.order_id.slice(-8).toUpperCase()}*
+                    </div>
+                    
+                    <div class="meta">
+                        <span>ORDER ID: ${order.order_id}</span>
+                        <span>Date: ${order.created_at}</span>
+                    </div>
+                </div>
+            </body>
+            </html>
+        `;
+        
+        printWindow.document.write(html);
+        printWindow.document.close();
+    };
+
     function renderOrders() {
         const tbody = document.getElementById("orders-table-body");
         const emptyMsg = document.getElementById("orders-empty-msg");
         const countPendingEl = document.getElementById("count-pending");
         const countProcessingEl = document.getElementById("count-processing");
+        const countOutForDeliveryEl = document.getElementById("count-out-for-delivery");
         const countCompletedEl = document.getElementById("count-completed");
 
         if (!tbody) return;
@@ -425,6 +525,11 @@ document.addEventListener("DOMContentLoaded", () => {
             return s === "processing";
         }).length;
 
+        const outForDeliveryCount = allOrders.filter(o => {
+            const s = (o.order_status || "").toLowerCase();
+            return s === "out for delivery";
+        }).length;
+
         const completedCount = allOrders.filter(o => {
             const s = (o.order_status || "").toLowerCase();
             return s === "completed";
@@ -432,6 +537,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (countPendingEl) countPendingEl.textContent = pendingCount;
         if (countProcessingEl) countProcessingEl.textContent = processingCount;
+        if (countOutForDeliveryEl) countOutForDeliveryEl.textContent = outForDeliveryCount;
         if (countCompletedEl) countCompletedEl.textContent = completedCount;
 
         // 1. Filter by active tab status
@@ -439,6 +545,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const s = (o.order_status || "").toLowerCase();
             if (activeOrderTab === "pending") return s === "pending" || !s;
             if (activeOrderTab === "processing") return s === "processing";
+            if (activeOrderTab === "out for delivery") return s === "out for delivery";
             if (activeOrderTab === "completed") return s === "completed";
             return false;
         });
@@ -533,6 +640,13 @@ document.addEventListener("DOMContentLoaded", () => {
                     } else if (status === 'processing') {
                         actionHtml = `
                             <div style="display:flex; gap:6px;">
+                                <button onclick="updateOrderStatusDirect('${order.order_id}', 'Out for Delivery')" style="padding:6px 10px; background:#06d6a0; border:none; color:#181818; border-radius:6px; font-size:12px; cursor:pointer; font-weight:600; transition:opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">Ship</button>
+                                <button onclick="updateOrderStatusDirect('${order.order_id}', 'Cancelled')" style="padding:6px 10px; background:#e8293f; border:none; color:#fff; border-radius:6px; font-size:12px; cursor:pointer; font-weight:600; transition:opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">Cancel</button>
+                            </div>
+                        `;
+                    } else if (status === 'out for delivery') {
+                        actionHtml = `
+                            <div style="display:flex; gap:6px;">
                                 <button onclick="updateOrderStatusDirect('${order.order_id}', 'Completed')" style="padding:6px 10px; background:#D4A847; border:none; color:#181818; border-radius:6px; font-size:12px; cursor:pointer; font-weight:600; transition:opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">Complete</button>
                                 <button onclick="updateOrderStatusDirect('${order.order_id}', 'Cancelled')" style="padding:6px 10px; background:#e8293f; border:none; color:#fff; border-radius:6px; font-size:12px; cursor:pointer; font-weight:600; transition:opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">Cancel</button>
                             </div>
@@ -560,6 +674,17 @@ document.addEventListener("DOMContentLoaded", () => {
                 `;
 
                 if (prodIndex === 0) {
+                    let labelHtml = '';
+                    if (status === 'processing') {
+                        labelHtml = `
+                            <button onclick="printShippingLabel('${order.order_id}')" style="padding:6px 10px; background:#111; border:1px solid #333; color:#fff; border-radius:6px; font-size:12px; cursor:pointer; font-weight:600; display:flex; align-items:center; gap:4px; transition:all 0.2s;" onmouseover="this.style.borderColor='#8B0D1C';this.style.color='#E8293F'" onmouseout="this.style.borderColor='#333';this.style.color='#fff'">
+                                <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2m-12 0v6h12v-6"/></svg> Print
+                            </button>
+                        `;
+                    } else {
+                        labelHtml = `<span style="color:var(--muted); font-size:12px;">—</span>`;
+                    }
+
                     row.innerHTML += `
                         <td rowspan="${rowSpan}">
                             <span class="order-status-badge ${(order.order_status || 'Pending').toLowerCase()}">
@@ -567,6 +692,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             </span>
                         </td>
                         <td rowspan="${rowSpan}">${actionHtml}</td>
+                        <td rowspan="${rowSpan}">${labelHtml}</td>
                     `;
                 }
 
