@@ -1245,3 +1245,88 @@ input:checked + .slider:before {
     gap: 8px;
   }
 }
+
+/* Custom Meesho-style Orders Navigation */
+.orders-tab-nav {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 20px;
+  gap: 32px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.order-tab-btn {
+  background: none;
+  border: none;
+  color: var(--muted);
+  padding: 12px 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  position: relative;
+  white-space: nowrap;
+  transition: color 0.2s;
+}
+
+.order-tab-btn:hover {
+  color: var(--white);
+}
+
+.order-tab-btn.active {
+  color: var(--white);
+}
+
+.order-tab-btn.active::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--red-light);
+  border-radius: 3px;
+}
+
+.filter-select-orders {
+  background: var(--black2);
+  border: 1px solid var(--border);
+  color: var(--white);
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.filter-select-orders:focus {
+  border-color: var(--red);
+}
+
+/* Download Orders Button */
+.download-orders-btn:hover {
+  background: var(--red) !important;
+  border-color: var(--red-light) !important;
+}
+
+.order-status-select.on-hold {
+  color: var(--gold);
+  background-color: rgba(212, 168, 71, 0.1);
+  border: 1px solid rgba(212, 168, 71, 0.3);
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23D4A847' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+}
+
+.order-status-select.shipped {
+  color: var(--green);
+  background-color: var(--green-bg);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2310B981' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+}
+
+.order-status-select.cancelled {
+  color: var(--red-light);
+  background-color: rgba(192, 23, 42, 0.1);
+  border: 1px solid rgba(192, 23, 42, 0.3);
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23E8293F' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+}

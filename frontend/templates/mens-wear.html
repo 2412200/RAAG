@@ -149,7 +149,6 @@
                 <h4 style="font-family:'Playfair Display',serif; font-size:22px; font-weight:700; color:#F5F0ED; margin-bottom:8px;">${product.product_name || product.name}</h4>
                 <div style="font-size:16px; font-weight:700; color:#D4A847; margin-bottom:12px;">₹${(product.price || product.mrp)}</div>
                 <div style="margin-bottom:12px;">${specHtml}</div>
-                <p style="font-size:13px; color:#A89B92; margin-bottom:8px;">Stock Available: <strong style="color:#06d6a0;">${product.stock !== undefined ? product.stock : 100}</strong> units</p>
                 <p style="font-size:13px; color:#A89B92;">Description: ${product.description || 'No description provided.'}</p>
               </div>
               

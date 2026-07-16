@@ -198,12 +198,108 @@
       background: var(--red-light);
     }
 
+    /* ── Section label (shared by Trending / Browse Categories) ── */
+    .section-label-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 0.5rem 1rem;
+    }
+
+    .section-label-accent {
+      width: 3px;
+      height: 22px;
+      background: var(--red);
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    .section-label-text {
+      font-size: 11px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    /* ── Trending products ── */
+    .trending-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      gap: 16px;
+      margin-bottom: 1rem;
+    }
+
+    .trend-card {
+      background: var(--black2);
+      border: 1px solid #222;
+      border-radius: 10px;
+      overflow: hidden;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+
+    .trend-card:hover {
+      transform: translateY(-3px);
+      border-color: var(--red);
+    }
+
+    .trend-card img {
+      width: 100%;
+      aspect-ratio: 1;
+      object-fit: cover;
+      display: block;
+      background: #111;
+    }
+
+    .trend-info {
+      padding: 0.75rem;
+    }
+
+    .trend-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--white);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 4px;
+    }
+
+    .trend-price {
+      font-size: 12px;
+      color: var(--gold);
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .trend-add-btn {
+      width: 100%;
+      background: transparent;
+      border: 1px solid var(--red-dark);
+      color: var(--red-light);
+      font-size: 11px;
+      padding: 7px;
+      border-radius: 6px;
+      cursor: pointer;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      transition: background 0.2s, color 0.2s;
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    .trend-add-btn:hover {
+      background: var(--red);
+      color: var(--white);
+    }
+
     /* Grid Padding and Separation */
     .grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 30px; /* Separated from each other */
-      padding: 20px 0 40px 0; /* Separated from edges */
+      gap: 30px;
+      /* Separated from each other */
+      padding: 20px 0 40px 0;
+      /* Separated from edges */
       margin: 1rem 0;
       width: 100%;
     }
@@ -440,6 +536,11 @@
         gap: 8px;
         text-align: center;
       }
+
+      .trending-grid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 12px;
+      }
     }
 
     @media (max-width: 480px) {
@@ -460,8 +561,10 @@
     <button id="sidebar-toggle" class="sidebar-toggle-btn" aria-label="Toggle Sidebar">☰</button>
     <div class="mobile-navbar-brand">RAAG</div>
     <div style="display: flex; align-items: center; gap: 10px;">
-      <button id="mobile-cart-toggle" class="sidebar-toggle-btn" style="position: relative; border: none; font-size: 18px;" aria-label="Toggle Cart">
-        🛒<span id="mobile-cart-count" style="position: absolute; top: -5px; right: -5px; background: var(--red); color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; display: flex; align-items: center; justify-content: center; font-weight: bold; display: none;">0</span>
+      <button id="mobile-cart-toggle" class="sidebar-toggle-btn"
+        style="position: relative; border: none; font-size: 18px;" aria-label="Toggle Cart">
+        🛒<span id="mobile-cart-count"
+          style="position: absolute; top: -5px; right: -5px; background: var(--red); color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; display: flex; align-items: center; justify-content: center; font-weight: bold; display: none;">0</span>
       </button>
       <a href="/logout" class="mobile-logout-btn">Logout</a>
     </div>
@@ -501,12 +604,37 @@
         </div>
       </form>
 
+      {% if trending_products %}
       <div style="padding:2rem 1.5px 0;">
-        <div style="display:flex;align-items:center;gap:8px;padding:0 .5rem 1rem;">
-          <div style="width:3px;height:22px;background:var(--red);border-radius:2px"></div>
-          <span
-            style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);font-weight:500">Browse
-            Categories</span>
+        <div class="section-label-row">
+          <div class="section-label-accent"></div>
+          <span class="section-label-text">Trending Products</span>
+        </div>
+      </div>
+
+      <div class="trending-grid">
+        {% for product in trending_products %}
+        <div class="trend-card">
+          <img
+            src="{% if product.image.startswith('http') %}{{ product.image }}{% else %}{{ url_for('static', path='images/' + product.image) }}{% endif %}"
+            alt="{{ product.name }}" onerror="this.onerror=null;this.src='/static/images/default.webp'">
+          <div class="trend-info">
+            <p class="trend-name" title="{{ product.name }}">{{ product.name }}</p>
+            <p class="trend-price">₹{{ product.price }}</p>
+            <button class="trend-add-btn" data-name="{{ product.name }}" data-image="{{ product.image }}"
+              data-quantity="{{ product.quantity }}" data-price="{{ product.price }}" onclick="addToCartFromEl(this)">
+              Add to Cart
+            </button>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <div style="padding:2rem 1.5px 0;">
+        <div class="section-label-row">
+          <div class="section-label-accent"></div>
+          <span class="section-label-text">Browse Categories</span>
         </div>
       </div>
 
@@ -579,21 +707,21 @@
 
         <!-- Furniture -->
         <a href="/furniture" class="cat-card">
-          <div class="placeholder-img" style="background:linear-gradient(135deg,#0a0f1a,#0e1a2d)">📱</div>
+          <div class="placeholder-img" style="background:linear-gradient(135deg,#0a0f1a,#0e1a2d)">🛋️</div>
           <div class="cat-overlay"></div>
           <div class="cat-label">
-            <span class="cat-tag">furniture</span>
+            <span class="cat-tag">Furniture</span>
             <span class="cat-name">Furniture</span>
           </div>
           <div class="cat-arrow">→</div>
         </a>
 
-        <!-- Sports -->
+        <!-- Kids -->
         <a href="/kids" class="cat-card">
-          <div class="placeholder-img" style="background:linear-gradient(135deg,#0a1a0f,#0e2d18)">⚽</div>
+          <div class="placeholder-img" style="background:linear-gradient(135deg,#0a1a0f,#0e2d18)">🧸</div>
           <div class="cat-overlay"></div>
           <div class="cat-label">
-            <span class="cat-tag">Study</span>
+            <span class="cat-tag">Junior</span>
             <span class="cat-name">Kids</span>
           </div>
           <div class="cat-arrow">→</div>
@@ -601,10 +729,10 @@
 
         <!-- Pharma -->
         <a href="/pharma" class="cat-card">
-          <div class="placeholder-img" style="background:linear-gradient(135deg,#1a0a14,#2d0e22)">🧸</div>
+          <div class="placeholder-img" style="background:linear-gradient(135deg,#1a0a14,#2d0e22)">💊</div>
           <div class="cat-overlay"></div>
           <div class="cat-label">
-            <span class="cat-tag">medicine</span>
+            <span class="cat-tag">Health</span>
             <span class="cat-name">Pharma</span>
           </div>
           <div class="cat-arrow">→</div>
@@ -621,4 +749,5 @@
   <!-- Sidebar toggle and cart synchronization is handled in cart.js -->
   <script src="{{ url_for('static', path='js/logout.js') }}"></script>
 </body>
+
 </html>

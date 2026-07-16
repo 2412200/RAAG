@@ -9,6 +9,7 @@ class order_item(BaseModel):
     product_name: str
     quantity: int
     price: float
+    product_id : Optional[str] = None
 
 class orders(BaseModel):
     customer_name: str
@@ -18,6 +19,14 @@ class orders(BaseModel):
 
     total_amount: float
     order_status: str = "Pending"
+
+    delivery_address: Optional[str] = None
+    delivery_city: Optional[str] = None
+    delivery_state: Optional[str] = None
+    delivery_pincode: Optional[str] = None
+    recipient_name: Optional[str] = None
+    recipient_phone: Optional[str] = None
+    payment_method: Optional[str] = None
 
     created_at: datetime = Field(default_factory=datetime.now)
 
@@ -122,7 +131,6 @@ class mobile_accessories(BaseModel):
     images: List[str] = []
     stock: Optional[int] = Field(default=100, ge=0)
 
-
 class steel_work(BaseModel):
     product_name : str
     steel_grade : str
@@ -135,7 +143,6 @@ class steel_work(BaseModel):
     description: Optional[str] = ""
     images: List[str] = []
     stock: Optional[int] = Field(default=100, ge=0)
-
 
 class otp_request(BaseModel):
     phone : str
@@ -178,7 +185,21 @@ class ForgotPasswordOTPRequest(BaseModel):
     role: Literal["buyer", "seller"]
 
 class ResetPasswordRequest(BaseModel):
+
     phone: str
     role: Literal["buyer", "seller"]
     otp: str
     password: str
+
+class CreateOrderRequest(BaseModel):
+    order_id: str 
+
+class CreateRazorpayOrderRequest(BaseModel):
+    amount: int
+    currency: str = "INR"
+    receipt: Optional[str] = None
+
+class VerifyPaymentRequest(BaseModel):
+    razorpay_order_id: str
+    razorpay_payment_id: str
+    razorpay_signature: str

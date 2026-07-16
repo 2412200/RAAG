@@ -1,6 +1,6 @@
-from fastapi import HTTPException, APIRouter, Response, UploadFile
+from fastapi import HTTPException, APIRouter, Response, UploadFile,Depends
 from fastapi.responses import JSONResponse
-from backend.pydanticmodels import SignupRequest, LoginRequest, apparel, fmcg, mobile_accessories, steel_work, orders, ToggleVisibilityRequest, DeleteProductRequest, home_appliances, pharmacy, ForgotPasswordOTPRequest, ResetPasswordRequest, otp_request
+from backend.pydanticmodels import SignupRequest, LoginRequest, apparel, fmcg, mobile_accessories, steel_work, orders, ToggleVisibilityRequest, DeleteProductRequest, home_appliances, pharmacy, ForgotPasswordOTPRequest, ResetPasswordRequest, otp_request,CreateOrderRequest, CreateRazorpayOrderRequest, VerifyPaymentRequest
 from backend.helper.database import get_pg_connection, mongo_client as client, mongo_db as db
 from anyio.to_thread import run_sync
 import os
@@ -16,13 +16,16 @@ import cloudinary
 import cloudinary.uploader
 import cloudinary.api
 from backend.config import SETTINGS
-
+from pydantic import BaseModel as PydanticBaseModel
+import razorpay
 cloudinary.config(
     cloud_name=SETTINGS.CLOUDINARY_CLOUD_NAME,
     api_key=SETTINGS.CLOUDINARY_API_KEY,
     api_secret=SETTINGS.CLOUDINARY_API_SECRET,
     secure=True
 )
+
+razorpay_client = SETTINGS.razorpay_client
 
 SECRET_KEY = SETTINGS.SECRET_KEY
 ALGORITHM = SETTINGS.ALGORITHM
@@ -71,12 +74,12 @@ def signup(data: SignupRequest, response: Response):
                     "To": data.phone,
                     "Code": data.otp
                 }
-                response = requests.post(
+                twilio_response = requests.post(
                     twilio_check_url,
                     data=check_payload,
                     auth=(account_ssid, auth_token)
                 )
-                if response.status_code != 200 or response.json().get("status") != "approved":
+                if twilio_response.status_code != 200 or twilio_response.json().get("status") != "approved":
                     raise HTTPException(
                         status_code=400,
                         detail="Invalid or expired OTP"
@@ -212,7 +215,9 @@ async def add_product(request : Request):
     product_specification = form.get("specification")
 
     user = getattr(request.state, "user", None)
-    seller_phone = user.get("phone") if user else None
+    if not user or not user.get("phone"):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    seller_phone = user["phone"]
     
     # Fetch category from postgres
     def get_seller_category_sync(phone):
@@ -582,46 +587,7 @@ async def post_order(order: orders, request: Request):
         except Exception as e:
             print("Postgres lookup error during order placement:", e)
             
-    # Check and decrement stock levels for all products in the order
-    collections = ["apparel", "fmcg", "mobile_accessories", "steel_work", "homeappliances", "pharma"]
-    
-    # 1. Validate stock first
-    for item in order.products:
-        p_name = item.product_name
-        qty_to_order = item.quantity
-        
-        found = False
-        for col_name in collections:
-            col = db[col_name]
-            doc = await col.find_one({"$or": [{"product_name": p_name}, {"name": p_name}]})
-            if doc:
-                found = True
-                current_stock = doc.get("stock", 100)
-                if current_stock < qty_to_order:
-                    raise HTTPException(
-                        status_code=400,
-                        detail=f"Insufficient stock for '{p_name}'. Available: {current_stock}, Requested: {qty_to_order}"
-                    )
-                break
-        if not found:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Product '{p_name}' not found in the database catalog."
-            )
-            
-    # 2. Decrement stock
-    for item in order.products:
-        p_name = item.product_name
-        qty_to_order = item.quantity
-        
-        for col_name in collections:
-            col = db[col_name]
-            result = await col.update_one(
-                {"$or": [{"product_name": p_name}, {"name": p_name}]},
-                {"$inc": {"stock": -qty_to_order}}
-            )
-            if result.modified_count > 0:
-                break
+
 
     orders_db = client["Orders"]
     result = await orders_db["orders"].insert_one(order.model_dump())
@@ -681,7 +647,6 @@ def request_otp(data: otp_request):
         print("Error requesting signup OTP:", e)
         raise HTTPException(status_code=500, detail="Internal server error. Could not request verification OTP.")
     
-
 @router.post("/POST/order/update-status")
 async def update_order_status(data: dict):
     order_id = data.get("order_id")
@@ -704,7 +669,6 @@ async def update_order_status(data: dict):
     except Exception as e:
         print("Error updating order status:", e)
         raise HTTPException(status_code=500, detail="Internal server error while updating order status.")
-
 
 @router.post("/POST/request-forgot-password-otp")
 def request_forgot_password_otp(data: ForgotPasswordOTPRequest):
@@ -823,9 +787,6 @@ def reset_password(data: ResetPasswordRequest):
         print("Error resetting password:", e)
         raise HTTPException(status_code=500, detail="Internal server error while resetting password.")
 
-
-from pydantic import BaseModel as PydanticBaseModel
-
 class ProfileUpdateRequest(PydanticBaseModel):
     business_name: str
     owner_name: str
@@ -873,14 +834,14 @@ async def edit_product(request: Request):
     product_id = form.get("product_id")
     specification = form.get("specification")
     
-    if not product_id or not specification:
+    if not product_id or not specification or not isinstance(product_id, str) or not isinstance(specification, str):
         raise HTTPException(status_code=400, detail="Missing product_id or specification")
         
     user = getattr(request.state, "user", None)
-    if not user or user.get("role") != "seller":
+    if not user or not user.get("phone") or user.get("role") != "seller":
         raise HTTPException(status_code=403, detail="Access denied. Sellers only.")
         
-    seller_phone = user.get("phone")
+    seller_phone: str = user["phone"]
     
     specification_to_collection = {
         "apparel": "apparel",
@@ -894,7 +855,6 @@ async def edit_product(request: Request):
     if not col_name:
         raise HTTPException(status_code=400, detail="Invalid specification")
         
-    from bson import ObjectId
     existing = await db[col_name].find_one({"_id": ObjectId(product_id), "seller_phone": seller_phone})
     if not existing:
         raise HTTPException(status_code=404, detail="Product not found or not owned by you")
@@ -902,34 +862,53 @@ async def edit_product(request: Request):
     update_fields = {}
     
     if "product_name" in form:
-        update_fields["product_name"] = str(form.get("product_name"))
-        update_fields["name"] = str(form.get("product_name"))
+        p_name = form.get("product_name")
+        if isinstance(p_name, str):
+            update_fields["product_name"] = p_name
+            update_fields["name"] = p_name
+            
     if "mrp" in form:
-        try:
-            update_fields["mrp"] = float(form.get("mrp"))
-            update_fields["price"] = float(form.get("mrp"))
-        except ValueError:
-            pass
+        mrp_val = form.get("mrp")
+        if isinstance(mrp_val, str):
+            try:
+                val = float(mrp_val)
+                update_fields["mrp"] = val
+                update_fields["price"] = val
+            except ValueError:
+                pass
+                
     if "price" in form:
-        try:
-            update_fields["price"] = float(form.get("price"))
-            update_fields["mrp"] = float(form.get("price"))
-        except ValueError:
-            pass
+        price_val = form.get("price")
+        if isinstance(price_val, str):
+            try:
+                val = float(price_val)
+                update_fields["price"] = val
+                update_fields["mrp"] = val
+            except ValueError:
+                pass
+                
     if "description" in form:
-        update_fields["description"] = str(form.get("description"))
+        desc_val = form.get("description")
+        if isinstance(desc_val, str):
+            update_fields["description"] = desc_val
+            
     if "stock" in form:
-        try:
-            update_fields["stock"] = int(form.get("stock"))
-        except ValueError:
-            pass
+        stock_val = form.get("stock")
+        if isinstance(stock_val, str):
+            try:
+                update_fields["stock"] = int(stock_val)
+            except ValueError:
+                pass
+                
     if "quantity" in form or "qty" in form:
-        try:
-            val = int(form.get("quantity") or form.get("qty"))
-            update_fields["quantity"] = val
-            update_fields["qty"] = val
-        except ValueError:
-            pass
+        qty_val = form.get("quantity") or form.get("qty")
+        if isinstance(qty_val, str):
+            try:
+                val = int(qty_val)
+                update_fields["quantity"] = val
+                update_fields["qty"] = val
+            except ValueError:
+                pass
             
     image_files = form.getlist("image_file")
     if image_files and hasattr(image_files[0], "filename") and image_files[0].filename:
@@ -970,6 +949,104 @@ async def edit_product(request: Request):
     )
     return {"message": "Product updated successfully"}
 
+@router.post("/create-razorpay-order")
+async def create_razorpay_order(payload: CreateOrderRequest):
 
+    # 1. Validate and convert the incoming order_id string to ObjectId
+    try:
+        mongo_id = ObjectId(payload.order_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid order_id")
 
+    # 2. Fetch the order from MongoDB
+    orders_collection = client["Orders"]["orders"]
+    order = await orders_collection.find_one({"_id": mongo_id})
+
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    # 3. Guard against double payment
+    if order.get("order_status") == "Completed":
+        raise HTTPException(status_code=400, detail="Order already paid")
+
+    # 4. Calculate total amount — sum from products if no stored total_amount field
+    total_amount = order.get("total_amount")
+    if total_amount is None:
+        total_amount = sum(
+            item["price"] * item["quantity"] for item in order.get("products", [])
+        )
+
+    if not total_amount or total_amount <= 0:
+        raise HTTPException(status_code=400, detail="Order has no valid amount")
+
+    total_amount_in_paise = int(total_amount * 100)
+
+    # 5. Create the order on Razorpay's side
+    try:
+        razorpay_order = cast(Any, razorpay_client).order.create({
+            "amount": total_amount_in_paise,
+            "currency": "INR",
+            "receipt": f"raag_order_{payload.order_id}",
+            "payment_capture": 1
+        })
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Razorpay error: {str(e)}")
+
+    # 6. Save Razorpay's order_id back onto the same Mongo document
+    await orders_collection.update_one(
+        {"_id": mongo_id},
+        {"$set": {"razorpay_order_id": razorpay_order["id"]}}
+    )
+
+    # 7. Return what the frontend Checkout needs
+    return {
+        "razorpay_order_id": razorpay_order["id"],
+        "amount": total_amount_in_paise,
+        "currency": "INR",
+        "key": os.getenv("RAZORPAY_KEY_ID")
+    }
+
+@router.post("/api/create-order")
+def create_order(payload: CreateRazorpayOrderRequest):
+    if payload.amount < 100:
+        raise HTTPException(status_code=400, detail="Amount must be at least 100 paise")
+        
+    try:
+        data = {
+            "amount": payload.amount,
+            "currency": payload.currency,
+            "receipt": payload.receipt or "",
+            "payment_capture": 1
+        }
+        razorpay_order = cast(Any, razorpay_client).order.create(data)
+        return {
+            "order_id": razorpay_order["id"],
+            "amount": razorpay_order["amount"],
+            "currency": razorpay_order["currency"],
+            "key": SETTINGS.RAZORPAY_KEY_ID
+        }
+    except Exception as e:
+        err_str = str(e).lower()
+        if "auth" in err_str or "unauthorized" in err_str or "api key" in err_str or "credentials" in err_str:
+            raise HTTPException(status_code=401, detail="Razorpay authentication failed")
+        raise HTTPException(status_code=500, detail=f"Razorpay error: {str(e)}")
+
+@router.post("/api/verify-payment")
+def verify_payment(payload: VerifyPaymentRequest):
+    if not payload.razorpay_order_id or not payload.razorpay_payment_id or not payload.razorpay_signature:
+        raise HTTPException(status_code=400, detail="Missing required signature verification fields")
+        
+    import hmac
+    import hashlib
     
+    msg = f"{payload.razorpay_order_id}|{payload.razorpay_payment_id}"
+    generated_sig = hmac.new(
+        SETTINGS.RAZORPAY_KEY_SECRET.encode(),
+        msg.encode(),
+        hashlib.sha256
+    ).hexdigest()
+    
+    if not hmac.compare_digest(generated_sig, payload.razorpay_signature):
+        raise HTTPException(status_code=400, detail="Payment verification failed: Signature mismatch")
+        
+    return {"status": "success", "message": "Payment verified successfully"}

@@ -197,98 +197,117 @@
 
         /* Override style.css light modes */
         .orders-container {
-            max-width: 900px;
+            max-width: 100%;
             margin: 0;
             padding: 20px 0;
         }
 
-        .orders-container h1 {
-            font-family: 'Playfair Display', serif;
-            font-size: 28px;
-            font-weight: 700;
+        /* Tabs Container */
+        .orders-tabs {
+            display: flex;
+            gap: 12px;
             margin-bottom: 24px;
-            color: #F5F0ED;
+            border-bottom: 1px solid #222;
+            padding-bottom: 12px;
         }
 
-        .orders-container h1::after {
-            content: none;
-        }
-
-        .order-item {
-            background: #181818 !important;
-            border: 1px solid #222 !important;
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 16px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
-            gap: 20px;
-        }
-
-        .order-item:hover {
-            border-color: #8B0D1C !important;
-        }
-
-        .order-item img {
+        .tab-btn {
+            background: transparent;
+            border: 1px solid #333;
+            color: #A89B92;
+            padding: 10px 20px;
             border-radius: 8px;
+            cursor: pointer;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn:hover {
+            border-color: #8B0D1C;
+            color: #F5F0ED;
+            background: rgba(139, 13, 28, 0.1);
+        }
+
+        .tab-btn.active {
+            background: #8B0D1C;
+            border-color: #8B0D1C;
+            color: #F5F0ED;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(139, 13, 28, 0.3);
+        }
+
+        .tab-count {
+            background: rgba(0, 0, 0, 0.4);
+            color: #F5F0ED;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        /* Table Styling */
+        .orders-table-container {
+            width: 100%;
+            overflow-x: auto;
+            background: #181818;
             border: 1px solid #222;
-        }
-
-        .order-info h3 {
-            font-family: 'Playfair Display', serif;
-            font-weight: 700;
-            color: #F5F0ED;
-        }
-
-        .order-info p {
-            color: #A89B92;
-        }
-
-        .order-price {
-            color: #D4A847;
-        }
-
-        .remove-btn {
-            border-color: #8B0D1C !important;
-            color: #E8293F !important;
-            border-radius: 8px;
-        }
-
-        .remove-btn:hover {
-            background: rgba(139, 13, 28, 0.2) !important;
-        }
-
-        .order-summary {
-            background: #181818 !important;
-            border: 1px solid #222 !important;
             border-radius: 12px;
-            padding: 24px;
-            text-align: right;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
-            margin-top: 10px;
+            margin-bottom: 30px;
         }
 
-        .order-summary h2 {
-            font-family: 'Playfair Display', serif;
-            font-weight: 700;
+        .orders-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        .orders-table th {
+            background: #1f1f1f;
             color: #F5F0ED;
-            margin-bottom: 16px;
+            font-weight: 600;
+            padding: 14px 16px;
+            border-bottom: 1px solid #333;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 0.5px;
         }
 
-        .confirm-btn {
-            background: #C0172A !important;
-            color: #F5F0ED !important;
-            border-radius: 8px;
-        }
-
-        .confirm-btn:hover {
-            background: #E8293F !important;
-            transform: translateY(-1px);
-        }
-
-        .empty-msg {
+        .orders-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #222;
             color: #A89B92;
-            margin-top: 60px;
-            font-size: 16px;
+            vertical-align: middle;
+        }
+
+        .orders-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Highlight Row on Hover */
+        .orders-table tbody tr:hover td {
+            color: #F5F0ED;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        /* Group border separator */
+        .order-group-start td {
+            border-top: 2px solid #8B0D1C !important;
+        }
+
+        /* Empty message */
+        .empty-msg {
+            display: none;
+            text-align: center;
+            padding: 40px;
+            color: #A89B92;
+            font-size: 15px;
         }
 
         footer {
@@ -380,6 +399,42 @@
                 text-align: center;
             }
         }
+
+        /* Order Status Badges */
+        .order-status-badge {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .order-status-badge.pending {
+            color: #ffb703;
+            background: rgba(255, 183, 3, 0.1);
+            border: 1px solid rgba(255, 183, 3, 0.3);
+        }
+
+        .order-status-badge.processing {
+            color: #D4A847;
+            background: rgba(212, 168, 71, 0.1);
+            border: 1px solid rgba(212, 168, 71, 0.3);
+        }
+
+        .order-status-badge.completed {
+            color: #06d6a0;
+            background: rgba(6, 214, 160, 0.1);
+            border: 1px solid rgba(6, 214, 160, 0.3);
+        }
+
+        .order-status-badge.cancelled {
+            color: #e8293f;
+            background: rgba(232, 41, 63, 0.1);
+            border: 1px solid rgba(232, 41, 63, 0.3);
+        }
     </style>
     <link rel="icon" type="image/png" href="{{ url_for('static', path='favicon.png') }}">
   <script src="/static/js/theme-toggle.js"></script>
@@ -425,11 +480,12 @@
         <a href="/logout" class="logout-btn">Logout</a>
       </header>
 
-      <div class="orders-container">
-        <div id="history-view">
-            <div id="history-list"></div>
-            <div id="history-empty-msg" class="empty-msg" style="display:block;">You have not placed any orders yet.</div>
+      <div class="orders-container" style="width: 100%; max-width: 100%;">
+        <!-- Card-based Orders List -->
+        <div id="orders-list-container" style="display: flex; flex-direction: column; gap: 24px; margin-top: 10px; margin-bottom: 40px; width: 100%;">
+            <!-- Loaded dynamically -->
         </div>
+        <div id="orders-empty-msg" class="empty-msg" style="text-align: center; padding: 40px; color: #A89B92; font-size: 15px; display: none;">No orders found.</div>
       </div>
 
       <footer>
@@ -440,65 +496,186 @@
   </div>
 
     <script>
-        async function loadOrderHistory() {
-            const list = document.getElementById('history-list');
-            const emptyMsg = document.getElementById('history-empty-msg');
+        let allOrders = [];
+        let currentTab = 'pending';
+
+        function getOrderDetails(createdAtStr) {
+            let orderDate = 'N/A';
+            let orderTime = 'N/A';
+            let dispatchDateStr = 'N/A';
             
-            list.innerHTML = '<div style="color:#A89B92; text-align:center; padding: 20px;">Loading order history...</div>';
+            if (!createdAtStr) return { orderDate, orderTime, dispatchDateStr };
+
+            try {
+                // createdAtStr format: YYYY-MM-DD HH:MM
+                const parts = createdAtStr.trim().split(' ');
+                if (parts.length >= 2) {
+                    orderDate = parts[0];
+                    orderTime = parts[1];
+                    
+                    const dateParts = orderDate.split('-');
+                    const timeParts = orderTime.split(':');
+                    
+                    if (dateParts.length === 3 && timeParts.length >= 2) {
+                        const year = parseInt(dateParts[0]);
+                        const month = parseInt(dateParts[1]) - 1;
+                        const day = parseInt(dateParts[2]);
+                        const hour = parseInt(timeParts[0]);
+                        const minute = parseInt(timeParts[1]);
+                        
+                        const dateObj = new Date(year, month, day, hour, minute);
+                        
+                        let dispatchDate = new Date(dateObj.getTime());
+                        if (hour < 15) {
+                            dispatchDate.setDate(dispatchDate.getDate() + 1);
+                        } else {
+                            dispatchDate.setDate(dispatchDate.getDate() + 2);
+                        }
+                        
+                        const dYear = dispatchDate.getFullYear();
+                        const dMonth = String(dispatchDate.getMonth() + 1).padStart(2, '0');
+                        const dDay = String(dispatchDate.getDate()).padStart(2, '0');
+                        dispatchDateStr = `${dYear}-${dMonth}-${dDay}`;
+                    }
+                } else {
+                    const dateObj = new Date(createdAtStr);
+                    if (!isNaN(dateObj.getTime())) {
+                        const year = dateObj.getFullYear();
+                        const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                        const day = String(dateObj.getDate()).padStart(2, '0');
+                        orderDate = `${year}-${month}-${day}`;
+                        
+                        const hour = dateObj.getHours();
+                        const minute = String(dateObj.getMinutes()).padStart(2, '0');
+                        orderTime = `${String(hour).padStart(2, '0')}:${minute}`;
+                        
+                        let dispatchDate = new Date(dateObj.getTime());
+                        if (hour < 15) {
+                            dispatchDate.setDate(dispatchDate.getDate() + 1);
+                        } else {
+                            dispatchDate.setDate(dispatchDate.getDate() + 2);
+                        }
+                        
+                        const dYear = dispatchDate.getFullYear();
+                        const dMonth = String(dispatchDate.getMonth() + 1).padStart(2, '0');
+                        const dDay = String(dispatchDate.getDate()).padStart(2, '0');
+                        dispatchDateStr = `${dYear}-${dMonth}-${dDay}`;
+                    }
+                }
+            } catch (e) {
+                console.error("Error parsing order datetime:", e);
+            }
+            
+            return { orderDate, orderTime, dispatchDateStr };
+        }
+
+        async function loadOrderHistory() {
+            const listContainer = document.getElementById('orders-list-container');
+            const emptyMsg = document.getElementById('orders-empty-msg');
+            
+            listContainer.innerHTML = '<div style="text-align:center; padding: 40px; color:#A89B92;">Loading order history...</div>';
             emptyMsg.style.display = 'none';
             
             try {
                 const res = await fetch('/GET/buyer/orders');
                 if (!res.ok) throw new Error('Failed to load');
                 const data = await res.json();
-                const orders = data.orders || [];
+                allOrders = data.orders || [];
                 
-                list.innerHTML = '';
-                
-                if (orders.length === 0) {
-                    emptyMsg.style.display = 'block';
-                    return;
-                }
-                
-                orders.forEach(order => {
-                    let itemsHtml = '';
-                    order.products.forEach(item => {
-                        itemsHtml += `
-                            <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:14px;">
-                                <span style="color:#F5F0ED;">${item.product_name} <span style="color:#A89B92;">x ${item.quantity}</span></span>
-                                <span style="color:#D4A847;">₹${(item.price * item.quantity).toLocaleString()}</span>
+                renderOrdersTable();
+            } catch (err) {
+                console.error(err);
+                listContainer.innerHTML = '<div style="text-align:center; padding: 40px; color:#E8293F;">Failed to load order history.</div>';
+            }
+        }
+
+        function renderOrdersTable() {
+            const listContainer = document.getElementById('orders-list-container');
+            const emptyMsg = document.getElementById('orders-empty-msg');
+            listContainer.innerHTML = '';
+            
+            if (allOrders.length === 0) {
+                emptyMsg.style.display = 'block';
+                return;
+            }
+            emptyMsg.style.display = 'none';
+
+            allOrders.forEach((order) => {
+                const products = order.products || [];
+                const { orderDate, orderTime, dispatchDateStr } = getOrderDetails(order.created_at);
+
+                const card = document.createElement('div');
+                card.style.cssText = `
+                    background: #181818;
+                    border: 1px solid #222;
+                    border-radius: 12px;
+                    overflow: hidden;
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+                    width: 100%;
+                `;
+
+                // Header section
+                const headerHtml = `
+                    <div style="background: #1f1f1f; padding: 16px 24px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+                        <div style="display: flex; gap: 40px; flex-wrap: wrap;">
+                            <div>
+                                <div style="font-size: 11px; color: #A89B92; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 4px;">Order Placed</div>
+                                <div style="font-size: 14px; color: #F5F0ED; font-weight: 500;">${orderDate} ${orderTime}</div>
                             </div>
-                        `;
-                    });
-                    
-                    let statusColor = '#D4A847'; // pending
-                    if (order.order_status === 'Shipped' || order.order_status === 'Processing') statusColor = '#3a86ff';
-                    if (order.order_status === 'Completed' || order.order_status === 'Delivered') statusColor = '#06d6a0';
-                    if (order.order_status === 'Cancelled') statusColor = '#e63946';
-                    
-                    list.innerHTML += `
-                        <div class="order-item" style="flex-direction:column; align-items:stretch; border:1px solid #222; border-radius:12px; padding:20px; background:#181818; margin-bottom:16px; box-shadow:0 4px 20px rgba(0,0,0,0.25);">
-                            <div style="display:flex; justify-content:space-between; border-bottom:1px solid #333; padding-bottom:10px; margin-bottom:12px; font-size:12px; color:#A89B92;">
-                                <span>Order ID: <strong>${order._id}</strong></span>
-                                <span>Date: ${order.created_at || ''}</span>
+                            <div>
+                                <div style="font-size: 11px; color: #A89B92; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 4px;">Total</div>
+                                <div style="font-size: 14px; color: #D4A847; font-weight: 600;">₹${order.total_amount.toLocaleString(undefined, {minimumFractionDigits: 2})}</div>
                             </div>
-                            <div style="margin-bottom:12px;">
-                                ${itemsHtml}
+                            <div>
+                                <div style="font-size: 11px; color: #A89B92; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 4px;">Ship To</div>
+                                <div style="font-size: 14px; color: #F5F0ED; font-weight: 500;">${order.customer_name || 'Buyer'}</div>
                             </div>
-                            <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #333; padding-top:12px; margin-top:8px;">
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 11px; color: #A89B92; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 4px; font-family: monospace;">Order # ${order._id}</div>
+                        </div>
+                    </div>
+                `;
+
+                // Body section (Products)
+                let productsHtml = '<div style="padding: 24px; display: flex; flex-direction: column; gap: 20px;">';
+                products.forEach((prod) => {
+                    const prodId = prod.product_id || 'N/A';
+                    const prodTotal = prod.price * prod.quantity;
+                    const imageSrc = prod.image && (prod.image.startsWith('http://') || prod.image.startsWith('https://')) ? prod.image : (prod.image ? `/static/images/${prod.image}` : '/static/images/default.webp');
+
+                    productsHtml += `
+                        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px; padding-bottom: 20px; border-bottom: 1px dashed #222;">
+                            <div style="display: flex; align-items: center; gap: 20px;">
+                                <img src="${imageSrc}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid #222;" onerror="this.onerror=null;this.src='/static/images/default.webp'">
                                 <div>
-                                    <span style="font-size:12px; color:#A89B92;">Status:</span>
-                                    <span style="font-size:12px; font-weight:600; color:${statusColor}; background:rgba(0,0,0,0.3); padding:4px 8px; border-radius:4px; margin-left:6px; text-transform:uppercase;">${order.order_status}</span>
+                                    <a href="/search?q=${encodeURIComponent(prod.product_name)}" style="color: #F5F0ED; font-weight: 600; text-decoration: none; font-size: 15px; display: block; margin-bottom: 4px; transition: color 0.2s;" onmouseover="this.style.color='#E8293F'" onmouseout="this.style.color='#F5F0ED'">
+                                        ${prod.product_name}
+                                    </a>
+                                    <div style="font-size: 12px; color: #A89B92;">Product ID: <span style="font-family: monospace;">${prodId}</span></div>
+                                    <div style="font-size: 13px; color: #A89B92; margin-top: 6px;">
+                                        Qty: <strong style="color:#F5F0ED;">${prod.quantity}</strong> &nbsp;|&nbsp; Price: <strong style="color:#F5F0ED;">₹${prod.price.toLocaleString(undefined, {minimumFractionDigits: 2})}</strong>
+                                    </div>
                                 </div>
-                                <div style="font-size:16px; font-weight:700; color:#F5F0ED;">Total: ₹${order.total_amount.toLocaleString()}</div>
+                            </div>
+                            <div style="text-align: right; min-width: 120px;">
+                                <div style="font-size: 11px; color: #A89B92; text-transform: uppercase; margin-bottom: 4px;">Item Total</div>
+                                <div style="font-size: 15px; color: #D4A847; font-weight: 600;">₹${prodTotal.toLocaleString(undefined, {minimumFractionDigits: 2})}</div>
+                                <button onclick="window.location.href='/search?q=${encodeURIComponent(prod.product_name)}'" style="margin-top: 10px; background: transparent; border: 1px solid #333; color: #F5F0ED; padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='#8B0D1C';this.style.color='#E8293F'" onmouseout="this.style.borderColor='#333';this.style.color='#F5F0ED'">
+                                    Buy it again
+                                </button>
                             </div>
                         </div>
                     `;
                 });
-            } catch (err) {
-                console.error(err);
-                list.innerHTML = '<div style="color:#E8293F; text-align:center; padding: 20px;">Failed to load order history.</div>';
-            }
+
+
+
+                productsHtml += '</div>';
+
+                card.innerHTML = headerHtml + productsHtml;
+                listContainer.appendChild(card);
+            });
         }
 
         // Load order history on ready

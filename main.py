@@ -118,6 +118,33 @@ async def orders(request : Request):
 async def cart_page(request: Request):
     return templates.TemplateResponse(request, "cart.html", {"request": request})
 
+@app.get("/confirm")
+async def confirm_page(request: Request):
+    user = getattr(request.state, "user", None)
+    buyer_details = {}
+    if user and user.get("phone") and user.get("role") == "buyer":
+        try:
+            from backend.helper.database import get_pg_connection
+            with get_pg_connection() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        "SELECT shop_name, owner_name, phone, city, state FROM buyer WHERE phone = %s",
+                        (user["phone"],)
+                    )
+                    row = cur.fetchone()
+                    if row:
+                        buyer_details = {
+                            "shop_name": row[0],
+                            "owner_name": row[1],
+                            "phone": row[2],
+                            "city": row[3],
+                            "state": row[4]
+                        }
+        except Exception as e:
+            print("Postgres buyer details lookup error:", e)
+
+    return templates.TemplateResponse(request, "confirm.html", {"request": request, "buyer_details": buyer_details})
+
 @app.get("/seller")
 def seller(request: Request):
     user = getattr(request.state, "user", None)

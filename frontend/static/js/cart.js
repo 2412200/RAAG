@@ -103,7 +103,7 @@ function updateSidebarCart() {
         <span>Subtotal:</span>
         <span id="cart-total-amount" class="cart-total-amount">₹${subtotal.toLocaleString()}</span>
       </div>
-      <button class="cart-checkout-btn" onclick="openCartPaymentModal()">Checkout</button>
+      <button class="cart-checkout-btn" onclick="window.location.href='/confirm'">Confirm</button>
     </div>
   `;
 }

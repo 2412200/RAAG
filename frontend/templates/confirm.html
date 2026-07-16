@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Confirm Order</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;700&display=swap"
+      rel="stylesheet" />
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/cart.css?v=1.0.9">
+    <script src="/static/js/cart.js?v=1.0.9"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: #0D0D0D;
+            color: #F5F0ED;
+            font-family: 'DM Sans', sans-serif;
+            min-height: 100vh;
+        }
+
+        .site {
+            min-height: 100vh;
+            background: #0D0D0D;
+            display: flex;
+            flex-direction: row;
+            width: 100%;
+        }
+
+        /* Sidebar Styling */
+        .sidebar {
+            width: 280px;
+            background: #181818;
+            border-right: 1px solid #8B0D1C;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            display: flex;
+            flex-direction: column;
+            padding: 30px 24px;
+            z-index: 100;
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .sidebar-brand {
+            font-family: 'Playfair Display', serif;
+            font-size: 24px;
+            font-weight: 900;
+            color: #E8293F;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-bottom: 40px;
+        }
+
+        .sidebar-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 14px 16px;
+            color: #A89B92;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .menu-item:hover {
+            background: #222;
+            color: #F5F0ED;
+        }
+
+        .menu-item.active {
+            background: #8B0D1C;
+            color: #F5F0ED;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 280px;
+            flex-grow: 1;
+            padding: 40px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 1px solid #222;
+            padding-bottom: 20px;
+        }
+
+        .dashboard-title h1 {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .dashboard-title p {
+            color: #A89B92;
+            font-size: 14px;
+            margin-top: 4px;
+        }
+
+        .logout-btn {
+            color: #E8293F;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            border: 1px solid #8B0D1C;
+            padding: 10px 20px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .logout-btn:hover {
+            background: #C0172A;
+            color: #F5F0ED;
+            border-color: #C0172A;
+        }
+
+        /* Mobile Nav styles */
+        .mobile-navbar {
+            display: none;
+            background: #181818;
+            border-bottom: 1px solid #8B0D1C;
+            padding: 10px 20px;
+            align-items: center;
+            justify-content: space-between;
+            height: 60px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            width: 100%;
+        }
+
+        .mobile-navbar-brand {
+            font-family: 'Playfair Display', serif;
+            font-size: 20px;
+            font-weight: 900;
+            color: #E8293F;
+            letter-spacing: 2px;
+        }
+
+        .sidebar-toggle-btn {
+            background: transparent;
+            border: 1px solid #8B0D1C;
+            color: #F5F0ED;
+            border-radius: 8px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .sidebar-toggle-btn:hover {
+            background: #222;
+        }
+
+        .mobile-logout-btn {
+            color: #E8293F;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+            border: 1px solid #8B0D1C;
+            padding: 6px 12px;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .mobile-logout-btn:hover {
+            background: #C0172A;
+            color: #F5F0ED;
+            border-color: #C0172A;
+        }
+
+        /* Layout Grid */
+        .checkout-grid {
+            display: grid;
+            grid-template-columns: 1.6fr 1fr;
+            gap: 30px;
+            margin-top: 10px;
+            margin-bottom: 40px;
+        }
+
+        /* Forms Styling */
+        .checkout-section-card {
+            background: #181818;
+            border: 1px solid #222;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 25px rgba(0, 0, 0, 0.35);
+            margin-bottom: 24px;
+        }
+
+        .checkout-section-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 20px;
+            font-weight: 700;
+            color: #F5F0ED;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .form-field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 16px;
+        }
+
+        .form-field.full {
+            grid-column: span 2;
+        }
+
+        .form-label {
+            font-size: 11px;
+            color: #A89B92;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            background: #0D0D0D;
+            border: 1px solid #333;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .form-input:focus {
+            border-color: #E8293F;
+        }
+
+        /* Payment Methods tabs */
+        .payment-methods {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .payment-method-tab {
+            flex: 1;
+            background: #0D0D0D;
+            border: 1px solid #333;
+            color: #A89B92;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .payment-method-tab.active {
+            border-color: #E8293F;
+            color: #fff;
+            background: rgba(232, 41, 63, 0.05);
+        }
+
+        .payment-method-content {
+            display: none;
+            background: #0D0D0D;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .payment-method-content.active {
+            display: block;
+        }
+
+        /* Right Summary Sidebar */
+        .order-summary-card {
+            background: #181818;
+            border: 1px solid #222;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 25px rgba(0, 0, 0, 0.35);
+            position: sticky;
+            top: 40px;
+            height: fit-content;
+        }
+
+        .summary-item-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid #222;
+        }
+
+        .summary-item-img {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 1px solid #222;
+        }
+
+        .summary-item-info {
+            flex-grow: 1;
+        }
+
+        .summary-item-name {
+            font-size: 13px;
+            font-weight: 500;
+            color: #F5F0ED;
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .summary-item-qty-price {
+            font-size: 11px;
+            color: #A89B92;
+        }
+
+        .summary-item-total {
+            font-size: 13px;
+            font-weight: 600;
+            color: #D4A847;
+        }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            margin-bottom: 24px;
+            font-family: 'Playfair Display', serif;
+        }
+
+        .total-label {
+            font-size: 18px;
+            font-weight: 700;
+            color: #F5F0ED;
+        }
+
+        .total-value {
+            font-size: 24px;
+            font-weight: 900;
+            color: #D4A847;
+        }
+
+        .place-order-btn {
+            width: 100%;
+            background: #C0172A;
+            color: #fff;
+            border: none;
+            padding: 14px 24px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .place-order-btn:hover {
+            background: #E8293F;
+        }
+
+        .empty-cart-view {
+            text-align: center;
+            padding: 80px 20px;
+        }
+
+        /* ── RESPONSIVE MEDIA QUERIES ── */
+        @media (max-width: 992px) {
+            .checkout-grid {
+                grid-template-columns: 1fr;
+            }
+            .order-summary-card {
+                position: static;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .site {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                transform: translateX(-100%);
+                position: fixed;
+                top: 60px;
+                bottom: 0;
+                left: 0;
+                width: 280px;
+                z-index: 1001;
+            }
+
+            .sidebar.show {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 20px;
+                min-height: calc(100vh - 60px);
+            }
+
+            .mobile-navbar {
+                display: flex;
+            }
+
+            .dashboard-header {
+                display: none;
+            }
+        }
+    </style>
+    <link rel="icon" type="image/png" href="{{ url_for('static', path='favicon.png') }}">
+</head>
+
+<body>
+  <!-- Mobile Navbar -->
+  <div class="mobile-navbar">
+    <button id="sidebar-toggle" class="sidebar-toggle-btn" aria-label="Toggle Sidebar">☰</button>
+    <div class="mobile-navbar-brand">RAAG</div>
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <a href="/logout" class="mobile-logout-btn">Logout</a>
+    </div>
+  </div>
+
+  <div class="site">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div>
+        <div class="sidebar-brand">RAAG</div>
+        <nav class="sidebar-menu">
+          <a href="/home" id="nav-home" class="menu-item">
+            Home
+          </a>
+          <a href="/orders" id="nav-orders" class="menu-item">
+            My Orders
+          </a>
+        </nav>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <header class="dashboard-header">
+        <div class="dashboard-title">
+          <h1>Confirm Order</h1>
+          <p>Complete your delivery and payment details below</p>
+        </div>
+        <a href="/logout" class="logout-btn">Logout</a>
+      </header>
+
+      <!-- Empty State -->
+      <div id="checkout-empty-state" class="empty-cart-view" style="display: none;">
+          <h2 style="font-family:'Playfair Display', serif; font-size:24px; margin-bottom:12px;">Your Cart is Empty</h2>
+          <p style="color:#A89B92; margin-bottom:24px;">Please add items to your cart before proceeding to confirm.</p>
+          <a href="/home" style="display:inline-block; padding:12px 24px; background:#C0172A; color:#fff; border-radius:8px; text-decoration:none; font-weight:600;">Go Shopping</a>
+      </div>
+
+      <!-- Checkout Form Content -->
+      <div id="checkout-form-content" class="checkout-grid">
+          
+          <!-- Left Columns: Details Form -->
+          <div class="checkout-forms-wrapper">
+              
+              <!-- Recipient & Delivery Details -->
+              <div class="checkout-section-card">
+                  <h2 class="checkout-section-title">Delivery Information</h2>
+                  
+                  <div class="form-row">
+                      <div class="form-field">
+                          <label class="form-label" for="recipient-name">Recipient Name</label>
+                          <input type="text" id="recipient-name" class="form-input" placeholder="e.g. John Doe" value="{{ buyer_details.owner_name or '' }}" required>
+                      </div>
+                      <div class="form-field">
+                          <label class="form-label" for="recipient-phone">Phone Number</label>
+                          <input type="tel" id="recipient-phone" class="form-input" placeholder="e.g. +91 99999 99999" value="{{ buyer_details.phone or '' }}" required>
+                      </div>
+                  </div>
+
+                  <div class="form-field full">
+                      <label class="form-label" for="delivery-address">Street Address</label>
+                      <input type="text" id="delivery-address" class="form-input" placeholder="e.g. Flat No, Building Name, Street Name" required>
+                  </div>
+
+                  <div class="form-row">
+                      <div class="form-field">
+                          <label class="form-label" for="delivery-city">City</label>
+                          <input type="text" id="delivery-city" class="form-input" placeholder="e.g. Mumbai" value="{{ buyer_details.city or '' }}" required>
+                      </div>
+                      <div class="form-field">
+                          <label class="form-label" for="delivery-state">State</label>
+                          <input type="text" id="delivery-state" class="form-input" placeholder="e.g. Maharashtra" value="{{ buyer_details.state or '' }}" required>
+                      </div>
+                  </div>
+
+                  <div class="form-field">
+                      <label class="form-label" for="delivery-pincode">Pincode / ZIP Code</label>
+                      <input type="text" id="delivery-pincode" class="form-input" placeholder="e.g. 400001" required>
+                  </div>
+              </div>
+
+
+          </div>
+
+          <!-- Right Column: Order Summary -->
+          <div class="checkout-summary-wrapper">
+              <div class="order-summary-card">
+                  <h2 class="checkout-section-title" style="margin-bottom:16px;">Order Summary</h2>
+                  
+                  <div id="summary-items-list" style="margin-bottom:20px; max-height: 280px; overflow-y: auto;">
+                      <!-- Rendered by JS -->
+                  </div>
+
+                  <div class="total-row">
+                      <span class="total-label">Total:</span>
+                      <span id="summary-grand-total" class="total-value">₹0</span>
+                  </div>
+
+                  <button id="place-order-submit-btn" onclick="placeOrder()" class="place-order-btn">
+                      Place Order
+                  </button>
+              </div>
+          </div>
+
+      </div>
+
+      <footer>
+        <span class="footer-brand">RAAG.COM</span>
+        <span class="footer-note">© 2026 Raag. All rights reserved.</span>
+      </footer>
+    </main>
+  </div>
+
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <script>
+      function loadConfirmPage() {
+          const orders = JSON.parse(localStorage.getItem('orderItems') || '[]');
+          const emptyState = document.getElementById('checkout-empty-state');
+          const mainContent = document.getElementById('checkout-form-content');
+          const summaryList = document.getElementById('summary-items-list');
+          const grandTotalEl = document.getElementById('summary-grand-total');
+
+          if (orders.length === 0) {
+              emptyState.style.display = 'block';
+              mainContent.style.display = 'none';
+              return;
+          }
+
+          emptyState.style.display = 'none';
+          mainContent.style.display = 'grid';
+
+          summaryList.innerHTML = '';
+          let subtotal = 0;
+
+          orders.forEach(item => {
+              const qty = item.qty || 1;
+              const itemTotal = item.price * qty;
+              subtotal += itemTotal;
+              const imageSrc = item.image.startsWith('http') ? item.image : (item.image.startsWith('/') ? item.image : `/static/images/${item.image}`);
+
+              summaryList.innerHTML += `
+                  <div class="summary-item-row">
+                      <img src="${imageSrc}" class="summary-item-img" alt="${item.name}" onerror="this.onerror=null;this.src='/static/images/default.webp'">
+                      <div class="summary-item-info">
+                          <span class="summary-item-name" title="${item.name}">${item.name}</span>
+                          <span class="summary-item-qty-price">₹${item.price.toLocaleString()} × ${qty}</span>
+                      </div>
+                      <span class="summary-item-total">₹${itemTotal.toLocaleString()}</span>
+                  </div>
+              `;
+          });
+
+          grandTotalEl.textContent = `₹${subtotal.toLocaleString()}`;
+      }
+
+      async function placeOrder() {
+          // Validate required fields
+          const recipientName = document.getElementById('recipient-name').value.trim();
+          const recipientPhone = document.getElementById('recipient-phone').value.trim();
+          const deliveryAddress = document.getElementById('delivery-address').value.trim();
+          const deliveryCity = document.getElementById('delivery-city').value.trim();
+          const deliveryState = document.getElementById('delivery-state').value.trim();
+          const deliveryPincode = document.getElementById('delivery-pincode').value.trim();
+
+          if (!recipientName || !recipientPhone || !deliveryAddress || !deliveryCity || !deliveryState || !deliveryPincode) {
+              alert('Please fill out all delivery information fields.');
+              return;
+          }
+
+          const placeBtn = document.getElementById('place-order-submit-btn');
+          placeBtn.disabled = true;
+          placeBtn.textContent = 'PLACING ORDER...';
+
+          const orders = JSON.parse(localStorage.getItem('orderItems') || '[]');
+          const products = orders.map(item => ({
+              product_name: item.name,
+              quantity: parseInt(item.qty || 1),
+              price: parseFloat(item.price)
+          }));
+          const total_amount = orders.reduce((sum, item) => sum + (item.price * (item.qty || 1)), 0);
+
+          const payload = {
+              customer_name: recipientName,
+              customer_number: parseInt(recipientPhone.replace(/\D/g, '')) || 9999999999,
+              products: products,
+              total_amount: total_amount,
+              delivery_address: deliveryAddress,
+              delivery_city: deliveryCity,
+              delivery_state: deliveryState,
+              delivery_pincode: deliveryPincode,
+              recipient_name: recipientName,
+              recipient_phone: recipientPhone,
+              payment_method: 'ONLINE'
+          };
+
+          try {
+              const res = await fetch('/POST/order', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(payload)
+              });
+
+              if (!res.ok) {
+                  const data = await res.json();
+                  throw new Error(data.detail || 'Failed to place order.');
+              }
+
+              const orderData = await res.json();
+              const orderId = orderData.id;
+
+              // Integrate Razorpay for online payments
+              placeBtn.textContent = 'INITIATING PAYMENT...';
+              
+              const rzpRes = await fetch('/api/create-order', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                      amount: Math.round(total_amount * 100),
+                      currency: 'INR',
+                      receipt: orderId
+                  })
+              });
+
+              if (!rzpRes.ok) {
+                  const rzpErr = await rzpRes.json();
+                  throw new Error(rzpErr.detail || 'Failed to initiate online payment.');
+              }
+
+              const rzpData = await rzpRes.json();
+
+              const options = {
+                  "key": rzpData.key,
+                  "amount": rzpData.amount,
+                  "currency": rzpData.currency,
+                  "name": "RAAG.COM",
+                  "description": "Payment for Order #" + orderId.slice(-6).toUpperCase(),
+                  "order_id": rzpData.order_id,
+                  "handler": async function (response) {
+                      try {
+                          // Verify payment signature on backend
+                          const verifyRes = await fetch('/api/verify-payment', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                  razorpay_order_id: response.razorpay_order_id,
+                                  razorpay_payment_id: response.razorpay_payment_id,
+                                  razorpay_signature: response.razorpay_signature
+                              })
+                          });
+                          
+                          if (!verifyRes.ok) {
+                              const verifyErr = await verifyRes.json();
+                              alert('Payment verification failed: ' + (verifyErr.detail || 'Signature mismatch.'));
+                              window.location.href = '/orders';
+                              return;
+                          }
+
+                          // Update status in the database
+                          const updateRes = await fetch('/POST/order/update-status', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                  order_id: orderId,
+                                  status: 'Processing'
+                              })
+                          });
+                          if (updateRes.ok) {
+                              localStorage.removeItem('orderItems');
+                              alert('Payment successful! Your order has been placed.');
+                              window.location.href = '/orders';
+                          } else {
+                              alert('Order placed and paid, but failed to update status. Please contact support.');
+                              window.location.href = '/orders';
+                          }
+                      } catch (err) {
+                          console.error(err);
+                          alert('Error during payment completion: ' + err.message);
+                          window.location.href = '/orders';
+                      }
+                  },
+                  "prefill": {
+                      "name": recipientName,
+                      "contact": recipientPhone,
+                      "email": "buyer@example.com"
+                  },
+                  "theme": {
+                      "color": "#8B0D1C"
+                  },
+                  "modal": {
+                      "ondismiss": function() {
+                          alert('Payment window closed. You can track your order status in My Orders.');
+                          window.location.href = '/orders';
+                      }
+                  }
+              };
+
+              const rzp = new Razorpay(options);
+              rzp.on('payment.failed', function (response) {
+                  alert('Payment failed: ' + response.error.description);
+              });
+              rzp.open();
+
+          } catch (err) {
+              console.error(err);
+              alert(err.message || 'An error occurred. Please try again.');
+              placeBtn.disabled = false;
+              placeBtn.textContent = 'PLACE ORDER';
+          }
+      }
+
+      document.addEventListener('DOMContentLoaded', () => {
+          loadConfirmPage();
+          
+          // Sidebar Toggler (if mobile)
+          const sidebarToggleBtn = document.getElementById("sidebar-toggle");
+          const sidebarEl = document.querySelector(".sidebar");
+          if (sidebarToggleBtn && sidebarEl) {
+              sidebarToggleBtn.addEventListener("click", (e) => {
+                  e.stopPropagation();
+                  sidebarEl.classList.toggle("show");
+              });
+          }
+      });
+  </script>
+</body>
+</html>

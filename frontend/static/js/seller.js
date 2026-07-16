@@ -333,6 +333,38 @@ document.addEventListener("DOMContentLoaded", () => {
         updateApparelFields();
     }
 
+    // Global orders store
+    let allOrders = [];
+    let activeOrderTab = "pending";
+
+    // Dispatch helper
+    function getDispatchDate(order) {
+        if (!order.created_at) return null;
+        try {
+            const created = new Date(order.created_at.replace(" ", "T"));
+            if (isNaN(created.getTime())) return null;
+            const hr = created.getHours();
+            const dispatch = new Date(created);
+            if (hr < 15) {
+                dispatch.setDate(dispatch.getDate() + 1);
+            } else {
+                dispatch.setDate(dispatch.getDate() + 2);
+            }
+            return dispatch;
+        } catch(e) { return null; }
+    }
+
+    // Days helper
+    function orderWithinDays(order, days) {
+        if (!order.created_at) return false;
+        try {
+            const created = new Date(order.created_at.replace(" ", "T"));
+            if (isNaN(created.getTime())) return false;
+            const diffDays = (new Date() - created) / (1000 * 60 * 60 * 24);
+            return diffDays <= days;
+        } catch(e) { return false; }
+    }
+
     // Fetch orders from backend
     async function fetchOrders() {
         try {
@@ -340,86 +372,207 @@ document.addEventListener("DOMContentLoaded", () => {
             if (!response.ok) throw new Error("Failed to fetch orders");
             
             const data = await response.json();
-            renderOrdersList(data.orders || []);
+            allOrders = data.orders || [];
+            renderOrders();
         } catch (error) {
             console.error("Error fetching orders:", error);
             showToast("Failed to load customer orders", "error");
         }
     }
 
-        function renderSectionOrders(containerEl, ordersList, statusName) {
-        if (!containerEl) return;
-        containerEl.innerHTML = "";
+    window.updateOrderStatusDirect = async function(orderId, newStatus) {
+        try {
+            const response = await fetch("/POST/order/update-status", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    order_id: orderId,
+                    status: newStatus
+                })
+            });
+            
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.detail || "Failed to update order status");
+            
+            showToast(data.message || `Order status updated to ${newStatus}`, "success");
+            fetchOrders();
+            if (typeof fetchAnalytics === "function") fetchAnalytics();
+        } catch (error) {
+            console.error(error);
+            showToast("Failed to update status: " + error.message, "error");
+        }
+    };
 
-        if (ordersList.length === 0) {
-            containerEl.innerHTML = `
-                <div class="empty-state" style="padding: 30px 10px; min-height: 150px; border-style: dashed; background: transparent; border-radius: 12px; box-shadow: none;">
-                    <div class="empty-icon" style="font-size: 24px; margin-bottom: 8px;">📋</div>
-                    <div class="empty-title" style="font-size: 13px;">No ${statusName.toLowerCase()} orders</div>
-                </div>
-            `;
-            return;
+    function renderOrders() {
+        const tbody = document.getElementById("orders-table-body");
+        const emptyMsg = document.getElementById("orders-empty-msg");
+        const countPendingEl = document.getElementById("count-pending");
+        const countProcessingEl = document.getElementById("count-processing");
+        const countCompletedEl = document.getElementById("count-completed");
+
+        if (!tbody) return;
+
+        // Calculate counts for active tabs
+        const pendingCount = allOrders.filter(o => {
+            const s = (o.order_status || "").toLowerCase();
+            return s === "pending" || !s;
+        }).length;
+
+        const processingCount = allOrders.filter(o => {
+            const s = (o.order_status || "").toLowerCase();
+            return s === "processing";
+        }).length;
+
+        const completedCount = allOrders.filter(o => {
+            const s = (o.order_status || "").toLowerCase();
+            return s === "completed";
+        }).length;
+
+        if (countPendingEl) countPendingEl.textContent = pendingCount;
+        if (countProcessingEl) countProcessingEl.textContent = processingCount;
+        if (countCompletedEl) countCompletedEl.textContent = completedCount;
+
+        // 1. Filter by active tab status
+        let filtered = allOrders.filter(o => {
+            const s = (o.order_status || "").toLowerCase();
+            if (activeOrderTab === "pending") return s === "pending" || !s;
+            if (activeOrderTab === "processing") return s === "processing";
+            if (activeOrderTab === "completed") return s === "completed";
+            return false;
+        });
+
+        // 2. Filter by Dispatch date
+        const dispatchFilter = document.getElementById("filter-dispatch")?.value;
+        if (dispatchFilter) {
+            filtered = filtered.filter(o => {
+                const dispDate = getDispatchDate(o);
+                if (!dispDate) return false;
+                const yyyy = dispDate.getFullYear();
+                const mm = String(dispDate.getMonth() + 1).padStart(2, '0');
+                const dd = String(dispDate.getDate()).padStart(2, '0');
+                return `${yyyy}-${mm}-${dd}` === dispatchFilter;
+            });
         }
 
-        ordersList.forEach(order => {
-            const card = document.createElement("div");
-            card.className = "order-card";
-
-            let productsHtml = "";
-            order.products.forEach(p => {
-                productsHtml += `
-                    <div class="order-product-item">
-                        <span>📦 ${p.product_name}</span>
-                        <span>Qty: <strong>${p.quantity}</strong> &nbsp;|&nbsp; ₹${p.price.toFixed(2)} each</span>
-                    </div>
-                `;
+        // 3. Filter by Order Date
+        const dateFilter = document.getElementById("filter-order-date")?.value;
+        if (dateFilter) {
+            filtered = filtered.filter(o => {
+                if (!o.created_at) return false;
+                return o.created_at.substring(0, 10) === dateFilter;
             });
+        }
 
-            const status = (order.order_status || "Pending");
-            const statusLower = status.toLowerCase();
+        // 4. Search
+        const searchVal = document.getElementById("orders-search-input")?.value.toLowerCase().trim();
+        if (searchVal) {
+            filtered = filtered.filter(o => 
+                o.order_id.toLowerCase().includes(searchVal) ||
+                (o.customer_name || "").toLowerCase().includes(searchVal) ||
+                o.products.some(p => 
+                    (p.product_name || "").toLowerCase().includes(searchVal) ||
+                    (p.product_id || "").toLowerCase().includes(searchVal)
+                )
+            );
+        }
 
-            card.innerHTML = `
-                <div class="order-header">
-                    <div class="order-id-date">
-                        <div class="order-id-lbl">Order #${order.order_id.slice(-6).toUpperCase()}</div>
-                        <div class="order-date-lbl">Ordered: ${order.created_at}</div>
-                    </div>
-                    <select class="order-status-select ${statusLower}" data-order-id="${order.order_id}">
-                        <option value="Pending" ${statusLower === "pending" ? "selected" : ""}>Pending</option>
-                        <option value="Processing" ${statusLower === "processing" ? "selected" : ""}>Processing</option>
-                        <option value="Completed" ${statusLower === "completed" ? "selected" : ""}>Completed</option>
-                    </select>
-                </div>
-                <div class="order-buyer-details">
-                    <div><strong>Customer:</strong> ${order.customer_name}</div>
-                    <div><strong>Phone:</strong> +${order.customer_number}</div>
-                </div>
-                <div class="order-products-list">
-                    ${productsHtml}
-                </div>
-                <div class="order-footer">
-                    <div class="order-subtotal-lbl">Subtotal:</div>
-                    <div class="order-total-amt">₹${parseFloat(order.total_amount).toFixed(2)}</div>
-                </div>
-            `;
+        tbody.innerHTML = "";
 
-            containerEl.appendChild(card);
+        // Display empty state or list
+        if (filtered.length === 0) {
+            if (emptyMsg) emptyMsg.style.display = "block";
+            return;
+        }
+        if (emptyMsg) emptyMsg.style.display = "none";
+
+        filtered.forEach(order => {
+            const products = order.products || [];
+            const rowSpan = products.length || 1;
+            
+            // Format order date & time
+            let orderDate = 'N/A';
+            let orderTime = 'N/A';
+            let dispatchDateStr = 'N/A';
+            
+            if (order.created_at) {
+                const parts = order.created_at.trim().split(' ');
+                if (parts.length >= 2) {
+                    orderDate = parts[0];
+                    orderTime = parts[1];
+                } else {
+                    orderDate = order.created_at;
+                }
+            }
+            
+            const dispDate = getDispatchDate(order);
+            if (dispDate) {
+                const yyyy = dispDate.getFullYear();
+                const mm = String(dispDate.getMonth() + 1).padStart(2, '0');
+                const dd = String(dispDate.getDate()).padStart(2, '0');
+                dispatchDateStr = `${yyyy}-${mm}-${dd}`;
+            }
+
+            products.forEach((prod, prodIndex) => {
+                const row = document.createElement('tr');
+                
+                if (prodIndex === 0) {
+                    row.className = 'order-group-start';
+                    
+                    // Accept / Cancel actions
+                    let actionHtml = '';
+                    const status = (order.order_status || 'Pending').toLowerCase();
+                    if (status === 'pending') {
+                        actionHtml = `
+                            <div style="display:flex; gap:6px;">
+                                <button onclick="updateOrderStatusDirect('${order.order_id}', 'Processing')" style="padding:6px 10px; background:#06d6a0; border:none; color:#181818; border-radius:6px; font-size:12px; cursor:pointer; font-weight:600; transition:opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">Accept</button>
+                                <button onclick="updateOrderStatusDirect('${order.order_id}', 'Cancelled')" style="padding:6px 10px; background:#e8293f; border:none; color:#fff; border-radius:6px; font-size:12px; cursor:pointer; font-weight:600; transition:opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">Cancel</button>
+                            </div>
+                        `;
+                    } else if (status === 'processing') {
+                        actionHtml = `
+                            <div style="display:flex; gap:6px;">
+                                <button onclick="updateOrderStatusDirect('${order.order_id}', 'Completed')" style="padding:6px 10px; background:#D4A847; border:none; color:#181818; border-radius:6px; font-size:12px; cursor:pointer; font-weight:600; transition:opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">Complete</button>
+                                <button onclick="updateOrderStatusDirect('${order.order_id}', 'Cancelled')" style="padding:6px 10px; background:#e8293f; border:none; color:#fff; border-radius:6px; font-size:12px; cursor:pointer; font-weight:600; transition:opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">Cancel</button>
+                            </div>
+                        `;
+                    } else {
+                        actionHtml = `<span style="color:var(--muted); font-size:12px;">No Actions</span>`;
+                    }
+
+                    row.innerHTML = `
+                        <td rowspan="${rowSpan}" style="font-weight: 600; color: #F5F0ED; font-family: monospace;">${order.order_id}</td>
+                        <td rowspan="${rowSpan}">${order.customer_name || 'Buyer'}</td>
+                        <td rowspan="${rowSpan}">+${order.customer_number}</td>
+                        <td rowspan="${rowSpan}">${orderDate}</td>
+                        <td rowspan="${rowSpan}">${orderTime}</td>
+                        <td rowspan="${rowSpan}" style="color: #D4A847; font-weight: 500;">${dispatchDateStr}</td>
+                    `;
+                }
+
+                const prodTotal = prod.price * prod.quantity;
+                row.innerHTML += `
+                    <td style="color: #F5F0ED;">${prod.product_name}</td>
+                    <td>${prod.quantity}</td>
+                    <td>₹${prod.price.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                    <td style="color: #D4A847; font-weight: 600;">₹${prodTotal.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                `;
+
+                if (prodIndex === 0) {
+                    row.innerHTML += `
+                        <td rowspan="${rowSpan}">
+                            <span class="order-status-badge ${(order.order_status || 'Pending').toLowerCase()}">
+                                ${order.order_status || 'Pending'}
+                            </span>
+                        </td>
+                        <td rowspan="${rowSpan}">${actionHtml}</td>
+                    `;
+                }
+
+                tbody.appendChild(row);
+            });
         });
-    }
-
-    // Render Orders Card List
-    function renderOrdersList(orders) {
-        const pendingOrders = orders.filter(o => (o.order_status || "").toLowerCase() === "pending" || !(o.order_status));
-        const processingOrders = orders.filter(o => (o.order_status || "").toLowerCase() === "processing");
-        const completedOrders = orders.filter(o => (o.order_status || "").toLowerCase() === "completed");
-
-        if (pendingCountEl) pendingCountEl.textContent = pendingOrders.length;
-        if (processingCountEl) processingCountEl.textContent = processingOrders.length;
-        if (completedCountEl) completedCountEl.textContent = completedOrders.length;
-
-        renderSectionOrders(pendingOrdersListEl, pendingOrders, "Pending");
-        renderSectionOrders(processingOrdersListEl, processingOrders, "Processing");
-        renderSectionOrders(completedOrdersListEl, completedOrders, "Completed");
     }
 
     // Fetch products from backend
@@ -691,11 +844,42 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Hook search and filter events
+    // Hook search and filter events for products
     if (searchInput) searchInput.addEventListener("input", renderProductsList);
     if (categoryFilter) categoryFilter.addEventListener("change", renderProductsList);
 
-    // Handle order status change
+    // Bind order tab button click events
+    const orderTabBtns = document.querySelectorAll(".order-tab-btn");
+    orderTabBtns.forEach(btn => {
+        btn.addEventListener("click", () => {
+            orderTabBtns.forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            activeOrderTab = btn.getAttribute("data-status");
+            renderOrders();
+        });
+    });
+
+    // Bind order filters and search inputs
+    const filterDispatchEl = document.getElementById("filter-dispatch");
+    if (filterDispatchEl) filterDispatchEl.addEventListener("change", renderOrders);
+
+    const filterOrderDateEl = document.getElementById("filter-order-date");
+    if (filterOrderDateEl) filterOrderDateEl.addEventListener("change", renderOrders);
+
+    const ordersSearchInputEl = document.getElementById("orders-search-input");
+    if (ordersSearchInputEl) ordersSearchInputEl.addEventListener("input", renderOrders);
+
+    const clearOrdersFilterBtn = document.getElementById("clear-orders-filter");
+    if (clearOrdersFilterBtn) {
+        clearOrdersFilterBtn.addEventListener("click", () => {
+            if (filterDispatchEl) filterDispatchEl.value = "";
+            if (filterOrderDateEl) filterOrderDateEl.value = "";
+            if (ordersSearchInputEl) ordersSearchInputEl.value = "";
+            renderOrders();
+        });
+    }
+
+    // Handle order status change via delegation
     const tabOrdersPane = document.getElementById("tab-orders");
     if (tabOrdersPane) {
         tabOrdersPane.addEventListener("change", async (e) => {
@@ -704,7 +888,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 const newStatus = e.target.value;
                 
                 const oldClassList = Array.from(e.target.classList);
-                e.target.className = `order-status-select ${newStatus.toLowerCase()}`;
+                const statusClass = newStatus.toLowerCase().replace(/\s+/g, '-');
+                e.target.className = `order-status-select ${statusClass}`;
                 
                 try {
                     const response = await fetch("/POST/order/update-status", {

@@ -99,7 +99,6 @@ async def get_seller_orders(request: Request):
     seller_orders.sort(key=lambda o: o.get("created_at") or "", reverse=True)
     return {"orders": seller_orders}
 
-
 @router.get("/GET/buyer/orders")
 async def get_buyer_orders(request: Request):
     user = getattr(request.state, "user", None)
@@ -116,8 +115,28 @@ async def get_buyer_orders(request: Request):
     
     buyer_number = int(digits)
     
+    # Create product name-to-info mapping from catalog collections
+    collections = ["apparel", "fmcg", "mobile_accessories", "steel_work", "homeappliances", "pharma"]
+    product_name_to_info = {}
+    for col_name in collections:
+        col = db[col_name]
+        cursor_prod = col.find({}, {"product_name": 1, "name": 1, "images": 1, "image": 1})
+        async for doc in cursor_prod:
+            name = doc.get("product_name") or doc.get("name")
+            if name:
+                images = doc.get("images")
+                image_val = images[0] if images and isinstance(images, list) else doc.get("image") or ""
+                product_name_to_info[name] = {
+                    "id": str(doc["_id"]),
+                    "image": image_val,
+                    "specification": col_name
+                }
+
     orders_col = client["Orders"]["orders"]
-    cursor = orders_col.find({"customer_number": buyer_number})
+    cursor = orders_col.find({
+        "customer_number": buyer_number,
+        "order_status": {"$ne": "Pending Payment"}
+    })
     buyer_orders = []
     
     from datetime import datetime
@@ -130,6 +149,14 @@ async def get_buyer_orders(request: Request):
             order_doc["created_at"] = str(created_at)
         else:
             order_doc["created_at"] = ""
+            
+        # Enrich each product item in the order with its resolved product_id, image, and spec
+        for prod in order_doc.get("products", []):
+            p_name = prod.get("product_name")
+            info = product_name_to_info.get(p_name, {})
+            prod["product_id"] = info.get("id", "N/A")
+            prod["image"] = info.get("image", "default.webp")
+            prod["specification"] = info.get("specification", "")
             
         buyer_orders.append(order_doc)
         
