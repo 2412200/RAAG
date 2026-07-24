@@ -550,9 +550,9 @@
     }
   </style>
   <link rel="icon" type="image/png" href="{{ url_for('static', path='favicon.png') }}">
-  <link rel="stylesheet" href="/static/css/cart.css?v=1.0.9">
+  <link rel="stylesheet" href="/static/css/cart.css?v=1.1.0">
   <script src="/static/js/theme-toggle.js"></script>
-  <script src="/static/js/cart.js?v=1.0.9"></script>
+  <script src="/static/js/cart.js?v=1.1.0"></script>
 </head>
 
 <body>
@@ -604,32 +604,6 @@
         </div>
       </form>
 
-      {% if trending_products %}
-      <div style="padding:2rem 1.5px 0;">
-        <div class="section-label-row">
-          <div class="section-label-accent"></div>
-          <span class="section-label-text">Trending Products</span>
-        </div>
-      </div>
-
-      <div class="trending-grid">
-        {% for product in trending_products %}
-        <div class="trend-card">
-          <img
-            src="{% if product.image.startswith('http') %}{{ product.image }}{% else %}{{ url_for('static', path='images/' + product.image) }}{% endif %}"
-            alt="{{ product.name }}" onerror="this.onerror=null;this.src='/static/images/default.webp'">
-          <div class="trend-info">
-            <p class="trend-name" title="{{ product.name }}">{{ product.name }}</p>
-            <p class="trend-price">₹{{ product.price }}</p>
-            <button class="trend-add-btn" data-name="{{ product.name }}" data-image="{{ product.image }}"
-              data-quantity="{{ product.quantity }}" data-price="{{ product.price }}" onclick="addToCartFromEl(this)">
-              Add to Cart
-            </button>
-          </div>
-        </div>
-        {% endfor %}
-      </div>
-      {% endif %}
 
       <div style="padding:2rem 1.5px 0;">
         <div class="section-label-row">

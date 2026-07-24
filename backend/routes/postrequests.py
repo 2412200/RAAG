@@ -276,6 +276,10 @@ async def add_product(request : Request):
         return date.today()
 
     description = get_str(form.get("description", ""))
+    main_category = get_str(form.get("main_category", ""))
+    sub_category1 = get_str(form.get("sub_category1", ""))
+    sub_category2 = get_str(form.get("sub_category2", ""))
+    sub_category3 = get_str(form.get("sub_category3", ""))
     
     product_id = ObjectId()
     image_files = form.getlist("image_file")
@@ -337,15 +341,18 @@ async def add_product(request : Request):
                 seller_phone=seller_phone,
                 is_hidden=False,
                 description=description,
-                images=images_list
+                images=images_list,
+                main_category=main_category,
+                sub_category1=sub_category1,
+                sub_category2=sub_category2,
+                sub_category3=sub_category3
             )
 
             product_data = apparel_product.model_dump()
             product_data["_id"] = product_id
+            product_data["specification"] = "apparel"
 
-            result = await db["apparel"].insert_one(
-                product_data
-            )
+            result = await db["products"].insert_one(product_data)
 
             return {
                 "message": "Apparel product added",
@@ -364,15 +371,20 @@ async def add_product(request : Request):
                 seller_phone=seller_phone,
                 is_hidden=False,
                 description=description,
-                images=images_list
+                images=images_list,
+                main_category=main_category,
+                sub_category1=sub_category1,
+                sub_category2=sub_category2,
+                sub_category3=sub_category3
             )
 
             product_data = fmcg_product.model_dump()
             product_data["_id"] = product_id
+            product_data["specification"] = "fmcg"
             product_data["manufacturing_date"] = product_data["manufacturing_date"].isoformat()
             product_data["expiry_date"] = product_data["expiry_date"].isoformat()
 
-            result = await db["fmcg"].insert_one(product_data)
+            result = await db["products"].insert_one(product_data)
 
             return {
                 "message": "FMCG product added",
@@ -391,13 +403,16 @@ async def add_product(request : Request):
                 seller_phone=seller_phone,
                 is_hidden=False,
                 description=description,
-                images=images_list
+                images=images_list,
+                main_category=main_category,
+                sub_category1=sub_category1,
+                sub_category2=sub_category2,
+                sub_category3=sub_category3
             )
             product_data = ma_product.model_dump()
             product_data["_id"] = product_id
-            result = await db["mobile_accessories"].insert_one(
-                product_data
-            )
+            product_data["specification"] = "mobile_accessories"
+            result = await db["products"].insert_one(product_data)
 
             return {
                 "message": "Mobile product added",
@@ -415,13 +430,16 @@ async def add_product(request : Request):
                 seller_phone=seller_phone,
                 is_hidden=False,
                 description=description,
-                images=images_list
+                images=images_list,
+                main_category=main_category,
+                sub_category1=sub_category1,
+                sub_category2=sub_category2,
+                sub_category3=sub_category3
             )
             product_data = sw_product.model_dump()
             product_data["_id"] = product_id
-            result = await db["steel_work"].insert_one(
-                product_data
-            )
+            product_data["specification"] = "steel_work"
+            result = await db["products"].insert_one(product_data)
 
             return {
                 "message": "Steel product added",
@@ -437,13 +455,16 @@ async def add_product(request : Request):
                 seller_phone=seller_phone,
                 is_hidden=False,
                 description=description,
-                images=images_list
+                images=images_list,
+                main_category=main_category,
+                sub_category1=sub_category1,
+                sub_category2=sub_category2,
+                sub_category3=sub_category3
             )
             product_data = ha_product.model_dump()
             product_data["_id"] = product_id
-            result = await db["homeappliances"].insert_one(
-                product_data
-            )
+            product_data["specification"] = "home_appliances"
+            result = await db["products"].insert_one(product_data)
             return {
                 "message": "Home Appliance product added",
                 "id": str(result.inserted_id)
@@ -459,13 +480,18 @@ async def add_product(request : Request):
                 seller_phone=seller_phone,
                 is_hidden=False,
                 description=description,
-                images=images_list
+                images=images_list,
+                main_category=main_category,
+                sub_category1=sub_category1,
+                sub_category2=sub_category2,
+                sub_category3=sub_category3
             )
             product_data = ph_product.model_dump()
             product_data["_id"] = product_id
+            product_data["specification"] = "pharmacy"
             product_data["expiry_date"] = product_data["expiry_date"].isoformat()
             
-            result = await db["pharma"].insert_one(product_data)
+            result = await db["products"].insert_one(product_data)
             return {
                 "message": "Pharmacy product added",
                 "id": str(result.inserted_id)
@@ -490,27 +516,27 @@ async def toggle_visibility(data: ToggleVisibilityRequest, request: Request):
         
     seller_phone = user.get("phone")
     
-    specification_to_collection = {
-        "apparel": "apparel",
-        "fmcg": "fmcg",
-        "mobile_accessories": "mobile_accessories",
-        "steel_work": "steel_work",
-        "home_appliances": "homeappliances",
-        "pharmacy": "pharma"
-    }
-    
-    col_name = specification_to_collection.get(data.specification)
-    if not col_name:
-        raise HTTPException(status_code=400, detail="Invalid product specification")
-        
     try:
-        result = await db[col_name].update_one(
+        query_conditions = []
+        try:
+            query_conditions.append({"_id": ObjectId(data.product_id)})
+        except Exception:
+            pass
+        query_conditions.append({"_id": data.product_id})
+        
+        id_query = {"$or": query_conditions} if len(query_conditions) > 1 else query_conditions[0]
+        
+        result = await db["products"].update_one(
             {
-                "_id": ObjectId(data.product_id),
-                "$or": [
-                    {"seller_phone": seller_phone},
-                    {"seller_phone": {"$exists": False}},
-                    {"seller_phone": None}
+                "$and": [
+                    id_query,
+                    {
+                        "$or": [
+                            {"seller_phone": seller_phone},
+                            {"seller_phone": {"$exists": False}},
+                            {"seller_phone": None}
+                        ]
+                    }
                 ]
             },
             {"$set": {"is_hidden": data.is_hidden}}
@@ -532,27 +558,27 @@ async def delete_product(data: DeleteProductRequest, request: Request):
         
     seller_phone = user.get("phone")
     
-    specification_to_collection = {
-        "apparel": "apparel",
-        "fmcg": "fmcg",
-        "mobile_accessories": "mobile_accessories",
-        "steel_work": "steel_work",
-        "home_appliances": "homeappliances",
-        "pharmacy": "pharma"
-    }
-    
-    col_name = specification_to_collection.get(data.specification)
-    if not col_name:
-        raise HTTPException(status_code=400, detail="Invalid product specification")
-        
     try:
-        result = await db[col_name].delete_one(
+        query_conditions = []
+        try:
+            query_conditions.append({"_id": ObjectId(data.product_id)})
+        except Exception:
+            pass
+        query_conditions.append({"_id": data.product_id})
+        
+        id_query = {"$or": query_conditions} if len(query_conditions) > 1 else query_conditions[0]
+
+        result = await db["products"].delete_one(
             {
-                "_id": ObjectId(data.product_id),
-                "$or": [
-                    {"seller_phone": seller_phone},
-                    {"seller_phone": {"$exists": False}},
-                    {"seller_phone": None}
+                "$and": [
+                    id_query,
+                    {
+                        "$or": [
+                            {"seller_phone": seller_phone},
+                            {"seller_phone": {"$exists": False}},
+                            {"seller_phone": None}
+                        ]
+                    }
                 ]
             }
         )

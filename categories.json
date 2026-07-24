@@ -1,0 +1,545 @@
+{
+    "category": {
+        "Men Fashion": {
+            "Mens Clothing": {
+                "Mens Top Wear": [
+                    "Tshirts",
+                    "Shirts",
+                    "Kurta",
+                    "Top & Bottom Set",
+                    "Personalized Tshirts",
+                    "Dad & Daughter Tshirts",
+                    "Dad & Son Tshirts",
+                    "Active Tshirts",
+                    "Brother & Sister T-Shirts",
+                    "Jumpsuits",
+                    "Plus Size T-Shirts",
+                    "Swim Suits"
+                ],
+                "Men Sports Wear": [
+                    "Active Shorts",
+                    "Gym vests",
+                    "Tracksuits"
+                ],
+                "Men Ethnic Wear": [
+                    "Dhotis, Mundus & Lungis",
+                    "Ethnic Jackets",
+                    "Kurta Sets",
+                    "Kurtas",
+                    "Sherwanis"
+                ],
+                "Men Bottom Wear": [
+                    "Jeans",
+                    "Shorts",
+                    "Track Pants",
+                    "Trousers",
+                    "Three Fourths",
+                    "Dungarees",
+                    "Swimming Shorts"
+                ],
+                "Top & Bottom Set": [
+                    "Swim Sets"
+                ],
+                "Men Inner & Sleepwear": [
+                    "Boxers",
+                    "Briefs",
+                    "Lounge Pants",
+                    "Trunks",
+                    "Vest",
+                    "Nightsuits"
+                ],
+                "Men Unstitched Fabric": [
+                    "Pant Fabric",
+                    "Top & Bottom Fabric",
+                    "Suit Fabric"
+                ]
+            },
+            "Mens Footwear": {
+                "Casual Footwear": [
+                    "Casual Shoes",
+                    "Sneakers",
+                    "Loafers",
+                    "Canvas Shoes"
+                ],
+                "Sports Footwear": [
+                    "Running Shoes",
+                    "Walking Shoes",
+                    "Sports Sandals"
+                ],
+                "Formal Footwear": [
+                    "Formal Shoes",
+                    "Derby Shoes",
+                    "Oxford Shoes"
+                ],
+                "Ethnic Footwear": [
+                    "Juttis & Mojaris",
+                    "Kolhapuris",
+                    "Ethnic Sandals"
+                ]
+            },
+            "Mens Accessories": {
+                "Fashion Accessories": [
+                    "Belts",
+                    "Wallets",
+                    "Sunglasses",
+                    "Ties & Pocket Squares",
+                    "Caps & Hats",
+                    "Socks"
+                ]
+            }
+        },
+        "Women Fashion": {
+            "Women Ethnic Wear": {
+                "Sarees": [
+                    "Cotton Sarees",
+                    "Silk Sarees",
+                    "Georgette Sarees",
+                    "Chiffon Sarees",
+                    "Net Sarees",
+                    "Bandhani Sarees",
+                    "Printed Sarees"
+                ],
+                "Kurtis & Kurta Sets": [
+                    "Anarkali Kurtis",
+                    "Straight Kurtis",
+                    "Short Kurtis",
+                    "Kurta & Palazzo Sets",
+                    "Kurta & Pant Sets",
+                    "Short Kurti Sets"
+                ],
+                "Ethnic Suits & Dress Materials": [
+                    "Unstitched Dress Material",
+                    "Semi-Stitched Suits",
+                    "Sharara Sets",
+                    "Gowns",
+                    "Anarkali Suits"
+                ],
+                "Lehenga Choli": [
+                    "Bridal Lehenga",
+                    "Semi-Stitched Lehenga",
+                    "Partywear Lehenga",
+                    "Crop Top Lehenga"
+                ],
+                "Blouses & Petticoats": [
+                    "Readymade Blouses",
+                    "Padded Blouses",
+                    "Stretchable Blouses",
+                    "Petticoats",
+                    "Shapewear Petticoats"
+                ]
+            },
+            "Women Western Wear": {
+                "Women Top Wear": [
+                    "Tops",
+                    "T-Shirts",
+                    "Casual Shirts",
+                    "Oversized T-Shirts",
+                    "Crop Tops",
+                    "Tunics",
+                    "Tank Tops"
+                ],
+                "Women Bottom Wear": [
+                    "Jeans",
+                    "Jeggings",
+                    "Trousers & Pants",
+                    "Palazzos",
+                    "Shorts",
+                    "Skirts",
+                    "Leggings",
+                    "Track Pants"
+                ],
+                "Dresses & Jumpsuits": [
+                    "Maxi Dresses",
+                    "Bodycon Dresses",
+                    "A-Line Dresses",
+                    "Short Dresses",
+                    "Jumpsuits",
+                    "Playsuits"
+                ],
+                "Outerwear": [
+                    "Jackets",
+                    "Shrugs",
+                    "Cardigans",
+                    "Blazers",
+                    "Coats",
+                    "Sweaters"
+                ]
+            },
+            "Women Innerwear & Sleepwear": {
+                "Innerwear": [
+                    "Bras",
+                    "Panties",
+                    "Bra & Panty Sets",
+                    "Camisoles & Slips",
+                    "Shapewear"
+                ],
+                "Sleepwear": [
+                    "Nightsuits",
+                    "Nighties",
+                    "Pyjama Sets",
+                    "Bathrobes",
+                    "Shorts Sets"
+                ]
+            },
+            "Women Footwear": {
+                "Flats & Sandals": [
+                    "Kolhapuri Flats",
+                    "Mojaris & Juttis",
+                    "Sliders",
+                    "Flip Flops",
+                    "Strappy Sandals"
+                ],
+                "Heels & Wedges": [
+                    "Block Heels",
+                    "Stilettos",
+                    "Wedges",
+                    "Pumps",
+                    "Platform Heels"
+                ],
+                "Casual & Sports Shoes": [
+                    "Sneakers",
+                    "Running Shoes",
+                    "Loafers",
+                    "Boots"
+                ]
+            }
+        },
+        "Home & Living": {
+            "Home Furnishing": {
+                "Bedding & Linen": [
+                    "Bedsheets",
+                    "Pillows & Covers",
+                    "Blankets & Quilts",
+                    "Mattress Protectors"
+                ],
+                "Curtains & Cushions": [
+                    "Window Curtains",
+                    "Door Curtains",
+                    "Cushion Covers",
+                    "Sofa Covers"
+                ]
+            },
+            "Home Decor": {
+                "Wall Decor": [
+                    "Wall Clocks",
+                    "Wall Paintings & Frames",
+                    "Wall Stickers"
+                ],
+                "Lighting & Fragrance": [
+                    "Table Lamps",
+                    "Fairy Lights",
+                    "Aroma Diffusers",
+                    "Scented Candles"
+                ]
+            }
+        },
+        "Kids & Toys": {
+            "Boys Clothing": {
+                "Boys Top Wear": [
+                    "Boys T-Shirts",
+                    "Boys Shirts",
+                    "Boys Kurta Sets"
+                ],
+                "Boys Bottom Wear": [
+                    "Boys Jeans",
+                    "Boys Shorts",
+                    "Boys Track Pants"
+                ]
+            },
+            "Girls Clothing": {
+                "Girls Dresses & Frocks": [
+                    "Party Dresses",
+                    "Casual Frocks",
+                    "Jumpsuits"
+                ],
+                "Girls Ethnic Wear": [
+                    "Lehenga Choli",
+                    "Kurti Sets",
+                    "Gowns"
+                ]
+            },
+            "Toys & Games": {
+                "Learning & Play": [
+                    "Educational Toys",
+                    "Soft Toys",
+                    "Board Games",
+                    "Action Figures & Dolls",
+                    "Outdoor Toys"
+                ]
+            }
+        },
+        "Personal Care & Wellness": {
+            "Personal Hygiene": {
+                "Bath & Body": [
+                    "Body Wash & Soaps",
+                    "Hand Wash",
+                    "Body Lotions"
+                ],
+                "Oral Care": [
+                    "Toothpastes",
+                    "Toothbrushes",
+                    "Mouthwash"
+                ]
+            },
+            "Wellness & Health": {
+                "Supplements & Care": [
+                    "Health Supplements",
+                    "Ayurvedic Care",
+                    "First Aid & Bandages"
+                ]
+            }
+        },
+        "Mobiles & Tablets": {
+            "Mobiles & Accessories": {
+                "Mobile Accessories": [
+                    "Mobile Back Covers",
+                    "Screen Protectors",
+                    "Chargers & Cables",
+                    "Power Banks",
+                    "Phone Holders & Stands"
+                ],
+                "Audio Devices": [
+                    "Bluetooth Neckbands",
+                    "Wireless Earbuds (TWS)",
+                    "Wired Headphones"
+                ]
+            }
+        },
+        "Consumer Electronics": {
+            "Electronics & Gadgets": {
+                "Smart Devices": [
+                    "Smartwatches",
+                    "Fitness Bands",
+                    "Bluetooth Speakers"
+                ],
+                "Computer Accessories": [
+                    "Keyboards & Mice",
+                    "USB Drives",
+                    "Laptop Bags & Covers"
+                ]
+            }
+        },
+        "Appliances": {
+            "Home Appliances": {
+                "Kitchen Appliances": [
+                    "Mixer Grinders",
+                    "Electric Kettles",
+                    "Induction Cooktops",
+                    "Juicers & Blenders"
+                ],
+                "Personal Care Appliances": [
+                    "Hair Dryers",
+                    "Hair Straighteners",
+                    "Trimmers & Shavers"
+                ]
+            }
+        },
+        "Automotive": {
+            "Vehicle Care": {
+                "Car & Bike Care": [
+                    "Car Covers",
+                    "Bike Covers",
+                    "Helmet Accessories",
+                    "Cleaning Cloths & Polishes"
+                ]
+            }
+        },
+        "Beauty & Personal Care": {
+            "Beauty & Skincare": {
+                "Makeup": [
+                    "Lipsticks",
+                    "Foundation & Compact",
+                    "Eyeliners & Kajal",
+                    "Nail Polish"
+                ],
+                "Skincare": [
+                    "Face Wash",
+                    "Face Creams & Moisturizers",
+                    "Sunscreen",
+                    "Face Masks & Serums"
+                ]
+            }
+        },
+        "Home Utility": {
+            "Utility & Storage": {
+                "Organization": [
+                    "Cloth Hangers",
+                    "Laundry Baskets",
+                    "Storage Boxes & Organizers",
+                    "Shoe Racks"
+                ]
+            }
+        },
+        "Kids": {
+            "Baby Care": {
+                "Baby Essentials": [
+                    "Baby Diapers & Wipes",
+                    "Baby Bath & Skin Care",
+                    "Feeding Bottles & Bibs"
+                ]
+            }
+        },
+        "Grocery": {
+            "Pantry & Food": {
+                "Staples": [
+                    "Rice & Pulses",
+                    "Atta & Flours",
+                    "Cooking Oils & Ghee",
+                    "Spices & Masalas"
+                ],
+                "Snacks & Beverages": [
+                    "Tea & Coffee",
+                    "Biscuits & Cookies",
+                    "Namkeen & Chips",
+                    "Chocolates & Candies"
+                ]
+            }
+        },
+        "Women": {
+            "Women Lifestyle": {
+                "Fashion & Care": [
+                    "Handbags & Clutches",
+                    "Artificial Jewellery",
+                    "Hair Accessories",
+                    "Beauty Grooming"
+                ]
+            }
+        },
+        "Home & Kitchen": {
+            "Kitchen & Dining": {
+                "Cookware & Storage": [
+                    "Pressure Cookers",
+                    "Non-Stick Pans",
+                    "Storage Containers",
+                    "Water Bottles & Flasks",
+                    "Dinnerware & Cutlery"
+                ]
+            }
+        },
+        "Health & Wellness": {
+            "Health Care": {
+                "Daily Health": [
+                    "Protein Powder",
+                    "Vitamins & Minerals",
+                    "Immunity Boosters",
+                    "Health Monitors"
+                ]
+            }
+        },
+        "Beauty & Makeup": {
+            "Cosmetics": {
+                "Face & Lip Care": [
+                    "Lip Gloss & Lip Balm",
+                    "Concealer",
+                    "Blush & Highlighter",
+                    "Makeup Removers"
+                ]
+            }
+        },
+        "Personal Care": {
+            "Hygiene & Body": [
+                "Deodorants & Perfumes",
+                "Hair Removal Creams & Razors",
+                "Hand Sanitizers"
+            ]
+        },
+        "Men'S Grooming": {
+            "Grooming & Shaving": [
+                "Beard Oils & Washes",
+                "Shaving Creams & Foams",
+                "Aftershave Lotions",
+                "Beard Trimmers"
+            ]
+        },
+        "Craft & Office Supplies": {
+            "Craft & Art": [
+                "Craft Papers",
+                "Color Pens & Paints",
+                "Scissors & Glues",
+                "DIY Craft Kits"
+            ]
+        },
+        "Sports & Fitness": {
+            "Fitness Equipment": [
+                "Dumbbells & Resistance Bands",
+                "Yoga Mats",
+                "Skipping Ropes",
+                "Badminton Rackets & Shuttles",
+                "Cricket Equipment"
+            ]
+        },
+        "Automotive Accessories": {
+            "Car & Bike Accessories": [
+                "Car Seat Covers",
+                "Car Steering Covers",
+                "Mobile Mounts",
+                "Bike Helmets"
+            ]
+        },
+        "Pet Supplies": {
+            "Pet Care": [
+                "Dog Food",
+                "Cat Food",
+                "Pet Toys",
+                "Pet Collars & Leashes"
+            ]
+        },
+        "Office Supplies & Stationery": {
+            "Stationery": [
+                "Notebooks & Diaries",
+                "Pens & Pencils",
+                "Files & Folders",
+                "Calculators",
+                "Desk Organizers"
+            ]
+        },
+        "Industrial & Scientific Products": {
+            "Safety & Tools": [
+                "Safety Helmets & Gloves",
+                "Testing & Measuring Tools",
+                "Hand Tools & Hardware"
+            ]
+        },
+        "Musical Instruments": {
+            "Instruments & Gear": [
+                "Guitars & Strings",
+                "Keyboards & Synthesizers",
+                "Flutes & Mouth Organs",
+                "Microphones & Stands"
+            ]
+        },
+        "Books": {
+            "Reading & Literature": [
+                "Fiction & Literature",
+                "Non-Fiction & Self-Help",
+                "Competitive Exam Books",
+                "Children's Story Books",
+                "School & College Textbooks"
+            ]
+        },
+        "Eye Utility": {
+            "Eyewear & Care": [
+                "Reading Glasses",
+                "Anti-Glare Computer Glasses",
+                "Contact Lens Cases & Solutions",
+                "Eyeglass Cleaning Sprays"
+            ]
+        },
+        "Bags, Luggage & Travel Accessories": {
+            "Bags & Luggage": [
+                "Backpacks",
+                "Trolley Bags & Suitcases",
+                "Duffle Bags",
+                "Travel Pouches & Organizers",
+                "Laptop Bags"
+            ]
+        },
+        "Mens Personal Care & Grooming": {
+            "Men's Care": [
+                "Men's Deodorants & Perfumes",
+                "Men's Face Wash",
+                "Men's Hair Styling Wax/Gel"
+            ]
+        }
+    }
+}

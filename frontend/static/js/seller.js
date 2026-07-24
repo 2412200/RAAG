@@ -1,3 +1,4 @@
+// frontend/static/js/seller.js - Manages the seller dashboard UI interactions, product uploads, active tab filtering, analytics data retrieval, and order status updates.
 document.addEventListener("DOMContentLoaded", () => {
     console.log("Seller Dashboard JS Loaded");
 
@@ -158,6 +159,143 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Global filter states
     let visibilityFilter = "all";
+
+    // Dynamic Cascading Categories Logic
+    let categoriesTree = {};
+
+    async function loadCategoriesTree() {
+        const mainCatSelect = document.getElementById("main_category");
+        const subCat1Select = document.getElementById("sub_category1");
+        const subCat2Select = document.getElementById("sub_category2");
+        const subCat3Select = document.getElementById("sub_category3");
+
+        if (!mainCatSelect) return;
+
+        try {
+            const response = await fetch("/GET/categories");
+            if (!response.ok) throw new Error("Failed to load categories");
+            const data = await response.json();
+            categoriesTree = data.category || {};
+
+            // Populate Main Categories dropdown
+            mainCatSelect.innerHTML = '<option value="" disabled selected>Select Main Category</option>';
+            Object.keys(categoriesTree).forEach(cat => {
+                const opt = document.createElement("option");
+                opt.value = cat;
+                opt.textContent = cat;
+                mainCatSelect.appendChild(opt);
+            });
+        } catch (err) {
+            console.error("Error loading categories taxonomy:", err);
+            mainCatSelect.innerHTML = '<option value="" disabled selected>Error loading categories</option>';
+        }
+
+        // On Main Category change
+        mainCatSelect.addEventListener("change", () => {
+            const selectedCat = mainCatSelect.value;
+            populateSubCategory1(selectedCat);
+        });
+
+        // On Sub-Category 1 change
+        subCat1Select.addEventListener("change", () => {
+            const selectedCat = mainCatSelect.value;
+            const selectedSub1 = subCat1Select.value;
+            populateSubCategory2(selectedCat, selectedSub1);
+        });
+
+        // On Sub-Category 2 change
+        subCat2Select.addEventListener("change", () => {
+            const selectedCat = mainCatSelect.value;
+            const selectedSub1 = subCat1Select.value;
+            const selectedSub2 = subCat2Select.value;
+            populateSubCategory3(selectedCat, selectedSub1, selectedSub2);
+        });
+    }
+
+    function populateSubCategory1(catName) {
+        const subCat1Select = document.getElementById("sub_category1");
+        const subCat2Select = document.getElementById("sub_category2");
+        const subCat3Select = document.getElementById("sub_category3");
+
+        if (!subCat1Select || !subCat2Select || !subCat3Select) return;
+
+        subCat1Select.innerHTML = '<option value="" disabled selected>Select Sub-Category 1</option>';
+        subCat2Select.innerHTML = '<option value="" disabled selected>Select Sub-Category 2</option>';
+        subCat3Select.innerHTML = '<option value="" disabled selected>Select Sub-Category 3</option>';
+        subCat2Select.disabled = true;
+        subCat3Select.disabled = true;
+
+        const sub1Obj = categoriesTree[catName] || {};
+        const sub1Keys = Object.keys(sub1Obj);
+
+        if (sub1Keys.length === 0) {
+            subCat1Select.disabled = true;
+            return;
+        }
+
+        sub1Keys.forEach(s1 => {
+            const opt = document.createElement("option");
+            opt.value = s1;
+            opt.textContent = s1;
+            subCat1Select.appendChild(opt);
+        });
+
+        subCat1Select.disabled = false;
+    }
+
+    function populateSubCategory2(catName, sub1Name) {
+        const subCat2Select = document.getElementById("sub_category2");
+        const subCat3Select = document.getElementById("sub_category3");
+
+        if (!subCat2Select || !subCat3Select) return;
+
+        subCat2Select.innerHTML = '<option value="" disabled selected>Select Sub-Category 2</option>';
+        subCat3Select.innerHTML = '<option value="" disabled selected>Select Sub-Category 3</option>';
+        subCat3Select.disabled = true;
+
+        const sub2Obj = (categoriesTree[catName] || {})[sub1Name] || {};
+        const sub2Keys = Object.keys(sub2Obj);
+
+        if (sub2Keys.length === 0) {
+            subCat2Select.disabled = true;
+            return;
+        }
+
+        sub2Keys.forEach(s2 => {
+            const opt = document.createElement("option");
+            opt.value = s2;
+            opt.textContent = s2;
+            subCat2Select.appendChild(opt);
+        });
+
+        subCat2Select.disabled = false;
+    }
+
+    function populateSubCategory3(catName, sub1Name, sub2Name) {
+        const subCat3Select = document.getElementById("sub_category3");
+
+        if (!subCat3Select) return;
+
+        subCat3Select.innerHTML = '<option value="" disabled selected>Select Sub-Category 3</option>';
+
+        const sub3List = ((categoriesTree[catName] || {})[sub1Name] || {})[sub2Name] || [];
+
+        if (!Array.isArray(sub3List) || sub3List.length === 0) {
+            subCat3Select.disabled = true;
+            return;
+        }
+
+        sub3List.forEach(s3 => {
+            const opt = document.createElement("option");
+            opt.value = s3;
+            opt.textContent = s3;
+            subCat3Select.appendChild(opt);
+        });
+
+        subCat3Select.disabled = false;
+    }
+
+    loadCategoriesTree();
 
     function switchTab(targetTab) {
         menuItems.forEach(mi => mi.classList.remove("active"));
@@ -1139,9 +1277,18 @@ document.addEventListener("DOMContentLoaded", () => {
             if (!res.ok) throw new Error("Failed to fetch analytics");
             const data = await res.json();
             
-            document.getElementById("stat-total-revenue").textContent = "₹" + parseFloat(data.total_revenue).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-            document.getElementById("stat-total-orders").textContent = data.total_orders;
-            document.getElementById("stat-completed-orders").textContent = data.completed_orders;
+            const totalRevenueEl = document.getElementById("stat-total-revenue");
+            if (totalRevenueEl) {
+                totalRevenueEl.textContent = "₹" + parseFloat(data.total_revenue).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            }
+            const totalOrdersEl = document.getElementById("stat-total-orders");
+            if (totalOrdersEl) {
+                totalOrdersEl.textContent = data.total_orders;
+            }
+            const completedOrdersEl = document.getElementById("stat-completed-orders");
+            if (completedOrdersEl) {
+                completedOrdersEl.textContent = data.completed_orders;
+            }
             
             const categoryList = document.getElementById("analytics-category-list");
             if (categoryList) {

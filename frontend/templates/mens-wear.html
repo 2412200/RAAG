@@ -9,10 +9,10 @@
     href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500&display=swap"
     rel="stylesheet" />
   <link rel="stylesheet" href="{{ url_for('static', path='css/category.css') }}?v=1.0.0">
-  <link rel="stylesheet" href="/static/css/cart.css?v=1.0.9">
+  <link rel="stylesheet" href="/static/css/cart.css?v=1.1.0">
   <link rel="icon" type="image/png" href="{{ url_for('static', path='favicon.png') }}">
   <script src="/static/js/theme-toggle.js"></script>
-  <script src="/static/js/cart.js?v=1.0.9"></script>
+  <script src="/static/js/cart.js?v=1.1.0"></script>
 </head>
 
 <body>
@@ -66,14 +66,11 @@
 
       <div class="products-container" style="width: 100%; margin: 1rem 0 3rem;">
     {% for product in Products %}
-    <div class="product-card">
-      <div class="product-img-wrap" onclick="viewDetails('{{ product.id }}', '{{ product.col_name }}')" style="cursor:pointer;">
+    <div class="product-card" onclick="viewDetails('{{ product.id }}', 'mens-wear')" style="cursor:pointer;">
+      <div class="product-img-wrap">
         <img
           src="{% if product.image.startswith('http') %}{{ product.image }}{% else %}{{ url_for('static', path='images/' + product.image) }}{% endif %}"
           alt="{{ product.name }}" />
-
-        <div class="product-img-overlay"></div>
-        <span class="quick-view">View Details</span>
       </div>
       <div class="product-info">
         <p class="product-name">{{ product.name }}</p>
@@ -84,7 +81,7 @@
                 data-image="{{ product.image }}"
                 data-quantity="{{ product.quantity }}"
                 data-price="{{ product.price }}"
-                onclick="addToCartFromEl(this)">
+                onclick="event.stopPropagation(); addToCartFromEl(this)">
           Add to Cart
         </button>
       </div>
@@ -94,16 +91,7 @@
   </main>
   </div>
 
-  <!-- Details Quick View Modal -->
-  <div id="detail-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:center; padding: 20px;">
-    <div style="background:#181818; border:1px solid #8B0D1C; border-radius:16px; padding:30px; max-width:550px; width:100%; box-shadow:0 10px 40px rgba(0,0,0,0.5); position:relative; overflow-y:auto; max-height:90vh; color:#F5F0ED; text-align:left;">
-      <button onclick="closeDetailModal()" style="position:absolute; top:15px; right:15px; background:transparent; border:none; color:#A89B92; font-size:24px; cursor:pointer; outline:none;">✕</button>
-      
-      <div id="modal-content">
-        <!-- Loaded dynamically -->
-      </div>
-    </div>
-  </div>
+  <!-- Details Quick View Modal Removed -->
 
   <footer>
     <span class="footer-brand">RAAG.COM</span>
@@ -114,78 +102,7 @@
 
   <script>
     // addToOrder is handled globally by cart.js
-
-    async function viewDetails(productId, specification) {
-      const modal = document.getElementById('detail-modal');
-      const content = document.getElementById('modal-content');
-      
-      content.innerHTML = '<div style="color:#A89B92; text-align:center; padding:30px;">Loading product details...</div>';
-      modal.style.display = 'flex';
-      
-      try {
-        const res = await fetch(`/GET/product?product_id=${productId}&specification=${specification}`);
-        if (!res.ok) throw new Error('Failed to load');
-        const product = await res.json();
-        
-        let specHtml = '';
-        if (specification === 'apparel') {
-          specHtml = `
-            <p style="margin-bottom:8px; font-size:13px; color:#A89B92;">Sizes: <strong style="color:#fff;">${product.size.join(', ')}</strong></p>
-            <p style="margin-bottom:8px; font-size:13px; color:#A89B92;">Fabric: <strong style="color:#fff;">${product.fabric}</strong></p>
-            <p style="margin-bottom:8px; font-size:13px; color:#A89B92;">GSM: <strong style="color:#fff;">${product.gsm}</strong></p>
-          `;
-        }
-        
-        const imageSrc = product.images && product.images.length > 0 ? product.images[0] : (product.image || 'menjeans.webp');
-        const imgSrc = imageSrc.startsWith('http') ? imageSrc : `/static/images/${imageSrc}`;
-        
-        content.innerHTML = `
-          <div style="display:flex; gap:20px; flex-direction:row; flex-wrap:wrap;">
-            <div style="flex:1; min-width:200px;">
-              <img src="${imgSrc}" style="width:100%; border-radius:12px; border:1px solid #333; max-height:220px; object-fit:cover;" onerror="this.onerror=null;this.src='/static/images/default.webp'">
-            </div>
-            <div style="flex:1.2; min-width:220px; display:flex; flex-direction:column; justify-content:space-between;">
-              <div>
-                <h4 style="font-family:'Playfair Display',serif; font-size:22px; font-weight:700; color:#F5F0ED; margin-bottom:8px;">${product.product_name || product.name}</h4>
-                <div style="font-size:16px; font-weight:700; color:#D4A847; margin-bottom:12px;">₹${(product.price || product.mrp)}</div>
-                <div style="margin-bottom:12px;">${specHtml}</div>
-                <p style="font-size:13px; color:#A89B92;">Description: ${product.description || 'No description provided.'}</p>
-              </div>
-              
-              <button id="modal-add-btn" 
-                      data-name="${product.product_name || product.name}" 
-                      data-image="${imageSrc}" 
-                      data-qty="${product.moq || product.quantity || 1}" 
-                      data-price="${product.price || product.mrp}"
-                      style="margin-top:20px; width:100%; padding:12px; background:#C0172A; border:none; color:#fff; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; transition:background .2s;">
-                Add to Cart
-              </button>
-            </div>
-          </div>
-        `;
-        
-        const addBtn = document.getElementById('modal-add-btn');
-        if (addBtn) {
-          addBtn.onclick = function() {
-            closeDetailModal();
-            const name = this.getAttribute('data-name');
-            const image = this.getAttribute('data-image');
-            const qty = parseInt(this.getAttribute('data-qty') || 1);
-            const price = parseFloat(this.getAttribute('data-price') || 0);
-            addToOrder({ name, image, quantity: qty, price });
-          };
-        }
-      } catch (err) {
-        console.error(err);
-        content.innerHTML = '<div style="color:#E8293F; text-align:center; padding:30px;">Failed to fetch product details.</div>';
-      }
-    }
-    
-    function closeDetailModal() {
-      document.getElementById('detail-modal').style.display = 'none';
-    }
-
-    // Sidebar toggles are handled by cart.js
+    // viewDetails is handled globally by cart.js
   </script>
   <script defer src="https://static.cloudflareinsights.com/beacon.min.js/v833ccba57c9e4d2798f2e76cebdd09a11778172276447"
     integrity="sha512-57MDmcccJXYtNnH+ZiBwzC4jb2rvgVCEokYN+L/nLlmO8rfYT/gIpW2A569iJ/3b+0UEasghjuZH/ma3wIs/EQ=="

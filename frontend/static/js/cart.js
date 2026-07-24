@@ -471,3 +471,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 });
+
+function viewDetails(productId, category) {
+  let cat = category;
+  if (!cat) {
+    const currentPath = window.location.pathname.replace(/^\//, '').split('/')[0];
+    if (currentPath && !['details', 'detail', 'home', 'search', 'cart', 'orders'].includes(currentPath)) {
+      cat = currentPath;
+    } else {
+      cat = 'product';
+    }
+  }
+  window.location.href = `/${cat}/${productId}/details`;
+}

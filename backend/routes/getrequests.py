@@ -1,3 +1,4 @@
+# backend/routes/getrequests.py - Handles GET requests for seller products, seller orders, buyer orders, and seller analytics.
 from fastapi import APIRouter, Request, HTTPException
 from fastapi.responses import RedirectResponse
 from backend.helper.database import mongo_client as client, mongo_db as db
@@ -17,24 +18,18 @@ async def get_seller_products(request: Request):
         raise HTTPException(status_code=403, detail="Access denied. Sellers only.")
     
     seller_phone = user.get("phone")
-    
-    collections = ["apparel", "fmcg", "mobile_accessories", "steel_work", "homeappliances", "pharma"]
     products = []
     
-    for col_name in collections:
-        col = db[col_name]
-        cursor = col.find({"seller_phone": seller_phone})
-        async for doc in cursor:
-            # Convert ObjectId to string
-            doc["_id"] = str(doc["_id"])
-            # Map collection name to specification name for consistency in UI
-            spec_name = col_name
-            if col_name == "homeappliances":
-                spec_name = "home_appliances"
-            elif col_name == "pharma":
-                spec_name = "pharmacy"
-            doc["specification"] = spec_name
-            products.append(doc)
+    cursor = db["products"].find({
+        "$or": [
+            {"seller_phone": seller_phone},
+            {"seller_phone": {"$exists": False}},
+            {"seller_phone": None}
+        ]
+    })
+    async for doc in cursor:
+        doc["_id"] = str(doc["_id"])
+        products.append(doc)
             
     return {"products": products}
 
@@ -49,20 +44,16 @@ async def get_seller_orders(request: Request):
     seller_phone = user.get("phone")
     
     # 1. Get all products of this seller to compile a list of their product names
-    collections = ["apparel", "fmcg", "mobile_accessories", "steel_work", "homeappliances", "pharma"]
     seller_product_names = set()
-    
-    for col_name in collections:
-        col = db[col_name]
-        cursor = col.find({"seller_phone": seller_phone}, {"product_name": 1, "name": 1})
-        async for doc in cursor:
-            name = doc.get("product_name") or doc.get("name")
-            if name:
-                seller_product_names.add(name)
+    cursor = db["products"].find({"seller_phone": seller_phone}, {"product_name": 1, "name": 1})
+    async for doc in cursor:
+        name = doc.get("product_name") or doc.get("name")
+        if name:
+            seller_product_names.add(name)
     
     # 2. Fetch all orders
     orders_col = client["Orders"]["orders"]
-    cursor = orders_col.find({})
+    cursor = orders_col.find({"order_status": {"$ne": "Pending Payment"}})
     seller_orders = []
     
     async for order_doc in cursor:
@@ -115,22 +106,19 @@ async def get_buyer_orders(request: Request):
     
     buyer_number = int(digits)
     
-    # Create product name-to-info mapping from catalog collections
-    collections = ["apparel", "fmcg", "mobile_accessories", "steel_work", "homeappliances", "pharma"]
+    # Create product name-to-info mapping from catalog
     product_name_to_info = {}
-    for col_name in collections:
-        col = db[col_name]
-        cursor_prod = col.find({}, {"product_name": 1, "name": 1, "images": 1, "image": 1})
-        async for doc in cursor_prod:
-            name = doc.get("product_name") or doc.get("name")
-            if name:
-                images = doc.get("images")
-                image_val = images[0] if images and isinstance(images, list) else doc.get("image") or ""
-                product_name_to_info[name] = {
-                    "id": str(doc["_id"]),
-                    "image": image_val,
-                    "specification": col_name
-                }
+    cursor_prod = db["products"].find({}, {"product_name": 1, "name": 1, "images": 1, "image": 1, "specification": 1})
+    async for doc in cursor_prod:
+        name = doc.get("product_name") or doc.get("name")
+        if name:
+            images = doc.get("images")
+            image_val = images[0] if images and isinstance(images, list) and images else doc.get("image") or ""
+            product_name_to_info[name] = {
+                "id": str(doc["_id"]),
+                "image": image_val,
+                "specification": doc.get("specification", "apparel")
+            }
 
     orders_col = client["Orders"]["orders"]
     cursor = orders_col.find({
@@ -165,27 +153,26 @@ async def get_buyer_orders(request: Request):
 
 
 @router.get("/GET/product")
-async def get_product_details(product_id: str, specification: str):
+async def get_product_details(product_id: str, specification: str = None):
     from bson import ObjectId
-    specification_to_collection = {
-        "apparel": "apparel",
-        "fmcg": "fmcg",
-        "mobile_accessories": "mobile_accessories",
-        "steel_work": "steel_work",
-        "home_appliances": "homeappliances",
-        "pharmacy": "pharma"
-    }
-    col_name = specification_to_collection.get(specification)
-    if not col_name:
-        raise HTTPException(status_code=400, detail="Invalid specification")
-        
     try:
-        doc = await db[col_name].find_one({"_id": ObjectId(product_id)})
-        if not doc:
-            raise HTTPException(status_code=404, detail="Product not found")
+        query_conditions = []
+        try:
+            query_conditions.append({"_id": ObjectId(product_id)})
+        except Exception:
+            pass
+        query_conditions.append({"_id": product_id})
         
-        doc["_id"] = str(doc["_id"])
-        return doc
+        query = {"$or": query_conditions} if len(query_conditions) > 1 else query_conditions[0]
+        
+        doc = await db["products"].find_one(query)
+        if doc:
+            doc["_id"] = str(doc["_id"])
+            return doc
+                
+        raise HTTPException(status_code=404, detail="Product not found")
+    except HTTPException:
+        raise
     except Exception as e:
         print("Error fetching product details:", e)
         raise HTTPException(status_code=500, detail="Error fetching product details")
@@ -200,34 +187,32 @@ async def get_seller_analytics(request: Request):
     seller_phone = user.get("phone")
     
     # Get all products of this seller
-    collections = ["apparel", "fmcg", "mobile_accessories", "steel_work", "homeappliances", "pharma"]
     seller_product_names = set()
     product_category_map = {}
     
-    for col_name in collections:
-        col = db[col_name]
-        cursor = col.find({"seller_phone": seller_phone}, {"product_name": 1, "name": 1})
-        async for doc in cursor:
-            name = doc.get("product_name") or doc.get("name")
-            if name:
-                seller_product_names.add(name)
-                product_category_map[name] = col_name.replace("_", " ").title()
-                
-    # Fetch all orders to aggregate stats
+    cursor = db["products"].find({"seller_phone": seller_phone}, {"product_name": 1, "name": 1, "category": 1, "main_category": 1})
+    async for doc in cursor:
+        name = doc.get("product_name") or doc.get("name")
+        if name:
+            seller_product_names.add(name)
+            cat = doc.get("main_category") or doc.get("category") or "Other"
+            product_category_map[name] = cat
+
+    # Fetch all orders to compute stats
     orders_col = client["Orders"]["orders"]
-    cursor = orders_col.find({})
+    cursor = orders_col.find({"order_status": {"$ne": "Pending Payment"}})
     
     total_revenue = 0.0
     total_orders_count = 0
     completed_orders_count = 0
-    category_sales = {}
+    
     product_sales_qty = {}
     product_sales_rev = {}
+    category_sales = {}
     
     async for order_doc in cursor:
         order_status = order_doc.get("order_status", "Pending")
         order_products = order_doc.get("products", [])
-        
         has_seller_item = False
         order_subtotal = 0.0
         
@@ -235,7 +220,7 @@ async def get_seller_analytics(request: Request):
             p_name = item.get("product_name")
             if p_name in seller_product_names:
                 has_seller_item = True
-                qty = item.get("quantity", 0)
+                qty = item.get("quantity", 1)
                 price = item.get("price", 0.0)
                 item_total = qty * price
                 order_subtotal += item_total
@@ -248,7 +233,7 @@ async def get_seller_analytics(request: Request):
                 
         if has_seller_item:
             total_orders_count += 1
-            if order_status in ["Completed", "Delivered", "Processing", "Shipped"]:
+            if order_status.lower() in ["completed", "delivered"]:
                 total_revenue += order_subtotal
                 completed_orders_count += 1
                 
@@ -269,5 +254,21 @@ async def get_seller_analytics(request: Request):
         "category_sales": [{"category": k, "revenue": v} for k, v in category_sales.items()],
         "top_products": top_products[:5]
     }
+
+
+@router.get("/GET/categories")
+async def get_categories():
+    import json
+    import os
+    try:
+        json_path = os.path.join(os.getcwd(), "categories.json")
+        if os.path.exists(json_path):
+            with open(json_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                return data
+        return {"category": {}}
+    except Exception as e:
+        print("Error loading categories.json:", e)
+        return {"category": {}}
 
 

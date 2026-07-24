@@ -1,3 +1,4 @@
+# backend/pydanticmodels.py - Defines Pydantic validation schemas for order items, orders, sign-up requests, and login requests.
 from pydantic import BaseModel , model_validator
 from pydantic.fields import Field
 from typing import Literal, List, Optional
@@ -18,15 +19,16 @@ class orders(BaseModel):
     products: List[order_item]
 
     total_amount: float
+    paid_amount: float = 0.0
+    remaining_amount: float = 0.0
+    paid_percentage: float = 0.0
+    remaining_percentage: float = 0.0
     order_status: str = "Pending"
 
     delivery_address: Optional[str] = None
     delivery_city: Optional[str] = None
     delivery_state: Optional[str] = None
     delivery_pincode: Optional[str] = None
-    recipient_name: Optional[str] = None
-    recipient_phone: Optional[str] = None
-    payment_method: Optional[str] = None
 
     created_at: datetime = Field(default_factory=datetime.now)
 
@@ -75,6 +77,11 @@ class SizeEnum(str,Enum):
     S34 = "34"
     S36 = "36"
 
+class categories(BaseModel):
+    category: str
+    sub_category1: Optional[str] = ""
+    sub_category2: Optional[str] = ""
+    sub_category3: Optional[str] = ""
 
 class apparel(BaseModel):
     product_name : str
@@ -83,6 +90,7 @@ class apparel(BaseModel):
     category : Literal["Mens Shirt", "Mens TShirt", "Mens Lower", "Mens Jeans", "Mens Shorts", 
                        "Pyjama", "Mens Inner Wear", "Womens Shirt", "Womens Jeans", "Womens TShirt",
                        "Womens Lower", "Womens Pyjama", "Mens Trouser", "Womens Trouser"]
+    
     gsm : int = Field(gt=1)
     mrp : float = Field(gt=1)
     gender : Literal["Male", "Female", "Unisex"]
@@ -92,6 +100,10 @@ class apparel(BaseModel):
     description: Optional[str] = ""
     images: List[str] = []
     stock: Optional[int] = Field(default=100, ge=0)
+    main_category: Optional[str] = ""
+    sub_category1: Optional[str] = ""
+    sub_category2: Optional[str] = ""
+    sub_category3: Optional[str] = ""
 
 class fmcg(BaseModel):
     product_name : str
@@ -106,6 +118,10 @@ class fmcg(BaseModel):
     description: Optional[str] = ""
     images: List[str] = []
     stock: Optional[int] = Field(default=100, ge=0)
+    main_category: Optional[str] = ""
+    sub_category1: Optional[str] = ""
+    sub_category2: Optional[str] = ""
+    sub_category3: Optional[str] = ""
 
 
     @model_validator(mode="after")
@@ -130,6 +146,10 @@ class mobile_accessories(BaseModel):
     description: Optional[str] = ""
     images: List[str] = []
     stock: Optional[int] = Field(default=100, ge=0)
+    main_category: Optional[str] = ""
+    sub_category1: Optional[str] = ""
+    sub_category2: Optional[str] = ""
+    sub_category3: Optional[str] = ""
 
 class steel_work(BaseModel):
     product_name : str
@@ -143,6 +163,10 @@ class steel_work(BaseModel):
     description: Optional[str] = ""
     images: List[str] = []
     stock: Optional[int] = Field(default=100, ge=0)
+    main_category: Optional[str] = ""
+    sub_category1: Optional[str] = ""
+    sub_category2: Optional[str] = ""
+    sub_category3: Optional[str] = ""
 
 class otp_request(BaseModel):
     phone : str
@@ -167,6 +191,10 @@ class home_appliances(BaseModel):
     description: Optional[str] = ""
     images: List[str] = []
     stock: Optional[int] = Field(default=100, ge=0)
+    main_category: Optional[str] = ""
+    sub_category1: Optional[str] = ""
+    sub_category2: Optional[str] = ""
+    sub_category3: Optional[str] = ""
 
 class pharmacy(BaseModel):
     product_name : str
@@ -179,6 +207,10 @@ class pharmacy(BaseModel):
     description: Optional[str] = ""
     images: List[str] = []
     stock: Optional[int] = Field(default=100, ge=0)
+    main_category: Optional[str] = ""
+    sub_category1: Optional[str] = ""
+    sub_category2: Optional[str] = ""
+    sub_category3: Optional[str] = ""
 
 class ForgotPasswordOTPRequest(BaseModel):
     phone: str

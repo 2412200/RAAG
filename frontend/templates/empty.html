@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cart is Empty — RAAG</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet" />
+    <style>
+        :root {
+            --bg-dark: #0D0D0D;
+            --bg-card: #181818;
+            --border-color: #222;
+            --primary: #E8293F;
+            --primary-hover: #C0172A;
+            --accent-gold: #D4A847;
+            --text-main: #F5F0ED;
+            --text-muted: #A89B92;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'DM Sans', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        /* Brand Header */
+        header {
+            width: 100%;
+            padding: 30px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            background: rgba(13, 13, 13, 0.8);
+            backdrop-filter: blur(10px);
+        }
+
+        .brand {
+            font-family: 'Playfair Display', serif;
+            font-size: 24px;
+            font-weight: 900;
+            color: var(--primary);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+
+        /* Empty State Layout */
+        .container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .visual-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 50px 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .visual-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 50px rgba(232, 41, 63, 0.1);
+        }
+
+        .visual-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--accent-gold) 100%);
+        }
+
+        .empty-illustration {
+            width: 100px;
+            height: 100px;
+            margin-bottom: 30px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: rgba(232, 41, 63, 0.05);
+            color: var(--primary);
+            border: 1px solid rgba(232, 41, 63, 0.1);
+            position: relative;
+            animation: bounce 3s ease-in-out infinite;
+        }
+
+        .empty-illustration svg {
+            width: 48px;
+            height: 48px;
+            stroke-width: 1.5;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        p {
+            color: var(--text-muted);
+            font-size: 15px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .btn-action {
+            display: inline-block;
+            background: var(--primary);
+            color: #fff;
+            padding: 14px 32px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 14px;
+            letter-spacing: 1px;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 15px rgba(232, 41, 63, 0.3);
+        }
+
+        .btn-action:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(232, 41, 63, 0.4);
+        }
+
+        /* Footer */
+        footer {
+            width: 100%;
+            padding: 30px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-muted);
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="brand">RAAG</div>
+        <div style="font-size: 13px; color: var(--text-muted);">Workspace View</div>
+    </header>
+
+    <div class="container">
+        <div class="visual-card">
+            <div class="empty-illustration">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="8" cy="21" r="1"></circle>
+                    <circle cx="19" cy="21" r="1"></circle>
+                    <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
+                </svg>
+            </div>
+            <h1>Your Cart is Empty</h1>
+            <p>You haven't added any products to your cart yet. Visit our homepage to explore the latest trends and apparel.</p>
+            <a href="/home" class="btn-action">Go Shopping</a>
+        </div>
+    </div>
+
+    <footer>
+        <span>RAAG.COM</span>
+        <span>© 2026 Raag. All rights reserved.</span>
+    </footer>
+
+</body>
+</html>

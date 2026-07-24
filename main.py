@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from backend.routes import getrequests, postrequests
@@ -34,7 +34,12 @@ ALGORITHM = SETTINGS.ALGORITHM
 @app.middleware("http")
 async def auth_middleware(request: Request, call_next):
     # Paths that don't require authentication
-    public_paths = ["/", "/signup", "/POST/login", "/POST/signup", "/logout", "/POST/request-otp", "/forgot-password", "/POST/request-forgot-password-otp", "/POST/reset-password"]
+    public_paths = [
+        "/", "/signup", "/POST/login", "/POST/signup", "/logout", 
+        "/POST/request-otp", "/forgot-password", "/POST/request-forgot-password-otp", 
+        "/POST/reset-password", "/state-demo", "/empty", "/loading", 
+        "/offline", "/no-result", "/success"
+    ]
     
     if request.url.path in public_paths or request.url.path.startswith("/static"):
         # Redirect authenticated users away from Login and Signup pages
@@ -76,12 +81,14 @@ async def auth_middleware(request: Request, call_next):
             "/POST/order"
         ]
         
+        is_buyer_details = path.endswith("/details") or path.endswith("/detail")
+        
         if role == "buyer" and path in seller_paths:
             if request.method == "GET":
                 return RedirectResponse(url="/home", status_code=303)
             return JSONResponse(status_code=403, content={"detail": "Access denied. Sellers only."})
             
-        if role == "seller" and path in buyer_paths:
+        if role == "seller" and (path in buyer_paths or is_buyer_details):
             if request.method == "GET":
                 return RedirectResponse(url="/seller", status_code=303)
             return JSONResponse(status_code=403, content={"detail": "Access denied. Buyers only."})
@@ -105,6 +112,54 @@ async def signup_page(request : Request):
 @app.get("/forgot-password")
 async def forgot_password_page(request : Request):
     return templates.TemplateResponse(request, "forgot_password.html", {"request" : request})
+
+@app.get("/state-demo")
+async def state_demo_page(request: Request):
+    return templates.TemplateResponse(request, "state_demo.html", {"request": request})
+
+@app.get("/empty")
+async def empty_state_page(request: Request):
+    return templates.TemplateResponse(request, "empty.html", {"request": request})
+
+@app.get("/loading")
+async def loading_state_page(request: Request):
+    return templates.TemplateResponse(request, "loading.html", {"request": request})
+
+@app.get("/offline")
+async def offline_state_page(request: Request):
+    return templates.TemplateResponse(request, "offline.html", {"request": request})
+
+@app.get("/no-result")
+async def no_result_state_page(request: Request, q: str | None = None):
+    return templates.TemplateResponse(request, "no_result.html", {"request": request, "query": q or "Mock Search Query"})
+
+@app.get("/success")
+async def success_state_page(request: Request, total_paid: str | None = None):
+    return templates.TemplateResponse(request, "success.html", {"request": request, "total_paid": total_paid or "5,499.00"})
+
+@app.get("/{category}/{product_id}/details")
+async def product_details_page(request: Request, category: str, product_id: str):
+    from bson import ObjectId
+    
+    query_conditions = []
+    try:
+        query_conditions.append({"_id": ObjectId(product_id)})
+    except Exception:
+        pass
+    query_conditions.append({"_id": product_id})
+    
+    query = {"$or": query_conditions} if len(query_conditions) > 1 else query_conditions[0]
+        
+    doc = await db["products"].find_one(query)
+    if doc:
+        spec = doc.get("specification", "apparel")
+        return templates.TemplateResponse(request, "product_details.html", {
+            "request": request,
+            "product_id": product_id,
+            "specification": spec
+        })
+            
+    raise HTTPException(status_code=404, detail="Product not found")
 
 @app.get("/home")
 async def home(request: Request):

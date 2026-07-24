@@ -1,3 +1,4 @@
+<!-- frontend/templates/seller.html - Seller Dashboard page layout displaying overview metrics, products list, and orders tabs. -->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -141,24 +142,6 @@
         </div>
       </div>
 
-      <div class="stats-grid" style="margin-top:20px;">
-        <div class="stat-card" style="background:#181818; border-color:#D4A847; cursor:default;">
-          <div class="stat-label">Total Sales Earnings</div>
-          <div class="stat-value" id="stat-total-revenue">₹0</div>
-          <div class="stat-badge">💰</div>
-        </div>
-        <div class="stat-card" style="background:#181818; border-color:#8B0D1C; cursor:default;">
-          <div class="stat-label">Total Orders Handled</div>
-          <div class="stat-value" id="stat-total-orders">0</div>
-          <div class="stat-badge">📋</div>
-        </div>
-        <div class="stat-card" style="background:#181818; border-color:#06d6a0; cursor:default;">
-          <div class="stat-label">Orders Completed</div>
-          <div class="stat-value" id="stat-completed-orders">0</div>
-          <div class="stat-badge">✓</div>
-        </div>
-      </div>
-
 
     </section>
 
@@ -278,6 +261,37 @@
               <option value="pharmacy">Pharmacy</option>
               {% endif %}
             </select>
+          </div>
+
+          <!-- Cascading Category & Sub-Category Selection -->
+          <div class="form-group">
+            <label for="main_category">Main Category</label>
+            <select id="main_category" name="main_category">
+              <option value="" disabled selected>Loading categories...</option>
+            </select>
+          </div>
+
+          <div class="dim-row" id="subcategories-row" style="display: flex; gap: 15px; flex-wrap: wrap;">
+            <div class="form-group" style="flex: 1; min-width: 150px;">
+              <label for="sub_category1">Sub-Category 1</label>
+              <select id="sub_category1" name="sub_category1" disabled>
+                <option value="" disabled selected>Select Sub-Category 1</option>
+              </select>
+            </div>
+
+            <div class="form-group" style="flex: 1; min-width: 150px;">
+              <label for="sub_category2">Sub-Category 2</label>
+              <select id="sub_category2" name="sub_category2" disabled>
+                <option value="" disabled selected>Select Sub-Category 2</option>
+              </select>
+            </div>
+
+            <div class="form-group" style="flex: 1; min-width: 150px;">
+              <label for="sub_category3">Sub-Category 3</label>
+              <select id="sub_category3" name="sub_category3" disabled>
+                <option value="" disabled selected>Select Sub-Category 3</option>
+              </select>
+            </div>
           </div>
 
           <!-- Description and Image Fields (Shown for all specs) -->

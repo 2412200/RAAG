@@ -1,0 +1,1443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visual States Playground & Error Reference</title>
+    
+    <!-- Premium Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,700;0,900;1,400&display=swap" rel="stylesheet" />
+    
+    <!-- Code Highlight styles (custom modern styling) -->
+    <style>
+        :root {
+            --bg-darker: #080808;
+            --bg-dark: #121212;
+            --bg-card: #1E1E1E;
+            --border-color: #2D2D2D;
+            --text-main: #F5F0ED;
+            --text-muted: #A89B92;
+            
+            --primary: #E8293F;
+            --primary-glow: rgba(232, 41, 63, 0.15);
+            --primary-dark: #8B0D1C;
+            
+            --accent-gold: #D4A847;
+            --accent-gold-glow: rgba(212, 168, 71, 0.15);
+            
+            --success-green: #10B981;
+            --success-glow: rgba(16, 185, 129, 0.15);
+            
+            --info-blue: #3B82F6;
+            --info-glow: rgba(59, 130, 246, 0.15);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-darker);
+            color: var(--text-main);
+            font-family: 'DM Sans', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* Scrollbars */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-darker);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #444;
+        }
+
+        header {
+            background: var(--bg-dark);
+            border-bottom: 1px solid var(--border-color);
+            padding: 24px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            background: rgba(18, 18, 18, 0.85);
+        }
+
+        .header-title h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 26px;
+            font-weight: 900;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #fff 0%, var(--text-muted) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-title p {
+            color: var(--text-muted);
+            font-size: 13px;
+            margin-top: 4px;
+            font-family: 'DM Sans', sans-serif;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 16px;
+        }
+
+        .btn-back {
+            color: var(--text-main);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+            border: 1px solid var(--border-color);
+            padding: 10px 20px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            background: transparent;
+            cursor: pointer;
+        }
+
+        .btn-back:hover {
+            background: #222;
+            border-color: #555;
+        }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: 280px 1fr 500px;
+            flex-grow: 1;
+            min-height: calc(100vh - 89px);
+        }
+
+        /* Sidebar for State Selection */
+        .sidebar {
+            background: var(--bg-dark);
+            border-right: 1px solid var(--border-color);
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            overflow-y: auto;
+        }
+
+        .sidebar-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            margin-left: 8px;
+            font-weight: 700;
+        }
+
+        .state-tab-btn {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 10px;
+            color: var(--text-muted);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s ease;
+        }
+
+        .state-tab-btn:hover {
+            background: #181818;
+            color: var(--text-main);
+        }
+
+        .state-tab-btn.active {
+            background: var(--primary-glow);
+            color: var(--text-main);
+            border-color: rgba(232, 41, 63, 0.3);
+            font-weight: 700;
+        }
+
+        .state-tab-btn .badge {
+            font-size: 9px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: #2D2D2D;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .state-tab-btn.active .badge {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        /* Interactive Showcase Sandbox */
+        .showcase-area {
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-darker);
+            position: relative;
+            border-right: 1px solid var(--border-color);
+        }
+
+        .sandbox-controls {
+            position: absolute;
+            top: 24px;
+            display: flex;
+            gap: 12px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border-color);
+            padding: 6px 12px;
+            border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            z-index: 10;
+        }
+
+        .sandbox-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 12px;
+            padding: 6px 12px;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+        }
+
+        .sandbox-btn.active, .sandbox-btn:hover {
+            color: var(--text-main);
+            background: #2a2a2a;
+        }
+
+        /* Container for rendered state visuals */
+        .preview-container {
+            width: 100%;
+            max-width: 480px;
+            min-height: 380px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .preview-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--primary);
+            opacity: 0.8;
+        }
+
+        .preview-container.success-accent::before {
+            background: var(--success-green);
+        }
+        .preview-container.warning-accent::before {
+            background: var(--accent-gold);
+        }
+        .preview-container.info-accent::before {
+            background: var(--info-blue);
+        }
+
+        /* Beautiful States UI Components */
+        
+        /* 1. Spinner/Loader State */
+        .state-visual-loader {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 24px;
+            width: 100%;
+        }
+
+        .glowing-spinner {
+            position: relative;
+            width: 60px;
+            height: 60px;
+        }
+
+        .spinner-outer {
+            width: 100%;
+            height: 100%;
+            border: 3px solid transparent;
+            border-top-color: var(--primary);
+            border-right-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .spinner-inner {
+            position: absolute;
+            top: 6px;
+            left: 6px;
+            right: 6px;
+            bottom: 6px;
+            border: 3px solid transparent;
+            border-bottom-color: var(--accent-gold);
+            border-left-color: var(--accent-gold);
+            border-radius: 50%;
+            animation: spin-reverse 1.2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes spin-reverse {
+            0% { transform: rotate(360deg); }
+            100% { transform: rotate(0deg); }
+        }
+
+        /* Skeleton Shimmer Layout */
+        .skeleton-block {
+            width: 100%;
+            height: 16px;
+            background: linear-gradient(90deg, #1e1e1e 25%, #2a2a2a 50%, #1e1e1e 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 6px;
+            margin-bottom: 12px;
+        }
+
+        .skeleton-block.title {
+            width: 60%;
+            height: 24px;
+            margin: 0 auto 16px auto;
+        }
+
+        .skeleton-block.short {
+            width: 40%;
+            margin: 0 auto;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* Icons with interactive animations */
+        .state-icon {
+            width: 72px;
+            height: 72px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            position: relative;
+        }
+
+        .state-icon.error-bg {
+            background: rgba(232, 41, 63, 0.1);
+            color: var(--primary);
+            border: 1px solid rgba(232, 41, 63, 0.2);
+            animation: pulse-red 2s infinite;
+        }
+
+        .state-icon.success-bg {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success-green);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            animation: pulse-green 2s infinite;
+        }
+
+        .state-icon.warning-bg {
+            background: rgba(212, 168, 71, 0.1);
+            color: var(--accent-gold);
+            border: 1px solid rgba(212, 168, 71, 0.2);
+            animation: pulse-gold 2s infinite;
+        }
+
+        .state-icon.info-bg {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--info-blue);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(232, 41, 63, 0.4); }
+            70% { box-shadow: 0 0 0 16px rgba(232, 41, 63, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(232, 41, 63, 0); }
+        }
+
+        @keyframes pulse-green {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+            70% { box-shadow: 0 0 0 16px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        @keyframes pulse-gold {
+            0% { box-shadow: 0 0 0 0 rgba(212, 168, 71, 0.4); }
+            70% { box-shadow: 0 0 0 16px rgba(212, 168, 71, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(212, 168, 71, 0); }
+        }
+
+        .state-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 8px;
+        }
+
+        .state-desc {
+            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 1.5;
+            margin-bottom: 24px;
+            max-width: 320px;
+        }
+
+        .state-action-btn {
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(232, 41, 63, 0.3);
+        }
+
+        .state-action-btn:hover {
+            background: #ff3b52;
+            transform: translateY(-1px);
+        }
+
+        .state-action-btn.secondary {
+            background: #2a2a2a;
+            color: var(--text-main);
+            box-shadow: none;
+            border: 1px solid var(--border-color);
+        }
+
+        .state-action-btn.secondary:hover {
+            background: #333;
+        }
+
+        /* Dropdown selection inside preview */
+        .status-dropdown {
+            background: #181818;
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            outline: none;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        /* Success Confetti Animation Elements */
+        .confetti {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: var(--success-green);
+            opacity: 0;
+            border-radius: 50%;
+        }
+
+        /* Code/Documentation Panel (Right) */
+        .code-panel {
+            background: var(--bg-dark);
+            border-left: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .code-tabs {
+            display: flex;
+            background: var(--bg-darker);
+            border-bottom: 1px solid var(--border-color);
+            padding: 8px 16px 0 16px;
+            gap: 4px;
+        }
+
+        .code-tab-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            border-bottom: none;
+            color: var(--text-muted);
+            padding: 8px 16px;
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 6px 6px 0 0;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .code-tab-btn:hover {
+            color: var(--text-main);
+        }
+
+        .code-tab-btn.active {
+            background: var(--bg-dark);
+            color: var(--primary);
+            border-color: var(--border-color);
+            border-bottom: 2px solid var(--primary);
+        }
+
+        .code-content-wrapper {
+            flex-grow: 1;
+            padding: 24px;
+            overflow-y: auto;
+            background: var(--bg-dark);
+        }
+
+        .code-block {
+            display: none;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 12.5px;
+            line-height: 1.6;
+            color: #E2E8F0;
+            white-space: pre-wrap;
+            position: relative;
+        }
+
+        .code-block.active {
+            display: block;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: #2d2d2d;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'DM Sans', sans-serif;
+        }
+
+        .copy-btn:hover {
+            color: var(--text-main);
+            background: #3a3a3a;
+        }
+
+        /* Syntax Highlighting Colors */
+        .token.comment { color: #6A9955; }
+        .token.keyword { color: #569CD6; font-weight: bold; }
+        .token.string { color: #CE9178; }
+        .token.number { color: #B5CEA8; }
+        .token.function { color: #DCDCAA; }
+        .token.class-name { color: #4EC9B0; }
+        .token.operator { color: #D4D4D4; }
+        .token.punctuation { color: #808080; }
+        .token.tag { color: #569CD6; }
+        .token.attr-name { color: #9CDCFE; }
+        .token.attr-value { color: #CE9178; }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header>
+        <div class="header-title">
+            <h1>State Playground</h1>
+            <p>Interactive playground to preview visual states, error types, and client-side handling</p>
+        </div>
+        <div class="header-actions">
+            <button class="btn-back" onclick="window.location.href='/home'">← Go Shopping</button>
+        </div>
+    </header>
+
+    <!-- Main Layout -->
+    <div class="main-layout">
+        
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-title">Application States</div>
+            
+            <button class="state-tab-btn active" onclick="selectState('loading')">
+                <span>Loading State</span>
+                <span class="badge">Fetch</span>
+            </button>
+            <button class="state-tab-btn" onclick="selectState('empty')">
+                <span>Empty State</span>
+                <span class="badge">List</span>
+            </button>
+            <button class="state-tab-btn" onclick="selectState('no_result')">
+                <span>No Search Results</span>
+                <span class="badge">Query</span>
+            </button>
+            <button class="state-tab-btn" onclick="selectState('no_internet')">
+                <span>No Internet</span>
+                <span class="badge">Network</span>
+            </button>
+            <button class="state-tab-btn" onclick="selectState('slow_network')">
+                <span>Slow Network</span>
+                <span class="badge">Delay</span>
+            </button>
+            <button class="state-tab-btn" onclick="selectState('permission_denied')">
+                <span>Permission Denied</span>
+                <span class="badge">Auth</span>
+            </button>
+            <button class="state-tab-btn" onclick="selectState('status_error')">
+                <span>HTTP Status Code</span>
+                <span class="badge">API</span>
+            </button>
+            <button class="state-tab-btn" onclick="selectState('generic_error')">
+                <span>Generic Error</span>
+                <span class="badge">Crash</span>
+            </button>
+            <button class="state-tab-btn" onclick="selectState('success')">
+                <span>Success State</span>
+                <span class="badge">Complete</span>
+            </button>
+        </aside>
+
+        <!-- Interactive Sandbox Showcase -->
+        <main class="showcase-area">
+            
+            <!-- Dynamic Preview Container -->
+            <div class="preview-container" id="preview-sandbox">
+                <!-- Content gets dynamically updated by javascript -->
+            </div>
+            
+        </main>
+
+        <!-- Code Reference Documentation (Right Side) -->
+        <aside class="code-panel">
+            <div class="code-tabs">
+                <button class="code-tab-btn active" onclick="selectCodeTab('js')">JAVASCRIPT</button>
+                <button class="code-tab-btn" onclick="selectCodeTab('html')">HTML STRUCTURE</button>
+                <button class="code-tab-btn" onclick="selectCodeTab('css')">VANILLA CSS</button>
+            </div>
+            
+            <div class="code-content-wrapper">
+                <!-- Javascript Code Block -->
+                <pre class="code-block active" id="code-js"><button class="copy-btn" onclick="copyCode('code-js')">Copy</button><code id="code-js-content"></code></pre>
+                
+                <!-- HTML Code Block -->
+                <pre class="code-block" id="code-html"><button class="copy-btn" onclick="copyCode('code-html')">Copy</button><code id="code-html-content"></code></pre>
+                
+                <!-- CSS Code Block -->
+                <pre class="code-block" id="code-css"><button class="copy-btn" onclick="copyCode('code-css')">Copy</button><code id="code-css-content"></code></pre>
+            </div>
+        </aside>
+    </div>
+
+    <!-- State Data & Interactive Logic -->
+    <script>
+        // Holds visual elements, labels and descriptions for state presets
+        const statesData = {
+            loading: {
+                accent: 'default',
+                title: 'Loading Data...',
+                desc: 'Please wait while we sync database records and assets.',
+                html: `<div class="state-visual-loader">
+    <div class="glowing-spinner">
+        <div class="spinner-outer"></div>
+        <div class="spinner-inner"></div>
+    </div>
+    <div style="width: 100%;">
+        <div class="skeleton-block title"></div>
+        <div class="skeleton-block"></div>
+        <div class="skeleton-block short"></div>
+    </div>
+</div>`,
+                js: `// 1. LOADING STATE
+// Triggered prior to starting an async fetch request
+function fetchProducts() {
+    const container = document.getElementById('product-list');
+    
+    // Set loading state visuals (Skeleton loader & glowing spinner)
+    container.innerHTML = \`
+        <div class="state-visual-loader">
+            <div class="glowing-spinner">
+                <div class="spinner-outer"></div>
+                <div class="spinner-inner"></div>
+            </div>
+            <div style="width: 100%;">
+                <div class="skeleton-block title"></div>
+                <div class="skeleton-block"></div>
+            </div>
+        </div>
+    \`;
+    
+    fetch('/api/products')
+        .then(response => response.json())
+        .then(data => renderProducts(data))
+        .catch(err => renderError(err));
+}`,
+                css: `/* Glowing spinner with custom sub-rotations */
+.glowing-spinner {
+    position: relative;
+    width: 60px;
+    height: 60px;
+}
+.spinner-outer {
+    width: 100%;
+    height: 100%;
+    border: 3px solid transparent;
+    border-top-color: #E8293F;
+    border-right-color: #E8293F;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+.spinner-inner {
+    position: absolute;
+    top: 6px; left: 6px; right: 6px; bottom: 6px;
+    border: 3px solid transparent;
+    border-bottom-color: #D4A847;
+    border-left-color: #D4A847;
+    border-radius: 50%;
+    animation: spin-reverse 1.2s linear infinite;
+}
+
+/* Skeleton Loading Shimmering Animation */
+.skeleton-block {
+    width: 100%;
+    height: 16px;
+    background: linear-gradient(90deg, #1e1e1e 25%, #2a2a2a 50%, #1e1e1e 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 6px;
+}
+@keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+@keyframes spin {
+    100% { transform: rotate(360deg); }
+}
+@keyframes spin-reverse {
+    100% { transform: rotate(-360deg); }
+}`
+            },
+            empty: {
+                accent: 'info-accent',
+                title: 'Your Cart is Empty',
+                desc: 'Looks like you haven\'t added any items to your workspace checkout list yet.',
+                html: `<div class="state-icon info-bg">
+    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+</div>
+<h3 class="state-title">Your Cart is Empty</h3>
+<p class="state-desc">Looks like you haven't added any items to your workspace checkout list yet.</p>
+<button class="state-action-btn" onclick="alert('Redirecting to catalogs!')">Browse Items</button>`,
+                js: `// 2. EMPTY STATE
+// Triggered when list returned successfully, but array is empty.
+function renderCart(cartItems) {
+    const container = document.getElementById('cart-container');
+    
+    if (!cartItems || cartItems.length === 0) {
+        container.innerHTML = \`
+            <div class="state-visual">
+                <div class="state-icon info-bg">
+                    <svg>...</svg>
+                </div>
+                <h3 class="state-title">Your Cart is Empty</h3>
+                <p class="state-desc">Add some premium products to verify checkout functionality.</p>
+                <button class="state-action-btn" onclick="routeToCatalog()">Browse Items</button>
+            </div>
+        \`;
+        return;
+    }
+    
+    // Otherwise render list elements...
+}`,
+                css: `/* Interactive state icons with soft background highlights */
+.state-icon.info-bg {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3B82F6;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+}
+.state-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #F5F0ED;
+    margin-bottom: 8px;
+}
+.state-desc {
+    font-size: 14px;
+    color: #A89B92;
+    line-height: 1.5;
+    margin-bottom: 24px;
+    max-width: 320px;
+}`
+            },
+            no_result: {
+                accent: 'warning-accent',
+                title: 'No Results Found',
+                desc: 'We couldn\'t find any records matching your search queries. Try adjusting your spelling or categories.',
+                html: `<div class="state-icon warning-bg">
+    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+</div>
+<h3 class="state-title">No Results Found</h3>
+<p class="state-desc">We couldn't find any records matching your search query. Try adjusting your filter parameters or terms.</p>
+<button class="state-action-btn secondary" onclick="resetFilters()">Clear Filters</button>`,
+                js: `// 3. NO SEARCH RESULTS STATE
+// Triggered when a filter/search resolves to 0 matches.
+function handleSearch(searchQuery, catalogList) {
+    const matched = catalogList.filter(item => 
+        item.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    const container = document.getElementById('search-results');
+    
+    if (matched.length === 0) {
+        container.innerHTML = \`
+            <div class="state-visual">
+                <div class="state-icon warning-bg">
+                    <svg>...</svg>
+                </div>
+                <h3 class="state-title">No Results Found</h3>
+                <p class="state-desc">No matches for "\${escapeHTML(searchQuery)}". Try checking your spelling.</p>
+                <button class="state-action-btn secondary" onclick="resetSearch()">Clear Filters</button>
+            </div>
+        \`;
+        return;
+    }
+    
+    renderGrid(matched);
+}`,
+                css: `/* Warning State Highlights */
+.state-icon.warning-bg {
+    background: rgba(212, 168, 71, 0.1);
+    color: #D4A847;
+    border: 1px solid rgba(212, 168, 71, 0.2);
+    animation: pulse-gold 2s infinite;
+}
+@keyframes pulse-gold {
+    0% { box-shadow: 0 0 0 0 rgba(212, 168, 71, 0.4); }
+    70% { box-shadow: 0 0 0 16px rgba(212, 168, 71, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(212, 168, 71, 0); }
+}`
+            },
+            no_internet: {
+                accent: 'warning-accent',
+                title: 'Network Offline',
+                desc: 'Your device is not connected to the internet. Please verify your connection setup.',
+                html: `<div class="state-icon warning-bg">
+    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1l22 22M16.72 11.06A10.94 10.94 0 0 1 19 12.5M5 12.5a10.94 10.94 0 0 1 5.83-2.84M8.53 16.03a6 6 0 0 1 3.5-1.5M16.24 16.24a6 6 0 0 1-1.24.81M12 20h.01"/></svg>
+</div>
+<h3 class="state-title">Connection Interrupted</h3>
+<p class="state-desc">Your device appears to be offline. Verify your local ethernet or Wi-Fi configurations.</p>
+<button class="state-action-btn" onclick="retryConnection()">Check Connection Status</button>`,
+                js: `// 4. NO INTERNET HANDLER
+// Checks navigator.onLine and listens to browser connectivity updates.
+function setupOfflineHandlers() {
+    window.addEventListener('online', updateConnectionStatus);
+    window.addEventListener('offline', updateConnectionStatus);
+}
+
+function verifyRequest() {
+    // Immediate pre-fetch client network checks
+    if (!navigator.onLine) {
+        showStateView('offline');
+        return;
+    }
+    
+    // Proceed with HTTP calls...
+}
+
+function updateConnectionStatus(event) {
+    if (navigator.onLine) {
+        removeOfflineBanner();
+        triggerReload();
+    } else {
+        showStateView('offline');
+    }
+}`,
+                css: `/* Offline Network visual icons styling */
+.state-icon svg {
+    stroke-dasharray: 100;
+    animation: draw 2s ease-out forwards;
+}
+@keyframes draw {
+    to { stroke-dashoffset: 0; }
+}`
+            },
+            slow_network: {
+                accent: 'warning-accent',
+                title: 'Slow Connection Detected',
+                desc: 'Server latency is unusually high. The request is taking longer than expected.',
+                html: `<div class="state-icon warning-bg">
+    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
+</div>
+<h3 class="state-title">Network Throttling</h3>
+<p class="state-desc">The request is taking longer than usual. Please verify your connection status or try reloading.</p>
+<div style="display:flex; gap:10px;">
+    <button class="state-action-btn" onclick="simulateSlowFetch()">Retry Now</button>
+    <button class="state-action-btn secondary" onclick="alert('Switching to lighter cache version')">Load Cache</button>
+</div>`,
+                js: `// 5. SLOW NETWORK / REQUEST TIMEOUT
+// Races your actual fetch call with a custom timeout promise.
+function fetchWithTimeout(url, options = {}, timeoutMs = 5000) {
+    let timeoutId;
+    
+    const timeoutPromise = new Promise((_, reject) => {
+        timeoutId = setTimeout(() => {
+            reject(new Error('TIMEOUT_SLOW_NETWORK'));
+        }, timeoutMs);
+    });
+    
+    return Promise.race([
+        fetch(url, options),
+        timeoutPromise
+    ]).then(response => {
+        clearTimeout(timeoutId);
+        return response;
+    }).catch(err => {
+        clearTimeout(timeoutId);
+        throw err;
+    });
+}
+
+// Controller integration
+function loadDashboard() {
+    showLoading();
+    fetchWithTimeout('/api/dashboard-data', {}, 6000) // 6s threshold
+        .then(res => res.json())
+        .then(data => renderData(data))
+        .catch(err => {
+            if (err.message === 'TIMEOUT_SLOW_NETWORK') {
+                showState('slow_network');
+            } else {
+                showState('generic_error');
+            }
+        });
+}`,
+                css: `/* High response latency styles */
+.state-visual-slow {
+    transition: all 0.3s ease;
+}
+.warning-bg svg {
+    animation: rotate-slow 4s linear infinite;
+}
+@keyframes rotate-slow {
+    100% { transform: rotate(360deg); }
+}`
+            },
+            permission_denied: {
+                accent: 'primary-accent',
+                title: 'Access Restricted (403)',
+                desc: 'You do not have the credentials required to view this segment.',
+                html: `<div class="state-icon error-bg">
+    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+</div>
+<h3 class="state-title">Permission Denied</h3>
+<p class="state-desc">Your profile role does not have authorization to view seller operations. Please log in with a Seller account.</p>
+<button class="state-action-btn" onclick="alert('Logging out...')">Switch Account</button>`,
+                js: `// 6. PERMISSION DENIED (HTTP 403 FORBIDDEN / ROLE-LOCK)
+// Handle authorization claims inside headers or token response
+async function checkSellerAccess() {
+    try {
+        const response = await fetch('/GET/seller/analytics');
+        
+        if (response.status === 403) {
+            const data = await response.json();
+            showPermissionDenied(data.detail || "Seller profile privileges required.");
+            return;
+        }
+        
+        const data = await response.json();
+        renderAnalytics(data);
+    } catch (err) {
+        showGenericError(err);
+    }
+}
+
+function showPermissionDenied(message) {
+    document.getElementById('display-sandbox').innerHTML = \`
+        <div class="state-visual">
+            <div class="state-icon error-bg">
+                <svg>...</svg>
+            </div>
+            <h3 class="state-title">Permission Denied</h3>
+            <p class="state-desc">\${message}</p>
+            <button class="state-action-btn" onclick="logoutRedirect()">Switch Account</button>
+        </div>
+    \`;
+}`,
+                css: `/* Pulsing keyframe effect for locked security animations */
+.error-bg {
+    background: rgba(232, 41, 63, 0.1);
+    color: #E8293F;
+    border: 1px solid rgba(232, 41, 63, 0.2);
+    animation: shake 0.5s ease-in-out;
+}
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-6px); }
+    40%, 80% { transform: translateX(6px); }
+}`
+            },
+            status_error: {
+                accent: 'primary-accent',
+                title: 'HTTP Response Codes Handler',
+                desc: 'API returns error responses. Pick status codes to check custom views.',
+                html: `<div class="state-icon error-bg" id="http-error-icon">
+    <span style="font-size: 18px; font-weight: 700; font-family:'IBM Plex Mono', monospace;">500</span>
+</div>
+<h3 class="state-title" id="http-error-title">Internal Server Error</h3>
+<p class="state-desc" id="http-error-desc">The server encountered an unexpected error. Please wait a minute and try again.</p>
+
+<div style="margin: 0 auto; display: flex; flex-direction: column; align-items: center;">
+    <select id="status-selector" class="status-dropdown" onchange="triggerStatusCodeView(this.value)">
+        <option value="400">400 Bad Request</option>
+        <option value="401">401 Session Expired / Unauthorized</option>
+        <option value="404">404 Document Not Found</option>
+        <option value="500" selected>500 Internal Server Error</option>
+        <option value="503">503 Service Unavailable</option>
+    </select>
+    <button class="state-action-btn" onclick="retryFetchStatus()">Retry Operation</button>
+</div>`,
+                js: `// 7. SPECIFIC STATUS CODES MIDDLEWARE
+// Central routing for fetch response codes
+function handleAPIResponse(response) {
+    if (response.ok) {
+        return response.json();
+    }
+    
+    // Status-specific client rendering
+    switch (response.status) {
+        case 400:
+            showErrorState('400 Bad Request', 'The server could not understand the input properties.');
+            break;
+        case 401:
+            showSessionExpiredState(); // Prompt re-login modal
+            break;
+        case 403:
+            showErrorState('403 Forbidden', 'Access permissions restricted for this directory.');
+            break;
+        case 404:
+            showErrorState('404 Not Found', 'The requested resource could not be found.');
+            break;
+        case 503:
+            showErrorState('503 Service Unavailable', 'The API gateway is temporarily overloaded. Please try again.');
+            break;
+        case 500:
+        default:
+            showErrorState('500 Internal Error', 'Server-side operation crashed. We have logged this error.');
+            break;
+    }
+    
+    throw new Error(\`HTTP API Error: \${response.status}\`);
+}`,
+                css: `/* Stylings for custom error status icons */
+.status-dropdown {
+    background: #181818;
+    color: #F5F0ED;
+    border: 1px solid #2D2D2D;
+    padding: 8px 16px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    outline: none;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.status-dropdown:focus {
+    border-color: #E8293F;
+}`
+            },
+            generic_error: {
+                accent: 'primary-accent',
+                title: 'Something went wrong',
+                desc: 'An unexpected exception occurred during standard execution loops.',
+                html: `<div class="state-icon error-bg">
+    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+</div>
+<h3 class="state-title">An Unexpected Error Occurred</h3>
+<p class="state-desc">Something crashed on this page. We've logged this report and are checking the servers.</p>
+<div style="display:flex; gap:10px;">
+    <button class="state-action-btn" onclick="location.reload()">Reload Application</button>
+    <button class="state-action-btn secondary" onclick="alert('Technical details: Reference ID: err-92381-x')">Diagnostics</button>
+</div>`,
+                js: `// 8. GENERIC ERROR HANDLER (TRY/CATCH CRASH SHIELD)
+// Prevent complete system crash using layout boundaries
+window.addEventListener('error', function(event) {
+    console.error('Unhandled Runtime Error:', event.error);
+    showGenericCrashState(event.error);
+});
+
+async function safeFetchData() {
+    try {
+        const res = await fetch('/GET/buyer/orders');
+        const data = await handleAPIResponse(res);
+        renderData(data);
+    } catch (error) {
+        console.error("Execution failed:", error);
+        // Show fallback screen
+        showGenericCrashState(error);
+    }
+}
+
+function showGenericCrashState(err) {
+    const layout = document.getElementById('root-view');
+    layout.innerHTML = \`
+        <div class="state-visual container">
+            <div class="state-icon error-bg">
+                <svg>...</svg>
+            </div>
+            <h3 class="state-title">System Error</h3>
+            <p class="state-desc">An unexpected layout crash occurred. Technical reason: \${err.message}</p>
+            <button class="state-action-btn" onclick="window.location.reload()">Refresh App</button>
+        </div>
+    \`;
+}`,
+                css: `/* Generic warning elements animation and borders */
+.error-bg svg {
+    animation: pulse-red 2s infinite;
+}
+@keyframes pulse-red {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}`
+            },
+            success: {
+                accent: 'success-accent',
+                title: 'Payment Successful',
+                desc: 'Your transaction was completed and the invoice record is generated.',
+                html: `<div class="state-icon success-bg" id="success-checkmark">
+    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+</div>
+<h3 class="state-title">Order Placed Successfully!</h3>
+<p class="state-desc">Your payment checkout completed successfully. Receipt ID: <b>#RAAG-82390</b></p>
+<button class="state-action-btn" style="background:var(--success-green); box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);" onclick="triggerConfettiBurst()">Order Status Tracker</button>`,
+                js: `// 9. SUCCESS / TRANSACTION FINISHED STATE
+// Triggers state completion, triggers animations, clean states
+function handleOrderSuccess(orderDetails) {
+    // 1. Clear shopping cart store
+    localStorage.removeItem('orderItems');
+    
+    // 2. Render celebration visual UI
+    const container = document.getElementById('checkout-form-content');
+    container.innerHTML = \`
+        <div class="state-visual success-accent">
+            <div class="state-icon success-bg animate-checkmark">
+                <svg>...</svg>
+            </div>
+            <h3 class="state-title">Order Placed Successfully!</h3>
+            <p class="state-desc">Your order is being prepared. Check status in My Orders.</p>
+            <button class="state-action-btn success" onclick="routeToOrders()">My Orders</button>
+        </div>
+    \`;
+    
+    // 3. Initiate celebratory confetti visual effects
+    triggerConfetticelebration();
+}`,
+                css: `/* Checkmark Success scale animation & Confetti */
+.state-icon.success-bg {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10B981;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    animation: checkmark-scale 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes checkmark-scale {
+    0% { transform: scale(0.2); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* Success Confetti styles */
+.confetti {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: #10B981;
+    opacity: 0;
+    border-radius: 50%;
+    animation: confetti-fall 2.5s ease-out infinite;
+}
+@keyframes confetti-fall {
+    0% { transform: translateY(-50px) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(400px) rotate(360deg); opacity: 0; }
+}`
+            }
+        };
+
+        let currentActiveState = 'loading';
+        let currentActiveTab = 'js';
+
+        // Update the visual preview inside sandbox
+        function renderSandboxContent(stateKey) {
+            const sandbox = document.getElementById('preview-sandbox');
+            const data = statesData[stateKey];
+            
+            // Clean previous sandbox states classes
+            sandbox.className = 'preview-container';
+            if (data.accent !== 'default') {
+                sandbox.classList.add(data.accent);
+            }
+            
+            sandbox.innerHTML = data.html;
+            
+            // Render specific highlight selector initialization if selected status error state
+            if (stateKey === 'status_error') {
+                // Initialize default status dropdown select code
+                setTimeout(() => {
+                    const selector = document.getElementById('status-selector');
+                    if (selector) triggerStatusCodeView(selector.value);
+                }, 50);
+            }
+        }
+
+        // Handle specific status code selection changes in showcase
+        function triggerStatusCodeView(statusCode) {
+            const errorTitle = document.getElementById('http-error-title');
+            const errorDesc = document.getElementById('http-error-desc');
+            const errorIcon = document.getElementById('http-error-icon');
+            
+            if (!errorTitle || !errorDesc || !errorIcon) return;
+
+            errorIcon.innerHTML = `<span style="font-size: 18px; font-weight: 700; font-family:'IBM Plex Mono', monospace;">\${statusCode}</span>`;
+            
+            switch (statusCode) {
+                case '400':
+                    errorTitle.textContent = '400 Bad Request';
+                    errorDesc.textContent = 'The system encountered invalid payload schemas or arguments.';
+                    break;
+                case '401':
+                    errorTitle.textContent = '401 Unauthorized Session';
+                    errorDesc.textContent = 'Your security token or credentials have expired. Please login again.';
+                    break;
+                case '404':
+                    errorTitle.textContent = '404 Document Not Found';
+                    errorDesc.textContent = 'The queried file path or object reference does not exist on our servers.';
+                    break;
+                case '500':
+                    errorTitle.textContent = '500 Internal Server Error';
+                    errorDesc.textContent = 'The server encountered an unexpected crash. Check backend log channels.';
+                    break;
+                case '503':
+                    errorTitle.textContent = '503 Service Temporarily Down';
+                    errorDesc.textContent = 'Server is currently undergoing updates or system maintenance modules.';
+                    break;
+            }
+        }
+
+        // Code highlight formatter mock to output pretty HTML tags
+        function formatHighlight(code, lang) {
+            if (lang === 'js') {
+                return code
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/(\/\/.*)/g, '<span class="token comment">$1</span>')
+                    .replace(/\b(function|const|let|var|return|try|catch|throw|new|if|else|switch|case|break|async|await|import|from|class)\b/g, '<span class="token keyword">$1</span>')
+                    .replace(/('[^']*'|"[^"]*"|`[^`]*`)/g, '<span class="token string">$1</span>')
+                    .replace(/\b(\d+)\b/g, '<span class="token number">$1</span>')
+                    .replace(/\b(fetch|then|catch|render[a-zA-Z]*|show[a-zA-Z]*|handle[a-zA-Z]*|setup[a-zA-Z]*|verify[a-zA-Z]*|update[a-zA-Z]*|verifyRequest|verifyConnection|race|clearTimeout|setTimeout|alert|getElementById|addEventListener)\b/g, '<span class="token function">$1</span>');
+            } else if (lang === 'html') {
+                return code
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/(&lt;!--.*?--&gt;)/g, '<span class="token comment">$1</span>')
+                    .replace(/(&lt;\/?[a-z0-9]+)(\s|&gt;)/gi, '$1$2')
+                    .replace(/(&lt;\/?)([a-z0-9]+)/gi, '$1<span class="token tag">$2</span>')
+                    .replace(/(\s[a-zA-Z-]+)=/g, ' <span class="token attr-name">$1</span>=')
+                    .replace(/="([^"]*)"/g, '="<span class="token attr-value">$1</span>"');
+            } else if (lang === 'css') {
+                return code
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/(\/\*.*?\*\/)/g, '<span class="token comment">$1</span>')
+                    .replace(/([\.#a-zA-Z0-9_:-]+)\s*\{/g, '<span class="token class-name">$1</span> {')
+                    .replace(/([a-zA-Z-]+)\s*:/g, '<span class="token keyword">$1</span>:')
+                    .replace(/:\s*([^;]+);/g, ': <span class="token string">$1</span>;');
+            }
+            return code;
+        }
+
+        // Render selected code content tabs
+        function renderCodeBlocks(stateKey) {
+            const data = statesData[stateKey];
+            
+            document.getElementById('code-js-content').innerHTML = formatHighlight(data.js.trim(), 'js');
+            document.getElementById('code-html-content').innerHTML = formatHighlight(data.html.trim(), 'html');
+            document.getElementById('code-css-content').innerHTML = formatHighlight(data.css.trim(), 'css');
+        }
+
+        // Select state from sidebar action
+        function selectState(stateKey) {
+            currentActiveState = stateKey;
+            
+            // Toggle sidebar buttons
+            const buttons = document.querySelectorAll('.state-tab-btn');
+            buttons.forEach(btn => {
+                btn.classList.remove('active');
+                // Matching criteria check
+                if (btn.getAttribute('onclick').includes(stateKey)) {
+                    btn.classList.add('active');
+                }
+            });
+
+            // Update Sandbox Visual & Code highlights
+            renderSandboxContent(stateKey);
+            renderCodeBlocks(stateKey);
+        }
+
+        // Switch between JAVASCRIPT / HTML / CSS code documentation tabs
+        function selectCodeTab(tabKey) {
+            currentActiveTab = tabKey;
+            
+            const tabs = document.querySelectorAll('.code-tab-btn');
+            tabs.forEach(tab => {
+                tab.classList.remove('active');
+                if (tab.getAttribute('onclick').includes(tabKey)) {
+                    tab.classList.add('active');
+                }
+            });
+
+            const preBlocks = document.querySelectorAll('.code-panel pre');
+            preBlocks.forEach(block => {
+                block.classList.remove('active');
+                if (block.id === `code-${tabKey}`) {
+                    block.classList.add('active');
+                }
+            });
+        }
+
+        // Copy active block to clipboard helper
+        function copyCode(preId) {
+            const codeEl = document.querySelector(`#${preId} code`);
+            if (!codeEl) return;
+            
+            navigator.clipboard.writeText(codeEl.innerText).then(() => {
+                const btn = document.querySelector(`#${preId} .copy-btn`);
+                btn.textContent = 'Copied!';
+                setTimeout(() => {
+                    btn.textContent = 'Copy';
+                }, 2000);
+            }).catch(err => {
+                console.error("Copy failed:", err);
+            });
+        }
+
+        // Simulating interactive offline test checks
+        function retryConnection() {
+            const btn = document.querySelector('.preview-container .state-action-btn');
+            btn.textContent = 'Connecting...';
+            btn.disabled = true;
+            
+            setTimeout(() => {
+                btn.textContent = 'Connection Verified!';
+                btn.style.background = 'var(--success-green)';
+                setTimeout(() => {
+                    selectState('success');
+                }, 1000);
+            }, 1500);
+        }
+
+        // Simulating slow connection retry fetch tests
+        function simulateSlowFetch() {
+            selectState('loading');
+            setTimeout(() => {
+                selectState('slow_network');
+            }, 2000);
+        }
+
+        // Simulating retry action
+        function retryFetchStatus() {
+            const selector = document.getElementById('status-selector');
+            const statusCode = selector ? selector.value : '500';
+            selectState('loading');
+            setTimeout(() => {
+                selectState('status_error');
+                setTimeout(() => {
+                    const sel = document.getElementById('status-selector');
+                    if (sel) {
+                        sel.value = statusCode;
+                        triggerStatusCodeView(statusCode);
+                    }
+                }, 50);
+            }, 1200);
+        }
+
+        function resetFilters() {
+            selectState('loading');
+            setTimeout(() => {
+                selectState('success');
+            }, 1200);
+        }
+
+        // Interactive success state confetti celebration burst simulator
+        function triggerConfettiBurst() {
+            const container = document.getElementById('preview-sandbox');
+            const particleColors = ['#10B981', '#3B82F6', '#E8293F', '#D4A847', '#A78BFA'];
+            
+            for (let i = 0; i < 40; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                
+                // Random position details
+                confetti.style.left = `${Math.random() * 90 + 5}%`;
+                confetti.style.top = `${Math.random() * 20 + 20}%`;
+                
+                // Custom sizing & background styling
+                const size = Math.random() * 6 + 4;
+                confetti.style.width = `${size}px`;
+                confetti.style.height = `${size}px`;
+                confetti.style.background = particleColors[Math.floor(Math.random() * particleColors.length)];
+                confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+                
+                // Animation settings
+                const duration = Math.random() * 1.5 + 1.5;
+                const delay = Math.random() * 0.4;
+                confetti.style.animation = `confetti-fall ${duration}s ${delay}s ease-out infinite`;
+                
+                container.appendChild(confetti);
+                
+                // Remove elements after animations completes
+                setTimeout(() => {
+                    confetti.remove();
+                }, (duration + delay) * 1000);
+            }
+        }
+
+        // Initialize state playground
+        window.addEventListener('DOMContentLoaded', () => {
+            selectState('loading');
+        });
+    </script>
+</body>
+</html>

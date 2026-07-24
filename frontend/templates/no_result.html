@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>No Results Found — RAAG</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet" />
+    <style>
+        :root {
+            --bg-dark: #0D0D0D;
+            --bg-card: #181818;
+            --border-color: #222;
+            --primary: #E8293F;
+            --primary-hover: #C0172A;
+            --accent-gold: #D4A847;
+            --text-main: #F5F0ED;
+            --text-muted: #A89B92;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'DM Sans', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        header {
+            width: 100%;
+            padding: 30px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .brand {
+            font-family: 'Playfair Display', serif;
+            font-size: 24px;
+            font-weight: 900;
+            color: var(--primary);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+
+        .container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .visual-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 50px 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        .visual-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--accent-gold);
+        }
+
+        .no-results-illustration {
+            width: 100px;
+            height: 100px;
+            margin-bottom: 30px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: rgba(212, 168, 71, 0.05);
+            color: var(--accent-gold);
+            border: 1px solid rgba(212, 168, 71, 0.1);
+        }
+
+        .no-results-illustration svg {
+            width: 44px;
+            height: 44px;
+            stroke-width: 1.5;
+            animation: float 4s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-8px) rotate(5deg); }
+        }
+
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        p {
+            color: var(--text-muted);
+            font-size: 15px;
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+
+        .query-box {
+            background: #0d0d0d;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 10px 16px;
+            display: inline-block;
+            font-family: monospace;
+            font-size: 14px;
+            color: var(--accent-gold);
+            margin-bottom: 30px;
+            word-break: break-all;
+        }
+
+        .suggestions-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+            font-weight: 700;
+        }
+
+        .suggestions-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 35px;
+        }
+
+        .suggestion-chip {
+            background: #202020;
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .suggestion-chip:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: #fff;
+            transform: translateY(-1px);
+        }
+
+        .btn-reset {
+            display: inline-block;
+            background: var(--primary);
+            color: #fff;
+            padding: 14px 32px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 13px;
+            letter-spacing: 1px;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 15px rgba(232, 41, 63, 0.3);
+        }
+
+        .btn-reset:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(232, 41, 63, 0.4);
+        }
+
+        footer {
+            width: 100%;
+            padding: 30px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-muted);
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="brand">RAAG</div>
+        <div style="font-size: 13px; color: var(--text-muted);">Search Manager</div>
+    </header>
+
+    <div class="container">
+        <div class="visual-card">
+            <div class="no-results-illustration">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    <line x1="11" y1="8" x2="11" y2="14"></line>
+                    <line x1="8" y1="11" x2="14" y2="11"></line>
+                </svg>
+            </div>
+            <h1>No Matches Found</h1>
+            <p>We searched our entire database catalog but couldn't find any products matching your search term.</p>
+            
+            <div class="query-box">
+                Query: "{{ query or 'No query specified' }}"
+            </div>
+
+            <div class="suggestions-title">Try browsing popular sections</div>
+            <div class="suggestions-grid">
+                <a href="/womens" class="suggestion-chip">Women's Apparel</a>
+                <a href="/mens-wear" class="suggestion-chip">Men's Apparel</a>
+                <a href="/homeappliances" class="suggestion-chip">Home Appliances</a>
+                <a href="/books" class="suggestion-chip">Books & Study</a>
+                <a href="/furniture" class="suggestion-chip">Furniture</a>
+            </div>
+
+            <a href="/home" class="btn-reset">Reset Search Filters</a>
+        </div>
+    </div>
+
+    <footer>
+        <span>RAAG.COM</span>
+        <span>© 2026 Raag. All rights reserved.</span>
+    </footer>
+
+</body>
+</html>

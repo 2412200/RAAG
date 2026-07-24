@@ -9,10 +9,10 @@
     href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500&display=swap"
     rel="stylesheet" />
   <link rel="stylesheet" href="{{ url_for('static', path='css/category.css') }}?v=1.0.0">
-  <link rel="stylesheet" href="/static/css/cart.css?v=1.0.9">
+  <link rel="stylesheet" href="/static/css/cart.css?v=1.1.0">
   <link rel="icon" type="image/png" href="{{ url_for('static', path='favicon.png') }}">
   <script src="/static/js/theme-toggle.js"></script>
-  <script src="/static/js/cart.js?v=1.0.9"></script>
+  <script src="/static/js/cart.js?v=1.1.0"></script>
 </head>
 
 <body>
@@ -69,14 +69,11 @@
   <!-- PRODUCTS -->
   <div class="products-container">
     {% for product in Products %}
-    <div class="product-card">
+    <div class="product-card" onclick="viewDetails('{{ product.id }}', 'kids')" style="cursor:pointer;">
       <div class="product-img-wrap">
         <img
           src="{% if product.image.startswith('http') %}{{ product.image }}{% else %}{{ url_for('static', path='images/' + product.image) }}{% endif %}"
           alt="{{ product.name }}" />
-
-        <div class="product-img-overlay"></div>
-        <span class="quick-view">View Details</span>
       </div>
       <div class="product-info">
         <p class="product-name">{{ product.name }}</p>
@@ -87,7 +84,7 @@
                 data-image="{{ product.image }}"
                 data-quantity="{{ product.quantity }}"
                 data-price="{{ product.price }}"
-                onclick="addToCartFromEl(this)">Add to Cart</button>
+                onclick="event.stopPropagation(); addToCartFromEl(this)">Add to Cart</button>
       </div>
     </div>
     {% endfor %}

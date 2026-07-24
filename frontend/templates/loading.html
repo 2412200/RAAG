@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loading... — RAAG</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet" />
+    <style>
+        :root {
+            --bg-dark: #0D0D0D;
+            --bg-card: #181818;
+            --border-color: #222;
+            --primary: #E8293F;
+            --accent-gold: #D4A847;
+            --text-main: #F5F0ED;
+            --text-muted: #A89B92;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'DM Sans', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        header {
+            width: 100%;
+            padding: 30px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .brand {
+            font-family: 'Playfair Display', serif;
+            font-size: 24px;
+            font-weight: 900;
+            color: var(--primary);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+
+        .container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            max-width: 900px;
+            width: 100%;
+        }
+
+        /* Central Loading Spinner */
+        .loader-wrapper {
+            margin-bottom: 50px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .spinner {
+            position: relative;
+            width: 64px;
+            height: 64px;
+        }
+
+        .spinner-outer {
+            width: 100%;
+            height: 100%;
+            border: 3px solid transparent;
+            border-top-color: var(--primary);
+            border-right-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .spinner-inner {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            right: 8px;
+            bottom: 8px;
+            border: 3px solid transparent;
+            border-bottom-color: var(--accent-gold);
+            border-left-color: var(--accent-gold);
+            border-radius: 50%;
+            animation: spin-reverse 1.2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes spin-reverse {
+            0% { transform: rotate(360deg); }
+            100% { transform: rotate(0deg); }
+        }
+
+        .loader-text {
+            color: var(--text-muted);
+            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        /* Skeleton Grid */
+        .skeleton-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 24px;
+            width: 100%;
+            opacity: 0.65;
+        }
+
+        .skeleton-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .skeleton-thumb {
+            width: 100%;
+            height: 160px;
+            border-radius: 12px;
+            background: linear-gradient(90deg, #181818 25%, #252525 50%, #181818 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+
+        .skeleton-line {
+            height: 14px;
+            border-radius: 6px;
+            background: linear-gradient(90deg, #181818 25%, #252525 50%, #181818 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+
+        .skeleton-line.title {
+            width: 70%;
+            height: 18px;
+        }
+
+        .skeleton-line.price {
+            width: 40%;
+        }
+
+        .skeleton-line.button {
+            width: 100%;
+            height: 38px;
+            margin-top: 10px;
+            border-radius: 8px;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        footer {
+            width: 100%;
+            padding: 30px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-muted);
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="brand">RAAG</div>
+        <div style="font-size: 13px; color: var(--text-muted);">Synchronizing...</div>
+    </header>
+
+    <div class="container">
+        
+        <!-- Central Progress spinner -->
+        <div class="loader-wrapper">
+            <div class="spinner">
+                <div class="spinner-outer"></div>
+                <div class="spinner-inner"></div>
+            </div>
+            <div class="loader-text">Loading catalog data</div>
+        </div>
+
+        <!-- Background Skeleton Loading Mock Grid -->
+        <div class="skeleton-grid">
+            <div class="skeleton-card">
+                <div class="skeleton-thumb"></div>
+                <div class="skeleton-line title"></div>
+                <div class="skeleton-line price"></div>
+                <div class="skeleton-line button"></div>
+            </div>
+            <div class="skeleton-card">
+                <div class="skeleton-thumb"></div>
+                <div class="skeleton-line title"></div>
+                <div class="skeleton-line price"></div>
+                <div class="skeleton-line button"></div>
+            </div>
+            <div class="skeleton-card">
+                <div class="skeleton-thumb"></div>
+                <div class="skeleton-line title"></div>
+                <div class="skeleton-line price"></div>
+                <div class="skeleton-line button"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <footer>
+        <span>RAAG.COM</span>
+        <span>© 2026 Raag. All rights reserved.</span>
+    </footer>
+
+</body>
+</html>
